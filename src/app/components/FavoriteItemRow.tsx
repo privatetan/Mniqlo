@@ -20,6 +20,7 @@ export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle }: 
     const [logs, setLogs] = useState<string[]>([]);
     const [intervalMs, setIntervalMs] = useState<number>(2000);
     const [timeWindow, setTimeWindow] = useState<{ start: string; end: string } | null>(null);
+    const [taskId, setTaskId] = useState<number | null>(null);
 
     // Sync local status if parent updates it
     useEffect(() => {
@@ -27,6 +28,48 @@ export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle }: 
             setLocalStockStatus(stockStatus);
         }
     }, [stockStatus]);
+
+    // Load task configuration
+    useEffect(() => {
+        const loadTask = async () => {
+            const userStr = localStorage.getItem('user');
+            if (!userStr) return;
+            const user = JSON.parse(userStr);
+
+            if (user.id === -1) return; // Skip for guest
+
+            try {
+                const res = await fetch(`/api/tasks?userId=${user.id}&productId=${item.productId}&style=${item.color}&size=${item.size}`);
+                const data = await res.json();
+                if (data.success && data.tasks.length > 0) {
+                    const task = data.tasks[0];
+                    setTaskId(task.id);
+                    setIntervalMs(task.frequency * 1000);
+
+                    // Restore time window
+                    if (task.startTime && task.endTime) {
+                        setTimeWindow({ start: task.startTime, end: task.endTime });
+                    }
+
+                    // Restore logs
+                    if (task.logs) {
+                        setLogs(task.logs.map((l: any) => `执行时间 ${new Date(l.timestamp).toLocaleTimeString()} - ${l.message || l.status}`));
+                    }
+
+                    // Auto-start if active
+                    if (task.isActive) {
+                        // Use a small timeout to ensure state updates (interval/timeWindow) are processed
+                        setTimeout(() => {
+                            start();
+                        }, 100);
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        };
+        loadTask();
+    }, [item]); // Remove start dependency to avoid loop, or keep if stable
 
     const handleCheck = useCallback(async () => {
         if (timeWindow) {
@@ -38,15 +81,11 @@ export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle }: 
             if (start <= end) {
                 isInWindow = currentHm >= start && currentHm <= end;
             } else {
-                // Crosses midnight
                 isInWindow = currentHm >= start || currentHm <= end;
             }
 
             if (!isInWindow) {
-                // Optional: log skip or just return silent? User might wonder if it's working.
-                // Let's log it occasionally or just once? "Skipped (Outside window)"
                 const timestamp = now.toLocaleTimeString();
-                // Limit logs to avoid spamming "Skipped" every 2 seconds
                 setLogs((prev) => {
                     const lastLog = prev[0];
                     if (lastLog && lastLog.includes('不在监控时间段')) return prev;
@@ -62,21 +101,71 @@ export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle }: 
         const timestamp = new Date().toLocaleTimeString();
         const statusText = isAvailable ? '有货' : '售罄';
         setLogs((prev) => [`执行时间 ${timestamp} - ${statusText}`, ...prev].slice(0, 5));
-
         setLocalStockStatus(isAvailable);
-    }, [item, onCheckSingle, timeWindow]);
+
+        if (taskId) {
+            try {
+                await fetch('/api/tasks/logs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        taskId,
+                        status: isAvailable ? 'SUCCESS' : 'FAILURE',
+                        message: statusText
+                    })
+                });
+            } catch (e) { console.error(e); }
+        }
+    }, [item, onCheckSingle, timeWindow, taskId]);
 
     // Use hook here so it persists even if popup closes
     const { isRunning, start, stop } = useScheduledTask(handleCheck, intervalMs);
 
+    const handleSaveTask = async (active: boolean, ms?: number, startStr?: string | null, endStr?: string | null) => {
+        const userStr = localStorage.getItem('user');
+        if (!userStr) return;
+        const user = JSON.parse(userStr);
+
+        try {
+            const freq = ms ? ms / 1000 : intervalMs / 1000;
+            // Handle null vs undefined vs empty string carefully
+            const sTime = startStr !== undefined ? startStr : (timeWindow?.start || null);
+            const eTime = endStr !== undefined ? endStr : (timeWindow?.end || null);
+
+            const res = await fetch('/api/tasks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: user.id,
+                    productId: item.productId,
+                    style: item.color,
+                    size: item.size,
+                    frequency: freq,
+                    isActive: active,
+                    startTime: sTime,
+                    endTime: eTime
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                setTaskId(data.task.id);
+            }
+        } catch (e) { console.error(e); }
+    };
+
     const handleStart = (ms: number, startTime: string, endTime: string) => {
         setIntervalMs(ms);
         setTimeWindow({ start: startTime, end: endTime });
-        // Defer start to Ensure interval updates first if needed, though hook handles dependency change
+        handleSaveTask(true, ms, startTime, endTime);
         setTimeout(() => {
             start();
-            setShowScheduler(false); // Auto-close popup on start
+            setShowScheduler(false);
         }, 0);
+    };
+
+    const handleStop = () => {
+        stop();
+        handleSaveTask(false);
     };
 
     // Handle clicking outside to close popup
@@ -165,6 +254,11 @@ export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle }: 
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
+                                        const userStr = localStorage.getItem('user');
+                                        if (userStr && JSON.parse(userStr).id === -1) {
+                                            alert('游客无法使用监控功能，请注册登录');
+                                            return;
+                                        }
                                         setShowScheduler(!showScheduler);
                                     }}
                                     className={`text-xs px-2 py-1 rounded border transition-colors ${isRunning
@@ -206,7 +300,7 @@ export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle }: 
                     <TaskScheduler
                         isRunning={isRunning}
                         onStart={handleStart}
-                        onStop={stop}
+                        onStop={handleStop}
                         executionCount={executionCount}
                         logs={logs}
                         initialInterval={intervalMs}

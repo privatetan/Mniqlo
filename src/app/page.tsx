@@ -1,13 +1,28 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Header from './components/Header';
 import SearchPage from './components/SearchPage';
 import BottomNav from './components/BottomNav';
 import FavoritePage from './components/FavoritePage';
 
 export default function Home() {
-
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<'search' | 'favorites'>('search');
+  const [isAuthorized, setIsAuthorized] = useState(false);
+
+  useEffect(() => {
+    const user = localStorage.getItem('user');
+    if (!user) {
+      router.push('/login');
+    } else {
+      setIsAuthorized(true);
+    }
+  }, [router]);
+
+  if (!isAuthorized) {
+    return null; // Or a loading spinner
+  }
 
   return (
     <div className="h-[100dvh] flex flex-col bg-white w-full max-w-[1000px] mx-auto overflow-hidden">

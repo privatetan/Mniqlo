@@ -54,35 +54,85 @@ export default function FavoritePage() {
         return false;
     }, []);
 
-    const removeFavorite = (e: React.MouseEvent, key: string) => {
+    const removeFavorite = async (e: React.MouseEvent, key: string) => {
         e.stopPropagation();
-        const newFavs = favorites.filter(f => f.key !== key);
-        setFavorites(newFavs);
-        localStorage.setItem('favorites', JSON.stringify(newFavs));
-        window.dispatchEvent(new Event('favorites-updated'));
+        const itemToRemove = favorites.find(f => f.key === key);
+        if (!itemToRemove) return;
+
+        try {
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+                const user = JSON.parse(userStr);
+
+                // Guest handling
+                if (user.id === -1) {
+                    const newFavs = favorites.filter(f => f.key !== key);
+                    setFavorites(newFavs);
+                    localStorage.setItem('favorites', JSON.stringify(newFavs));
+                    window.dispatchEvent(new Event('favorites-updated'));
+                    return;
+                }
+
+                await fetch(`/api/favorites?userId=${user.id}&productId=${itemToRemove.productId}&style=${itemToRemove.color}&size=${itemToRemove.size}`, {
+                    method: 'DELETE'
+                });
+            }
+
+            const newFavs = favorites.filter(f => f.key !== key);
+            setFavorites(newFavs);
+            // localStorage.setItem('favorites', JSON.stringify(newFavs)); // Keep local sync optionally? Better to rely on API state/re-fetch?
+            // For now, optimistically update UI is good.
+            window.dispatchEvent(new Event('favorites-updated'));
+        } catch (error) {
+            console.error('Failed to remove favorite', error);
+            // Revert state if needed, but for now just log
+        }
     };
 
-    useEffect(() => {
-        const loadFavorites = () => {
-            const saved = localStorage.getItem('favorites');
-            if (saved) {
-                try {
-                    const parsed: FavoriteItem[] = JSON.parse(saved);
-                    const valid = parsed.filter(item => item && item.price !== undefined && item.timestamp);
-                    valid.sort((a, b) => b.timestamp - a.timestamp);
-                    setFavorites(valid);
-                } catch (e) {
-                    console.error('Failed to parse favorites', e);
-                }
-            } else {
-                setFavorites([]);
-            }
-        };
+    const fetchFavorites = useCallback(async () => {
+        const userStr = localStorage.getItem('user');
+        if (!userStr) return;
+        const user = JSON.parse(userStr);
 
-        loadFavorites();
-        window.addEventListener('favorites-updated', loadFavorites);
-        return () => window.removeEventListener('favorites-updated', loadFavorites);
+        // Guest handling
+        if (user.id === -1) {
+            const savedFavs = localStorage.getItem('favorites');
+            if (savedFavs) {
+                try {
+                    const parsed = JSON.parse(savedFavs);
+                    setFavorites(parsed);
+                } catch (e) { console.error(e); }
+            }
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/favorites?userId=${user.id}`);
+            const data = await res.json();
+            if (data.success) {
+                const mapped = data.favorites.map((f: any) => ({
+                    key: `${f.style}-${f.size}`,
+                    productId: f.productId,
+                    code: f.code,
+                    name: f.name,
+                    color: f.style || '',
+                    size: f.size || '',
+                    price: f.price,
+                    timestamp: new Date(f.createdAt).getTime(),
+                    imageUrl: f.imageUrl
+                }));
+                setFavorites(mapped);
+            }
+        } catch (error) {
+            console.error('Failed to fetch favorites', error);
+        }
     }, []);
+
+    useEffect(() => {
+        fetchFavorites();
+        window.addEventListener('favorites-updated', fetchFavorites);
+        return () => window.removeEventListener('favorites-updated', fetchFavorites);
+    }, [fetchFavorites]);
 
     return (
         <div className="flex flex-col h-full w-full overflow-hidden">

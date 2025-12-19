@@ -25,25 +25,51 @@ export default function SearchPage() {
     const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
 
     useEffect(() => {
-        // Load history from local storage on mount (client-side only)
-        if (typeof window !== 'undefined') {
-            const saved = localStorage.getItem('searchHistory');
-            if (saved) {
-                setHistory(JSON.parse(saved));
+        const fetchFavorites = async () => {
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+                const user = JSON.parse(userStr);
+
+                // Guest handling
+                if (user.id === -1) {
+                    const savedFavs = localStorage.getItem('favorites');
+                    if (savedFavs) {
+                        try {
+                            setFavorites(JSON.parse(savedFavs));
+                        } catch (e) {
+                            console.error(e);
+                        }
+                    }
+                    return;
+                }
+
+                try {
+                    const res = await fetch(`/api/favorites?userId=${user.id}`);
+                    const data = await res.json();
+                    if (data.success) {
+                        const mapped = data.favorites.map((f: any) => ({
+                            key: `${f.style}-${f.size}`,
+                            productId: f.productId,
+                            code: f.code,
+                            name: f.name,
+                            color: f.style || '',
+                            size: f.size || '',
+                            price: f.price,
+                            timestamp: new Date(f.createdAt).getTime(),
+                            imageUrl: f.imageUrl
+                        }));
+                        setFavorites(mapped);
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
             }
-            const savedFavs = localStorage.getItem('favorites');
-            if (savedFavs) {
-                setFavorites(JSON.parse(savedFavs));
-            }
-        }
+        };
+
+        fetchFavorites();
 
         const handleFavoritesUpdated = () => {
-            const savedFavs = localStorage.getItem('favorites');
-            if (savedFavs) {
-                setFavorites(JSON.parse(savedFavs));
-            } else {
-                setFavorites([]);
-            }
+            fetchFavorites();
         };
 
         window.addEventListener('favorites-updated', handleFavoritesUpdated);
@@ -52,31 +78,90 @@ export default function SearchPage() {
         };
     }, []);
 
-    const toggleFavorite = (style: string, size: string) => {
+    const toggleFavorite = async (style: string, size: string) => {
         if (!result) return;
 
         const key = `${style}-${size}`;
         const isFav = favorites.some(f => f.key === key);
-        let newFavs;
 
-        if (isFav) {
-            newFavs = favorites.filter(f => f.key !== key);
-        } else {
-            const newItem: FavoriteItem = {
-                key,
-                productId: result.productId,
-                code: result.code,
-                name: result.productName,
-                color: style,
-                size: size,
-                price: result.minPrice,
-                timestamp: Date.now()
-            };
-            newFavs = [...favorites, newItem];
+        const userStr = localStorage.getItem('user');
+        if (!userStr) {
+            alert('Please login to use favorites'); // Should be covered by route protection but just in case
+            return;
         }
-        setFavorites(newFavs);
-        localStorage.setItem('favorites', JSON.stringify(newFavs));
-        window.dispatchEvent(new Event('favorites-updated'));
+        const user = JSON.parse(userStr);
+
+        // Guest handling
+        if (user.id === -1) {
+            let newFavs;
+            if (isFav) {
+                newFavs = favorites.filter(f => f.key !== key);
+            } else {
+                const newItem: FavoriteItem = {
+                    key,
+                    productId: result.productId,
+                    code: result.code,
+                    name: result.productName,
+                    color: style,
+                    size: size,
+                    price: result.minPrice,
+                    timestamp: Date.now()
+                };
+                newFavs = [...favorites, newItem];
+            }
+            setFavorites(newFavs);
+            localStorage.setItem('favorites', JSON.stringify(newFavs));
+            window.dispatchEvent(new Event('favorites-updated'));
+            return;
+        }
+
+        try {
+            if (isFav) {
+                const itemToRemove = favorites.find(f => f.key === key);
+                if (itemToRemove) {
+                    await fetch(`/api/favorites?userId=${user.id}&productId=${itemToRemove.productId}&style=${style}&size=${size}`, {
+                        method: 'DELETE'
+                    });
+                }
+                setFavorites(favorites.filter(f => f.key !== key));
+            } else {
+                const newItem = {
+                    userId: user.id,
+                    productId: result.productId,
+                    code: result.code,
+                    name: result.productName,
+                    price: result.minPrice,
+                    style,
+                    size,
+                    imageUrl: null // TODO?
+                };
+
+                const res = await fetch('/api/favorites', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newItem)
+                });
+
+                if (res.ok) {
+                    // Optimistic add or refetch?
+                    // Let's refetch to get the correct object or just construct one
+                    const addedFav: FavoriteItem = {
+                        key,
+                        productId: result.productId,
+                        code: result.code,
+                        name: result.productName,
+                        color: style,
+                        size: size,
+                        price: result.minPrice,
+                        timestamp: Date.now()
+                    };
+                    setFavorites([...favorites, addedFav]);
+                }
+            }
+            window.dispatchEvent(new Event('favorites-updated'));
+        } catch (error) {
+            console.error('Failed to toggle favorite', error);
+        }
     };
 
     const updateHistory = (newQuery: string) => {
