@@ -6,10 +6,12 @@ Mniqlo is a specialized application for monitoring Uniqlo product stock and mana
 
 ## Features
 
+- **User Authentication**: Login, registration, and guest mode support.
 - **Stock Monitoring**: Track stock levels for specific Uniqlo items.
-- **Favorites Management**: Save items to a favorites list for quick access.
+- **Favorites Management**: Save items to a favorites list (persisted in DB for users, local for guests).
+- **Enhanced Monitoring**: Set monitoring rules including target price, frequency, and time windows.
 - **Automated Tasks**: Background task scheduling for periodic updates.
-- **Responsive UI**: optimized for both desktop and mobile use.
+- **Responsive UI**: Optimized for both desktop and mobile use.
 
 ## Tech Stack
 
