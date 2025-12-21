@@ -33,6 +33,7 @@ const STOCK_URL = 'https://d.uniqlo.cn/p/stock/stock/query/zh_CN';
  * Get Product ID by 6-digit code
  */
 export async function getProductIdByCode(code: string): Promise<{ id: string; code: string; minPrice: number; originPrice: number } | null> {
+
     const body = {
         belongTo: 'pc',
         description: code,
@@ -79,7 +80,14 @@ export async function getProductIdByCode(code: string): Promise<{ id: string; co
 export async function getDetailByProductId(productId: string) {
     const url = `https://www.uniqlo.cn/data/products/spu/zh_CN/${productId}.json`;
     try {
-        const res = await fetch(url);
+        const res = await fetch(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'application/json',
+                'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+                'Referer': 'https://www.uniqlo.cn/'
+            }
+        });
         if (!res.ok) return null;
         const data = await res.json();
         return data.rows || [];
@@ -103,7 +111,13 @@ export async function getStockByProductId(productId: string) {
     try {
         const res = await fetch(STOCK_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'application/json',
+                'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+                'Referer': 'https://www.uniqlo.cn/'
+            },
             body: JSON.stringify(body),
         });
         const data = await res.json();
@@ -119,6 +133,7 @@ export async function getStockByProductId(productId: string) {
  * Matches ProductService.getProductStockByDescriptionIdOld
  */
 export async function getProductInfoByCode(code: string) {
+
     // 1. Get Product ID
     const productData = await getProductIdByCode(code);
     if (!productData) return null;
