@@ -78,6 +78,45 @@ export default function SearchPage() {
         };
     }, []);
 
+    useEffect(() => {
+        const fetchHistory = async () => {
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+                try {
+                    const user = JSON.parse(userStr);
+                    if (user.id !== -1) {
+                        const res = await fetch(`/api/search/history?userId=${user.id}`);
+                        const data = await res.json();
+                        if (data.success) {
+                            // Merge with local history or just set it?
+                            // Let's prefer server history but keep local if unique?
+                            // Simple approach: Server history takes precedence
+                            const serverKeywords = data.history.map((h: any) => h.keyword);
+                            // Combine with local unique
+                            const localHistory = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+                            const combined = Array.from(new Set([...serverKeywords, ...localHistory])).slice(0, 10);
+                            setHistory(combined);
+                            localStorage.setItem('searchHistory', JSON.stringify(combined));
+                        }
+                    } else {
+                        // Guest: Load from local
+                        const saved = localStorage.getItem('searchHistory');
+                        if (saved) setHistory(JSON.parse(saved));
+                    }
+                } catch (e) {
+                    console.error('Failed to load history', e);
+                    const saved = localStorage.getItem('searchHistory');
+                    if (saved) setHistory(JSON.parse(saved));
+                }
+            } else {
+                const saved = localStorage.getItem('searchHistory');
+                if (saved) setHistory(JSON.parse(saved));
+            }
+        };
+
+        fetchHistory();
+    }, []);
+
     const toggleFavorite = async (style: string, size: string) => {
         if (!result) return;
 
@@ -185,6 +224,23 @@ export default function SearchPage() {
         if (overrideQuery) setQuery(overrideQuery);
 
         updateHistory(searchText);
+
+        // Save to DB
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+            try {
+                const user = JSON.parse(userStr);
+                if (user.id !== -1) {
+                    fetch('/api/search/history', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userId: user.id, keyword: searchText })
+                    }); // Fire and forget
+                }
+            } catch (e) {
+                console.error('Failed to save search history', e);
+            }
+        }
 
         setLoading(true);
         setResult(null);

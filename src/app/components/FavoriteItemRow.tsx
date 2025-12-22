@@ -71,6 +71,8 @@ export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle }: 
         loadTask();
     }, [item]); // Remove start dependency to avoid loop, or keep if stable
 
+    const [lastNotifiedStatus, setLastNotifiedStatus] = useState<boolean | null>(null);
+
     const handleCheck = useCallback(async () => {
         if (timeWindow) {
             const now = new Date();
@@ -103,6 +105,43 @@ export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle }: 
         setLogs((prev) => [`执行时间 ${timestamp} - ${statusText}`, ...prev].slice(0, 5));
         setLocalStockStatus(isAvailable);
 
+        // Notify if newly available
+        if (isAvailable && lastNotifiedStatus !== true) {
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+                try {
+                    const user = JSON.parse(userStr);
+                    if (user.username) {
+                        fetch('/api/notify', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                username: user.username,
+                                productId: item.productId,
+                                style: item.color,
+                                size: item.size,
+                                title: `库存通知: ${item.name}`,
+                                content: `您监控的商品 [${item.code}] ${item.name} (${item.color}/${item.size}) 现在有货了！\n刷新时间: ${timestamp}`
+                            })
+                        }).then(res => res.json()).then(data => {
+                            if (data.success) {
+                                if (data.skipped) {
+                                    setLogs(prev => [`[限流] 1小时内已发送过记录`, ...prev].slice(0, 5));
+                                } else {
+                                    setLogs(prev => [`[通知] 已发送微信提醒`, ...prev].slice(0, 5));
+                                }
+                            }
+                        });
+                    }
+                } catch (e) {
+                    console.error('Failed to send notification:', e);
+                }
+            }
+            setLastNotifiedStatus(true);
+        } else if (!isAvailable) {
+            setLastNotifiedStatus(false);
+        }
+
         if (taskId) {
             try {
                 await fetch('/api/tasks/logs', {
@@ -116,7 +155,7 @@ export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle }: 
                 });
             } catch (e) { console.error(e); }
         }
-    }, [item, onCheckSingle, timeWindow, taskId]);
+    }, [item, onCheckSingle, timeWindow, taskId, lastNotifiedStatus]);
 
     // Use hook here so it persists even if popup closes
     const { isRunning, start, stop } = useScheduledTask(handleCheck, intervalMs);

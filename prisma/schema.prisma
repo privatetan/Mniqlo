@@ -18,8 +18,22 @@ model User {
   id        Int      @id @default(autoincrement())
   username  String   @unique
   password  String
-  favorites Favorite[]
+  wxUserId        String?
+  notifyFrequency Int      @default(60) // in minutes
+  favorites       Favorite[]
   tasks     MonitorTask[]
+  searchHistory   SearchHistory[]
+  notificationLogs NotificationLog[]
+}
+
+model SearchHistory {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  keyword   String
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt(sort: Desc)])
 }
 
 model Favorite {
@@ -62,4 +76,16 @@ model TaskLog {
   status    String
   message   String?
   timestamp DateTime    @default(now())
+}
+
+model NotificationLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  productId String
+  style     String?
+  size      String?
+  timestamp DateTime @default(now())
+
+  @@index([userId, productId, timestamp(sort: Desc)])
 }
