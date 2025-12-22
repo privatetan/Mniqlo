@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { withApiLogging } from '@/lib/api-logger';
 
-export async function POST(req: Request) {
+export const POST = withApiLogging(async (req: Request) => {
     try {
         const { username, password } = await req.json();
 
@@ -33,4 +34,4 @@ export async function POST(req: Request) {
         console.error('Registration error:', error);
         return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
     }
-}
+});

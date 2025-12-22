@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { withApiLogging } from '@/lib/api-logger';
 
-export async function GET(req: Request) {
+export const GET = withApiLogging(async (req: Request) => {
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get('userId');
 
@@ -24,9 +25,9 @@ export async function GET(req: Request) {
             details: error instanceof Error ? error.message : 'Unknown error'
         }, { status: 500 });
     }
-}
+});
 
-export async function POST(req: Request) {
+export const POST = withApiLogging(async (req: Request) => {
     try {
         const body = await req.json();
         const { userId, productId, code, name, price, style, size, imageUrl } = body;
@@ -54,9 +55,9 @@ export async function POST(req: Request) {
         console.error(error)
         return NextResponse.json({ success: false, message: 'Failed to add favorite' }, { status: 500 });
     }
-}
+});
 
-export async function DELETE(req: Request) {
+export const DELETE = withApiLogging(async (req: Request) => {
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get('userId');
     const productId = searchParams.get('productId');
@@ -87,4 +88,4 @@ export async function DELETE(req: Request) {
     } catch (error) {
         return NextResponse.json({ success: false, message: 'Failed to delete' }, { status: 500 });
     }
-}
+});

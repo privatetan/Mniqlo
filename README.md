@@ -11,6 +11,7 @@ Mniqlo is a specialized application for monitoring Uniqlo product stock and mana
 - **Favorites Management**: Save items to a favorites list (persisted in DB for users, local for guests).
 - **Enhanced Monitoring**: Set monitoring rules including target price, frequency, and time windows.
 - **Automated Tasks**: Background task scheduling for periodic updates.
+- **Comprehensive Logging**: Automatic logging of all HTTP requests and API responses with color-coded console output.
 - **Responsive UI**: Optimized for both desktop and mobile use.
 
 ## Tech Stack
@@ -63,6 +64,54 @@ docker pull ghcr.io/privatetan/mniqlo:main
 
 - `src/app`: Next.js App Router pages and API routes.
 - `src/components`: UI components (StockRefreshControl, FavoritePage, etc.).
-- `src/lib`: Utility functions (including `uniqlo.ts` logic).
+- `src/lib`: Utility functions and logging infrastructure.
+  - `uniqlo.ts`: Uniqlo API integration with logging.
+  - `logger.ts`: HTTP request/response logging utilities.
+  - `api-logger.ts`: API route logging middleware.
 - `prisma`: Database schema and migrations.
 - `scripts`: Utility scripts for debugging and data management.
+
+## Logging System
+
+The application includes a comprehensive logging system that automatically tracks all HTTP requests and API responses:
+
+### Features
+
+- **Automatic Request/Response Logging**: All fetch calls and API routes are logged with detailed information
+- **Color-Coded Output**: Different colors for requests, responses, errors, and status codes
+- **Request Tracking**: Unique request IDs for tracing complete request-response chains
+- **Sensitive Data Masking**: Automatically hides tokens, passwords, and other sensitive information
+- **Performance Metrics**: Response time tracking for all requests
+
+### Usage
+
+**HTTP Client Logging:**
+```typescript
+import { fetchWithLogging } from '@/lib/logger';
+
+const response = await fetchWithLogging('https://api.example.com/data', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ key: 'value' })
+});
+```
+
+**API Route Logging:**
+```typescript
+import { withApiLogging } from '@/lib/api-logger';
+
+export const GET = withApiLogging(async (request: NextRequest) => {
+  // Your handler logic
+  return NextResponse.json({ data: 'example' });
+});
+```
+
+### Log Output Example
+
+```
+[2025-12-22 18:25:00] [REQUEST] [req_1703246700000_1] POST https://api.uniqlo.cn/...
+  Body: {"productId":"123456",...}
+  
+[2025-12-22 18:25:01] [RESPONSE] [req_1703246700000_1] 200 OK (1234ms)
+  Data: Object(5 keys)
+```

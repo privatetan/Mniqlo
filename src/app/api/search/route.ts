@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getProductInfoByCode } from '@/lib/uniqlo';
+import { withApiLogging } from '@/lib/api-logger';
 
-export async function GET(request: NextRequest) {
+export const GET = withApiLogging(async (request: NextRequest) => {
     const { searchParams } = new URL(request.url);
     const code = searchParams.get('code');
-    console.log('[API Debug] Search request received for URL:', request.url);
-    console.log('[API Debug] Extracted code:', code);
 
     if (!code) {
         return NextResponse.json({ error: '商品编号不能为空' }, { status: 400 });
@@ -23,4 +22,4 @@ export async function GET(request: NextRequest) {
         console.error('Search API error:', error);
         return NextResponse.json({ error: '服务器错误' }, { status: 500 });
     }
-}
+});

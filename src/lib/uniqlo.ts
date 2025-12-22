@@ -1,3 +1,4 @@
+import { fetchWithLogging, logError, generateRequestId } from './logger';
 
 interface PageInfo {
     page: number;
@@ -44,8 +45,10 @@ export async function getProductIdByCode(code: string): Promise<{ id: string; co
         searchFlag: true,
     };
 
+    const requestId = generateRequestId();
+
     try {
-        const res = await fetch(QUERY_PRODUCT_ID_URL, {
+        const res = await fetchWithLogging(QUERY_PRODUCT_ID_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -68,7 +71,7 @@ export async function getProductIdByCode(code: string): Promise<{ id: string; co
             originPrice: parseFloat(product.originPrice)
         };
     } catch (error) {
-        console.error('Error fetching product ID:', error);
+        logError({ requestId, error, context: 'getProductIdByCode' });
         return null;
     }
 }
@@ -78,9 +81,11 @@ export async function getProductIdByCode(code: string): Promise<{ id: string; co
  * Matches CommonService.getDetailByProductId
  */
 export async function getDetailByProductId(productId: string) {
+    const requestId = generateRequestId();
     const url = `https://www.uniqlo.cn/data/products/spu/zh_CN/${productId}.json`;
+
     try {
-        const res = await fetch(url, {
+        const res = await fetchWithLogging(url, {
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                 'Accept': 'application/json',
@@ -92,7 +97,7 @@ export async function getDetailByProductId(productId: string) {
         const data = await res.json();
         return data.rows || [];
     } catch (error) {
-        console.error('Error fetching details:', error);
+        logError({ requestId, error, context: 'getDetailByProductId' });
         return [];
     }
 }
@@ -102,6 +107,7 @@ export async function getDetailByProductId(productId: string) {
  * Matches CommonService.getStockByProductId
  */
 export async function getStockByProductId(productId: string) {
+    const requestId = generateRequestId();
     const body = {
         distribution: 'EXPRESS',
         productCode: productId,
@@ -109,7 +115,7 @@ export async function getStockByProductId(productId: string) {
     };
 
     try {
-        const res = await fetch(STOCK_URL, {
+        const res = await fetchWithLogging(STOCK_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -123,7 +129,7 @@ export async function getStockByProductId(productId: string) {
         const data = await res.json();
         return data;
     } catch (error) {
-        console.error('Error fetching stock:', error);
+        logError({ requestId, error, context: 'getStockByProductId' });
         return null;
     }
 }

@@ -1,3 +1,4 @@
+import { fetchWithLogging, logError, generateRequestId } from './logger';
 
 export const WX_PUSH_CONFIG = {
     url: process.env.WX_PUSH_URL || 'https://mniqlo-wxpush.pittlucy9.workers.dev/wxsend',
@@ -8,6 +9,7 @@ export const WX_PUSH_CONFIG = {
 
 
 export async function sendWxNotification(userid: string, title: string, content: string) {
+    const requestId = generateRequestId();
     const params = new URLSearchParams({
         userid: userid,
         template_id: WX_PUSH_CONFIG.template_id,
@@ -20,11 +22,11 @@ export async function sendWxNotification(userid: string, title: string, content:
     const fullUrl = `${WX_PUSH_CONFIG.url}?${params.toString()}`;
 
     try {
-        const response = await fetch(fullUrl);
+        const response = await fetchWithLogging(fullUrl);
         const data = await response.json();
         return { success: true, data };
     } catch (error) {
-        console.error('Failed to send WxPush notification:', error);
+        logError({ requestId, error, context: 'sendWxNotification' });
         return { success: false, error };
     }
 }

@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { sendWxNotification } from '@/lib/wxpush';
 import { prisma } from '@/lib/prisma'; // Assumed available
+import { withApiLogging } from '@/lib/api-logger';
 
-export async function POST(req: Request) {
+export const POST = withApiLogging(async (req: Request) => {
     try {
         const body = await req.json();
         const { title, content, username, productId, style, size } = body;
@@ -71,4 +72,4 @@ export async function POST(req: Request) {
     } catch (error) {
         return NextResponse.json({ success: false, message: 'Internal server error', error }, { status: 500 });
     }
-}
+});
