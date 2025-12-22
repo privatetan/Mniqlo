@@ -1,9 +1,11 @@
+
 export const WX_PUSH_CONFIG = {
-    url: 'https://mniqlo-wxpush.pittlucy9.workers.dev/wxsend',
-    template_id: 'yuJhvEg27v9xabCLKM7XQBqJJm9snhn8ml2pekcucVk',
-    base_url: 'http://43.129.237.149:3000',
-    token: 'B5445E73C1C669E23B14DA2601FC7039'
+    url: process.env.WX_PUSH_URL || 'https://mniqlo-wxpush.pittlucy9.workers.dev/wxsend',
+    template_id: process.env.WX_PUSH_TEMPLATE_ID || '',
+    base_url: process.env.WX_PUSH_BASE_URL || '',
+    token: process.env.WX_PUSH_TOKEN || ''
 };
+
 
 export async function sendWxNotification(userid: string, title: string, content: string) {
     const params = new URLSearchParams({
