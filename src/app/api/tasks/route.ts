@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { withApiLogging } from '@/lib/api-logger';
-
-export const GET = withApiLogging(async (req: Request) => {
+export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get('userId');
     const productId = searchParams.get('productId');
@@ -33,9 +31,9 @@ export const GET = withApiLogging(async (req: Request) => {
     } catch (error) {
         return NextResponse.json({ success: false, message: 'Failed to fetch tasks' }, { status: 500 });
     }
-});
+}
 
-export const POST = withApiLogging(async (req: Request) => {
+export async function POST(req: Request) {
     try {
         const body = await req.json();
         const { userId, productId, style, size, targetPrice, frequency, isActive, startTime, endTime } = body;
@@ -87,4 +85,4 @@ export const POST = withApiLogging(async (req: Request) => {
         console.error(error);
         return NextResponse.json({ success: false, message: 'Failed to save task' }, { status: 500 });
     }
-});
+}

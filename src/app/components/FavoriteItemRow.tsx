@@ -71,9 +71,11 @@ export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle }: 
         loadTask();
     }, [item]); // Remove start dependency to avoid loop, or keep if stable
 
-    const [lastNotifiedStatus, setLastNotifiedStatus] = useState<boolean | null>(null);
+    // Use a ref for next allowed notification time to avoid re-renders and closure staleness issues
+    const nextNotifyTime = useRef<number>(0);
 
     const handleCheck = useCallback(async () => {
+        console.log('handleCheck');
         if (timeWindow) {
             const now = new Date();
             const currentHm = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
@@ -106,40 +108,74 @@ export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle }: 
         setLocalStockStatus(isAvailable);
 
         // Notify if newly available
-        if (isAvailable && lastNotifiedStatus !== true) {
-            const userStr = localStorage.getItem('user');
-            if (userStr) {
-                try {
-                    const user = JSON.parse(userStr);
-                    if (user.username) {
-                        fetch('/api/notify', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                username: user.username,
-                                productId: item.productId,
-                                style: item.color,
-                                size: item.size,
-                                title: `库存通知: ${item.name}`,
-                                content: `您监控的商品 [${item.code}] ${item.name} (${item.color}/${item.size}) 现在有货了！\n刷新时间: ${timestamp}`
-                            })
-                        }).then(res => res.json()).then(data => {
-                            if (data.success) {
-                                if (data.skipped) {
-                                    setLogs(prev => [`[限流] 1小时内已发送过记录`, ...prev].slice(0, 5));
+        console.log('isAvailable', isAvailable);
+        // Notify logic with frequency handling
+        console.log('isAvailable', isAvailable);
+
+        if (isAvailable) {
+
+            const nowMs = Date.now();
+            if (nowMs >= nextNotifyTime.current) {
+                const userStr = localStorage.getItem('user');
+                if (userStr) {
+                    try {
+                        const user = JSON.parse(userStr);
+                        if (user.username) {
+                            // Optimistically set next time
+                            nextNotifyTime.current = nowMs + 60 * 1000;
+
+                            setLogs(prev => [`[发出通知请求] ...`, ...prev].slice(0, 5));
+
+                            fetch('/api/notify', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    username: user.username,
+                                    productId: item.productId,
+                                    style: item.color,
+                                    size: item.size,
+                                    title: `库存通知: ${item.name}`,
+                                    content: `您监控的商品 [${item.code}] ${item.name} (${item.color}/${item.size}) 现在有货了！\n刷新时间: ${timestamp}`
+                                })
+                            }).then(res => res.json()).then(data => {
+                                if (data.success) {
+                                    if (data.skipped) {
+                                        setLogs(prev => [`[限流] 剩余 ${data.remainingMinutes ?? '?'} 分钟`, ...prev].slice(0, 5));
+                                        if (data.remainingMinutes) {
+                                            nextNotifyTime.current = Date.now() + (data.remainingMinutes * 60 * 1000);
+                                        } else {
+                                            nextNotifyTime.current = Date.now() + 60 * 1000;
+                                        }
+                                    } else {
+                                        setLogs(prev => [`[通知成功] 微信已发送`, ...prev].slice(0, 5));
+                                        const freq = data.frequency || 60;
+                                        nextNotifyTime.current = Date.now() + (freq * 60 * 1000);
+                                    }
                                 } else {
-                                    setLogs(prev => [`[通知] 已发送微信提醒`, ...prev].slice(0, 5));
+                                    setLogs(prev => [`[通知失败] ${data.message || '未知错误'}`, ...prev].slice(0, 5));
+                                    nextNotifyTime.current = 0; // Reset to retry
                                 }
-                            }
-                        });
+                            }).catch(err => {
+                                setLogs(prev => [`[网络错误] ${err.message}`, ...prev].slice(0, 5));
+                                nextNotifyTime.current = 0;
+                            });
+                        } else {
+                            setLogs(prev => [`[错误] 用户名缺失`, ...prev].slice(0, 5));
+                        }
+                    } catch (e) {
+                        console.error('Failed to send notification:', e);
+                        nextNotifyTime.current = 0;
                     }
-                } catch (e) {
-                    console.error('Failed to send notification:', e);
+                } else {
+                    setLogs(prev => [`[错误] 未登录`, ...prev].slice(0, 5));
                 }
+            } else {
+                // Throttled locally
+                // console.log('Throttled locally');
             }
-            setLastNotifiedStatus(true);
-        } else if (!isAvailable) {
-            setLastNotifiedStatus(false);
+        } else {
+            // If out of stock, allow immediate notification next time it's in stock
+            nextNotifyTime.current = 0;
         }
 
         if (taskId) {
@@ -155,7 +191,7 @@ export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle }: 
                 });
             } catch (e) { console.error(e); }
         }
-    }, [item, onCheckSingle, timeWindow, taskId, lastNotifiedStatus]);
+    }, [item, onCheckSingle, timeWindow, taskId]); // Removed lastNotifiedStatus dependency
 
     // Use hook here so it persists even if popup closes
     const { isRunning, start, stop } = useScheduledTask(handleCheck, intervalMs);

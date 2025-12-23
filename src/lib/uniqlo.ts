@@ -1,32 +1,3 @@
-import { fetchWithLogging, logError, generateRequestId } from './logger';
-
-interface PageInfo {
-    page: number;
-    pageSize: number;
-    withSideBar: string;
-}
-
-interface PriceRange {
-    low: number;
-    high: number;
-}
-
-export interface StockItem {
-    type: 'BPL' | 'SKU' | 'EXPRESS' | 'Sum';
-    stock: number;
-}
-
-export interface ColorStock {
-    style: string; // Color name/code
-    stock: number; // Aggregate or specific stock
-    breakdown: StockItem[];
-}
-
-export interface SizeGroup {
-    size: string;
-    colors: ColorStock[];
-}
-
 const QUERY_PRODUCT_ID_URL = 'https://d.uniqlo.cn/p/hmall-sc-service/search/searchWithDescriptionAndConditions/zh_CN';
 const STOCK_URL = 'https://d.uniqlo.cn/p/stock/stock/query/zh_CN';
 
@@ -45,10 +16,8 @@ export async function getProductIdByCode(code: string): Promise<{ id: string; co
         searchFlag: true,
     };
 
-    const requestId = generateRequestId();
-
     try {
-        const res = await fetchWithLogging(QUERY_PRODUCT_ID_URL, {
+        const res = await fetch(QUERY_PRODUCT_ID_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -71,7 +40,7 @@ export async function getProductIdByCode(code: string): Promise<{ id: string; co
             originPrice: parseFloat(product.originPrice)
         };
     } catch (error) {
-        logError({ requestId, error, context: 'getProductIdByCode' });
+        console.error('getProductIdByCode error:', error);
         return null;
     }
 }
@@ -81,11 +50,10 @@ export async function getProductIdByCode(code: string): Promise<{ id: string; co
  * Matches CommonService.getDetailByProductId
  */
 export async function getDetailByProductId(productId: string) {
-    const requestId = generateRequestId();
     const url = `https://www.uniqlo.cn/data/products/spu/zh_CN/${productId}.json`;
-
+    console.log("[API DEBUGG]", url);
     try {
-        const res = await fetchWithLogging(url, {
+        const res = await fetch(url, {
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                 'Accept': 'application/json',
@@ -97,7 +65,7 @@ export async function getDetailByProductId(productId: string) {
         const data = await res.json();
         return data.rows || [];
     } catch (error) {
-        logError({ requestId, error, context: 'getDetailByProductId' });
+        console.error('getDetailByProductId error:', error);
         return [];
     }
 }
@@ -107,7 +75,6 @@ export async function getDetailByProductId(productId: string) {
  * Matches CommonService.getStockByProductId
  */
 export async function getStockByProductId(productId: string) {
-    const requestId = generateRequestId();
     const body = {
         distribution: 'EXPRESS',
         productCode: productId,
@@ -115,7 +82,7 @@ export async function getStockByProductId(productId: string) {
     };
 
     try {
-        const res = await fetchWithLogging(STOCK_URL, {
+        const res = await fetch(STOCK_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -129,7 +96,7 @@ export async function getStockByProductId(productId: string) {
         const data = await res.json();
         return data;
     } catch (error) {
-        logError({ requestId, error, context: 'getStockByProductId' });
+        console.error('getStockByProductId error:', error);
         return null;
     }
 }

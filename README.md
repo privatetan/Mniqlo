@@ -10,9 +10,9 @@ Mniqlo is a specialized application for monitoring Uniqlo product stock and mana
 - **Stock Monitoring**: Real-time tracking of Uniqlo product availability
 - **WeChat Notifications**: Get instant alerts when items are back in stock
 - **Favorites Management**: Save and organize your favorite items
-- **Smart Monitoring Rules**: Configure target price, frequency, and time windows
-- **Automated Tasks**: Background scheduling for periodic stock checks
-- **Comprehensive Logging**: Detailed HTTP request/response logging with color-coded output
+- **Smart Monitoring Rules**: Configure target price, frequency (e.g., check every 1 min), and specific time windows (e.g., 08:00 - 22:00) to avoid disturbing at night.
+- **Intelligent Rate Limiting**: Prevents notification spam by respecting user-defined frequency settings.
+- **Automated Tasks**: Reliable background scheduling for periodic stock checks with success/failure logging.
 - **Responsive UI**: Optimized for both desktop and mobile devices
 - **Persistent Storage**: SQLite database with Docker volume support
 
@@ -117,8 +117,7 @@ Mniqlo/
 │   └── lib/              # Utility functions and integrations
 │       ├── uniqlo.ts     # Uniqlo API integration
 │       ├── wxpush.ts     # WeChat notification service
-│       ├── logger.ts     # HTTP logging utilities
-│       └── api-logger.ts # API route logging middleware
+│       └── prisma.ts     # Prisma client instance
 ├── prisma/
 │   ├── schema.prisma     # Database schema
 │   └── migrations/       # Database migrations
@@ -129,51 +128,7 @@ Mniqlo/
 └── DEPLOYMENT.md         # Detailed deployment guide
 ```
 
-## 📊 Logging System
 
-The application includes a comprehensive logging system for debugging and monitoring:
-
-### Features
-
-- **Automatic Request/Response Logging**: All HTTP calls are logged with detailed information
-- **Color-Coded Console Output**: Easy-to-read logs with different colors for different log levels
-- **Request Tracking**: Unique IDs for tracing complete request-response chains
-- **Sensitive Data Masking**: Automatically hides tokens, passwords, and API keys
-- **Performance Metrics**: Response time tracking for all requests
-
-### Usage Examples
-
-**HTTP Client Logging:**
-```typescript
-import { fetchWithLogging } from '@/lib/logger';
-
-const response = await fetchWithLogging('https://api.example.com/data', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ key: 'value' })
-});
-```
-
-**API Route Logging:**
-```typescript
-import { withApiLogging } from '@/lib/api-logger';
-
-export const GET = withApiLogging(async (request: NextRequest) => {
-  // Your handler logic
-  return NextResponse.json({ data: 'example' });
-});
-```
-
-### Sample Log Output
-
-```
-[2025-12-23 14:25:00] [REQUEST] [req_1703332700000_1] POST https://api.uniqlo.cn/...
-  Headers: {"Content-Type":"application/json"}
-  Body: {"productId":"123456","size":"M"}
-  
-[2025-12-23 14:25:01] [RESPONSE] [req_1703332700000_1] 200 OK (1234ms)
-  Data: {"stock":{"available":true,"quantity":5}}
-```
 
 ## 🐳 Docker
 
