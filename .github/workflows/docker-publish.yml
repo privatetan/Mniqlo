@@ -90,3 +90,48 @@ jobs:
           TAGS: ${{ steps.meta.outputs.tags }}
           DIGEST: ${{ steps.build-and-push.outputs.digest }}
         run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
+
+  deploy:
+    needs: build
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to VPS using SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            # Convert repository name to lowercase for Docker image name
+            REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+            IMAGE_TAG="ghcr.io/$REPO_NAME:main"
+            
+            echo "Deploying $IMAGE_TAG..."
+            
+            # Login to GHCR using the workflow token (passed via env expansion)
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            # Pull the latest image
+            docker pull $IMAGE_TAG
+            
+            # Stop and remove existing container
+            docker stop mniqlo || true
+            docker rm mniqlo || true
+            
+            # Run new container
+            # Make sure to mount a volume for persistent data
+            docker run -d \
+              --name mniqlo \
+              --restart unless-stopped \
+              -p 3000:3000 \
+              -v mniqlo-data:/app/data \
+              -e DATABASE_URL="file:/app/data/prod.db" \
+              -e WX_PUSH_URL="${{ secrets.WX_PUSH_URL }}" \
+              -e WX_PUSH_TEMPLATE_ID="${{ secrets.WX_PUSH_TEMPLATE_ID }}" \
+              -e WX_PUSH_BASE_URL="${{ secrets.WX_PUSH_BASE_URL }}" \
+              -e WX_PUSH_TOKEN="${{ secrets.WX_PUSH_TOKEN }}" \
+              $IMAGE_TAG
+              
+            # Cleanup unused images to save disk space (critical for 512MB server)
+            docker image prune -f
