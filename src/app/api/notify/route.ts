@@ -48,11 +48,13 @@ export async function POST(req: Request) {
             console.log('monitorTask Search Params:', { userId: targetUser.id, productId, style, size });
 
             if (monitorTask && monitorTask.lastPushTime) {
-                const lastPush = new Date(monitorTask.lastPushTime).getTime();
+                // Parse "yyyy-MM-dd HH:mm:ss" - replace space with T
+                const lastPushStr = monitorTask.lastPushTime.replace(' ', 'T');
+                const lastPush = new Date(lastPushStr).getTime();
                 const now = Date.now();
                 const diffInMinutes = (now - lastPush) / (1000 * 60);
 
-                console.log(`[RateLimit] Last: ${lastPush}, Now: ${now}, Diff: ${diffInMinutes}, Freq: ${frequencyInMinutes}`);
+                console.log(`[RateLimit] LastData: ${monitorTask.lastPushTime}, LastISO: ${lastPushStr}, Now: ${now}, Diff: ${diffInMinutes}`);
 
                 if (diffInMinutes < frequencyInMinutes) {
                     const remaining = Math.ceil(frequencyInMinutes - diffInMinutes);
@@ -74,26 +76,31 @@ export async function POST(req: Request) {
                         ...(style && { style }),
                         ...(size && { size }),
                         timestamp: {
-                            gte: new Date(Date.now() - frequencyInMinutes * 60 * 1000)
+                            // gte: new Date(Date.now() - frequencyInMinutes * 60 * 1000)
+                            // String comparision 'gte' works for ISO-like strings "yyyy-MM-dd HH:mm:ss"
+                            gte: new Date(Date.now() - frequencyInMinutes * 60 * 1000).toISOString().replace('T', ' ').slice(0, 19)
                         }
                     },
                     orderBy: { timestamp: 'desc' }
                 });
 
                 if (lastLog) {
-                    const lastPush = new Date(lastLog.timestamp).getTime();
+                    const lastPushStr = lastLog.timestamp.replace(' ', 'T');
+                    const lastPush = new Date(lastPushStr).getTime();
                     const now = Date.now();
                     const diffInMinutes = (now - lastPush) / (1000 * 60);
 
                     const remaining = Math.ceil(frequencyInMinutes - diffInMinutes);
 
-                    return NextResponse.json({
-                        success: true,
-                        skipped: true,
-                        remainingMinutes: remaining,
-                        frequency: frequencyInMinutes,
-                        message: `Notification skipped due to rate limit (${remaining} mins)`
-                    });
+                    if (diffInMinutes < frequencyInMinutes) {
+                        return NextResponse.json({
+                            success: true,
+                            skipped: true,
+                            remainingMinutes: remaining,
+                            frequency: frequencyInMinutes,
+                            message: `Notification skipped due to rate limit (${remaining} mins)`
+                        });
+                    }
                 }
             }
         }
@@ -106,13 +113,16 @@ export async function POST(req: Request) {
         console.log('[Notify] Send result:', result);
 
         if (result.success && productId) {
+            const { formatToLocalTime } = require('@/lib/date-utils');
+            const nowStr = formatToLocalTime(new Date());
+
             // Update MonitorTask lastPushTime
             if (monitorTask) {
-                console.log('[Notify] Updating task', monitorTask.id, 'lastPushTime');
+                console.log('[Notify] Updating task', monitorTask.id, 'lastPushTime', nowStr);
                 try {
                     await prisma.monitorTask.update({
                         where: { id: monitorTask.id },
-                        data: { lastPushTime: new Date() }
+                        data: { lastPushTime: nowStr }
                     });
                     console.log('[Notify] Task updated');
                 } catch (err) {
@@ -130,6 +140,7 @@ export async function POST(req: Request) {
                     productId: productId,
                     style: style || null,
                     size: size || null,
+                    timestamp: nowStr
                 }
             });
         }

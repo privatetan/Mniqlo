@@ -64,7 +64,7 @@ model MonitorTask {
   isActive    Boolean   @default(true)
   startTime   String?   // Format "HH:mm"
   endTime     String?   // Format "HH:mm"
-  lastPushTime DateTime? // Last time a notification was successfully pushed
+  lastPushTime String?   // Format "yyyy-MM-dd HH:mm:ss"
   logs        TaskLog[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -76,7 +76,7 @@ model TaskLog {
   task      MonitorTask @relation(fields: [taskId], references: [id])
   status    String
   message   String?
-  timestamp DateTime    @default(now())
+  timestamp String      // Format "yyyy-MM-dd HH:mm:ss"
 }
 
 model NotificationLog {
@@ -86,7 +86,7 @@ model NotificationLog {
   productId String
   style     String?
   size      String?
-  timestamp DateTime @default(now())
+  timestamp String   // Format "yyyy-MM-dd HH:mm:ss"
 
   @@index([userId, productId, timestamp(sort: Desc)])
 }
