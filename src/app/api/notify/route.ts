@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { sendWxNotification } from '@/lib/wxpush';
 import { prisma } from '@/lib/prisma'; // Assumed available
+import { formatToLocalTime } from '@/lib/date-utils';
 
 export async function POST(req: Request) {
     try {
@@ -113,7 +114,6 @@ export async function POST(req: Request) {
         console.log('[Notify] Send result:', result);
 
         if (result.success && productId) {
-            const { formatToLocalTime } = require('@/lib/date-utils');
             const nowStr = formatToLocalTime(new Date());
 
             // Update MonitorTask lastPushTime

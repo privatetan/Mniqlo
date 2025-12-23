@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { formatToLocalTime } from '@/lib/date-utils';
 
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
@@ -30,11 +31,14 @@ export async function POST(req: Request) {
             return NextResponse.json({ success: false, message: 'Missing fields' }, { status: 400 });
         }
 
+        const nowStr = formatToLocalTime(new Date());
+
         const log = await prisma.taskLog.create({
             data: {
                 taskId: parseInt(taskId, 10),
                 status,
                 message,
+                timestamp: nowStr,
             },
         });
 
