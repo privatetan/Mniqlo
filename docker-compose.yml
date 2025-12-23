@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=file:/app/data/dev.db
+      - WX_PUSH_URL=${WX_PUSH_URL}
+      - WX_PUSH_TEMPLATE_ID=${WX_PUSH_TEMPLATE_ID}
+      - WX_PUSH_BASE_URL=${WX_PUSH_BASE_URL}
+      - WX_PUSH_TOKEN=${WX_PUSH_TOKEN}
+    volumes:
+      # 持久化数据库文件
+      - db-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  # 创建命名卷来持久化数据
+  db-data:
+    driver: local
