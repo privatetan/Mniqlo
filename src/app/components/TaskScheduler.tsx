@@ -17,7 +17,7 @@ export function TaskScheduler({
     onStop,
     executionCount,
     logs,
-    initialInterval = 1000,
+    initialInterval = 10 * 1000,
     initialStartTime = '00:00',
     initialEndTime = '23:59'
 }: TaskSchedulerProps) {
