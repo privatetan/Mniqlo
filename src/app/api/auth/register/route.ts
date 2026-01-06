@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
+import { formatToLocalTime } from '@/lib/date-utils';
+
 export async function POST(req: Request) {
     try {
         const { username, password } = await req.json();
@@ -9,21 +11,31 @@ export async function POST(req: Request) {
         }
 
         // Check if user already exists
-        const existingUser = await prisma.user.findUnique({
-            where: { username },
-        });
+        const { data: existingUser, error: checkError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('username', username)
+            .single();
 
         if (existingUser) {
             return NextResponse.json({ success: false, message: 'Username already exists' }, { status: 409 });
         }
 
         // In a real app, hash the password!
-        const newUser = await prisma.user.create({
-            data: {
-                username,
-                password,
-            },
-        });
+        const { data: newUser, error: createError } = await supabase
+            .from('users')
+            .insert([
+                {
+                    username,
+                    password,
+                    role: 'USER',
+                    created_at: formatToLocalTime()
+                }
+            ])
+            .select()
+            .single();
+
+        if (createError) throw createError;
 
         const { password: _, ...userWithoutPassword } = newUser;
 

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
+import { formatToLocalTime } from '@/lib/date-utils';
 
 export async function POST(req: Request) {
     try {
@@ -10,16 +11,19 @@ export async function POST(req: Request) {
             return NextResponse.json({ success: false, message: 'Missing required fields' }, { status: 400 });
         }
 
-        // Optional: Check if the user exists
-        // const user = await prisma.user.findUnique({ where: { id: userId } });
-        // if (!user) ...
+        const { data: searchRecord, error } = await supabase
+            .from('search_histories')
+            .insert([
+                {
+                    user_id: parseInt(userId, 10),
+                    query: keyword,
+                    timestamp: formatToLocalTime()
+                }
+            ])
+            .select()
+            .single();
 
-        const searchRecord = await prisma.searchHistory.create({
-            data: {
-                userId: parseInt(userId, 10),
-                keyword,
-            },
-        });
+        if (error) throw error;
 
         return NextResponse.json({ success: true, data: searchRecord });
     } catch (error) {
@@ -37,20 +41,32 @@ export async function GET(req: Request) {
     }
 
     try {
-        // Fetch recent unique searches
-        // Prisma `distinct` is useful here
-        const history = await prisma.searchHistory.findMany({
-            where: {
-                userId: parseInt(userId, 10),
-            },
-            orderBy: {
-                createdAt: 'desc',
-            },
-            distinct: ['keyword'],
-            take: 20, // get top 20 unique
-        });
+        const { data: history, error } = await supabase
+            .from('search_histories')
+            .select('*')
+            .eq('user_id', parseInt(userId, 10))
+            .order('id', { ascending: false })
+            .limit(100);
 
-        return NextResponse.json({ success: true, history });
+        if (error) throw error;
+
+        // Fetch recent unique searches manually
+        const uniqueHistory: any[] = [];
+        const seen = new Set();
+
+        for (const item of history || []) {
+            if (!seen.has(item.query)) {
+                seen.add(item.query);
+                uniqueHistory.push({
+                    ...item,
+                    keyword: item.query, // Compatibility with frontend
+                    createdAt: item.timestamp
+                });
+            }
+            if (uniqueHistory.length >= 20) break;
+        }
+
+        return NextResponse.json({ success: true, history: uniqueHistory });
     } catch (error) {
         console.error('Search History GET Error:', error);
         return NextResponse.json({ success: false, message: 'Failed to fetch history' }, { status: 500 });

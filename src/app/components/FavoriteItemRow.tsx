@@ -2,15 +2,17 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { FavoriteItem } from '@/types';
 import { TaskScheduler } from './TaskScheduler';
 import { useScheduledTask } from '@/hooks/useScheduledTask';
+import { parseLocalTime } from '@/lib/date-utils';
 
 interface FavoriteItemRowProps {
     item: FavoriteItem;
     stockStatus: boolean | null;
     onRemove: (e: React.MouseEvent, key: string) => void;
     onCheckSingle: (item: FavoriteItem) => Promise<boolean>;
+    hideProductInfo?: boolean;
 }
 
-export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle }: FavoriteItemRowProps) {
+export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle, hideProductInfo = false }: FavoriteItemRowProps) {
     const [showScheduler, setShowScheduler] = useState(false);
     const [localStockStatus, setLocalStockStatus] = useState<boolean | null>(stockStatus);
     const popupRef = useRef<HTMLDivElement>(null);
@@ -53,7 +55,7 @@ export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle }: 
 
                     // Restore logs
                     if (task.logs) {
-                        setLogs(task.logs.map((l: any) => `执行时间 ${new Date(l.timestamp).toLocaleTimeString()} - ${l.message || l.status}`));
+                        setLogs(task.logs.map((l: any) => `执行时间 ${parseLocalTime(l.timestamp).toLocaleTimeString()} - ${l.message || l.status}`));
                     }
 
                     // Auto-start if active
@@ -306,66 +308,123 @@ export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle }: 
 
             {/* Foreground Content */}
             <div
-                className={`flex gap-4 p-4 bg-white border border-gray-100 rounded-xl shadow-sm relative z-10 transition-transform duration-200 ease-out overflow-visible group ${isSwiped ? '-translate-x-20' : 'translate-x-0'}`}
+                className={`flex gap-3 p-3 bg-white border border-gray-100 rounded-xl shadow-sm relative z-10 transition-transform duration-200 ease-out overflow-visible group ${isSwiped ? '-translate-x-20' : 'translate-x-0'}`}
                 onTouchStart={onTouchStart}
                 onTouchMove={onTouchMove}
                 onTouchEnd={onTouchEnd}
             >
                 <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start mb-1">
-                        <h3 className="font-medium text-sm text-gray-900 truncate flex-1 mr-2">
-                            {item.code && <span className="font-mono text-green-500 mr-2">{item.code}</span>}
-                            {item.name}
-                        </h3>
-                        <div className="flex items-center gap-2">
-                            {localStockStatus !== undefined && localStockStatus !== null && (
-                                <span className={`text-[10px] px-1.5 py-0.5 rounded border ${localStockStatus
-                                    ? 'bg-green-50 text-green-600 border-green-100'
-                                    : 'bg-red-50 text-red-500 border-red-100'
-                                    }`}>
-                                    {localStockStatus ? '有货' : '售罄'}
-                                </span>
-                            )}
-
-                            <div className="relative">
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        const userStr = localStorage.getItem('user');
-                                        if (userStr && JSON.parse(userStr).id === -1) {
-                                            alert('游客无法使用监控功能，请注册登录');
-                                            return;
-                                        }
-                                        setShowScheduler(!showScheduler);
-                                    }}
-                                    className={`text-xs px-2 py-1 rounded border transition-colors ${isRunning
-                                        ? 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100'
-                                        : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
-                                        }`}
-                                >
-                                    {isRunning ? '监控中...' : '监控'}
-                                </button>
+                    {hideProductInfo ? (
+                        // Single line layout
+                        <div className="flex items-center justify-between h-full">
+                            <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-gray-900 text-sm px-2 py-0.5 bg-gray-100 rounded-full font-medium">{item.color}</span>
+                                    <span className="text-gray-900 text-sm px-2 py-0.5 bg-gray-100 rounded-full font-medium">{item.size}</span>
+                                </div>
+                                <span className="font-bold text-red-600">¥{item.price}</span>
                             </div>
 
-                            <button
-                                onClick={(e) => onRemove(e, item.key)}
-                                className="text-gray-400 hover:text-red-500 p-1 -mr-2 bg-transparent"
-                                title="删除收藏"
-                            >
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                </svg>
-                            </button>
+                            <div className="flex items-center gap-2">
+                                {localStockStatus !== undefined && localStockStatus !== null && (
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded border ${localStockStatus
+                                        ? 'bg-green-50 text-green-600 border-green-100'
+                                        : 'bg-red-50 text-red-500 border-red-100'
+                                        }`}>
+                                        {localStockStatus ? '有货' : '售罄'}
+                                    </span>
+                                )}
+
+                                <div className="relative">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            const userStr = localStorage.getItem('user');
+                                            if (userStr && JSON.parse(userStr).id === -1) {
+                                                alert('游客无法使用监控功能，请注册登录');
+                                                return;
+                                            }
+                                            setShowScheduler(!showScheduler);
+                                        }}
+                                        className={`text-xs px-2 py-1 rounded border transition-colors ${isRunning
+                                            ? 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100'
+                                            : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
+                                            }`}
+                                    >
+                                        {isRunning ? '监控中' : '监控'}
+                                    </button>
+                                </div>
+
+                                <button
+                                    onClick={(e) => onRemove(e, item.key)}
+                                    className="text-gray-400 hover:text-red-500 p-1 bg-transparent"
+                                    title="删除收藏"
+                                >
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                    <div className="flex items-center gap-2 mb-2">
-                        <span className="text-gray-500 text-xs px-2 py-0.5 bg-gray-100 rounded-full">{item.color}</span>
-                        <span className="text-gray-500 text-xs px-2 py-0.5 bg-gray-100 rounded-full">{item.size}</span>
-                    </div>
-                    <div className="flex items-baseline justify-between">
-                        <span className="font-bold text-red-600">¥{item.price}</span>
-                        <span className="text-xs text-gray-400">{new Date(item.timestamp).toLocaleDateString()}</span>
-                    </div>
+                    ) : (
+                        // Default stacked layout
+                        <>
+                            <div className="flex justify-between items-start mb-1">
+                                <h3 className="font-medium text-sm text-gray-900 truncate flex-1 mr-2">
+                                    {item.code && <span className="font-mono text-green-500 mr-2">{item.code}</span>}
+                                    {item.name}
+                                </h3>
+                                <div className="flex items-center gap-2">
+                                    {localStockStatus !== undefined && localStockStatus !== null && (
+                                        <span className={`text-[10px] px-1.5 py-0.5 rounded border ${localStockStatus
+                                            ? 'bg-green-50 text-green-600 border-green-100'
+                                            : 'bg-red-50 text-red-500 border-red-100'
+                                            }`}>
+                                            {localStockStatus ? '有货' : '售罄'}
+                                        </span>
+                                    )}
+
+                                    <div className="relative">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                const userStr = localStorage.getItem('user');
+                                                if (userStr && JSON.parse(userStr).id === -1) {
+                                                    alert('游客无法使用监控功能，请注册登录');
+                                                    return;
+                                                }
+                                                setShowScheduler(!showScheduler);
+                                            }}
+                                            className={`text-xs px-2 py-1 rounded border transition-colors ${isRunning
+                                                ? 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100'
+                                                : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
+                                                }`}
+                                        >
+                                            {isRunning ? '监控中...' : '监控'}
+                                        </button>
+                                    </div>
+
+                                    <button
+                                        onClick={(e) => onRemove(e, item.key)}
+                                        className="text-gray-400 hover:text-red-500 p-1 -mr-2 bg-transparent"
+                                        title="删除收藏"
+                                    >
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className="text-gray-900 text-sm px-2 py-0.5 bg-gray-100 rounded-full font-medium">{item.color}</span>
+                                <span className="text-gray-900 text-sm px-2 py-0.5 bg-gray-100 rounded-full font-medium">{item.size}</span>
+                            </div>
+                            <div className="flex items-baseline justify-between">
+                                <span className="font-bold text-red-600">¥{item.price}</span>
+                                <span className="text-xs text-gray-400">{parseLocalTime(item.timestamp).toLocaleDateString()}</span>
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
             {showScheduler && (

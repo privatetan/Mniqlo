@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 
 export async function GET(
     req: Request,
@@ -11,12 +11,13 @@ export async function GET(
             return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
         }
 
-        const admin = await prisma.user.findUnique({
-            where: { username },
-            select: { role: true }
-        });
+        const { data: admin, error: adminError } = await supabase
+            .from('users')
+            .select('role')
+            .eq('username', username)
+            .single();
 
-        if (!admin || admin.role !== 'ADMIN') {
+        if (adminError || !admin || admin.role !== 'ADMIN') {
             return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
         }
 
@@ -25,12 +26,29 @@ export async function GET(
             return NextResponse.json({ success: false, message: 'Invalid User ID' }, { status: 400 });
         }
 
-        const tasks = await prisma.monitorTask.findMany({
-            where: { userId },
-            orderBy: { createdAt: 'desc' }
-        });
+        const { data: tasks, error } = await supabase
+            .from('monitor_tasks')
+            .select('*')
+            .eq('user_id', userId)
+            .order('id', { ascending: false });
 
-        return NextResponse.json({ success: true, tasks });
+        if (error) throw error;
+
+        // Map fields for frontend compatibility
+        const mappedTasks = tasks.map(task => ({
+            ...task,
+            productId: task.product_id,
+            productName: task.product_name,
+            productCode: task.product_code,
+            targetPrice: task.target_price,
+            isActive: task.is_active,
+            startTime: task.start_time,
+            endTime: task.end_time,
+            lastPushTime: task.last_push_time,
+            createdAt: task.created_at
+        }));
+
+        return NextResponse.json({ success: true, tasks: mappedTasks });
     } catch (error) {
         console.error('Fetch user tasks error:', error);
         return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });

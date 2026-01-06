@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
+
 export async function POST(req: Request) {
     try {
         const { username, password } = await req.json();
@@ -9,16 +10,16 @@ export async function POST(req: Request) {
         }
 
         // In a real app, hash and compare passwords!
-        const user = await prisma.user.findUnique({
-            where: { username },
-        });
+        const { data: user, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('username', username)
+            .single();
 
         if (!user || user.password !== password) {
             return NextResponse.json({ success: false, message: 'Invalid credentials' }, { status: 401 });
         }
 
-        // For simplicity, we just return success. Session handling can be done via cookies (JWT) or just client-side state for this starter.
-        // Let's return the user info (excluding password).
         const { password: _, ...userWithoutPassword } = user;
 
         return NextResponse.json({ success: true, user: userWithoutPassword });

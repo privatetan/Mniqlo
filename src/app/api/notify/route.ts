@@ -1,65 +1,59 @@
 import { NextResponse } from 'next/server';
 import { sendWxNotification } from '@/lib/wxpush';
-import { prisma } from '@/lib/prisma'; // Assumed available
+import { supabase } from '@/lib/supabase';
 import { formatToLocalTime } from '@/lib/date-utils';
 
 export async function POST(req: Request) {
     try {
-        console.log('Notify request received');
         const body = await req.json();
-        console.log(`Request body: ${JSON.stringify(body)}`);
         const { title, content, username, productId, style, size } = body;
 
-        // Default test ID if no user found or provided
-        let recipientId = '';
-        let targetUser = null;
-
-        if (username) {
-            targetUser = await prisma.user.findUnique({
-                where: { username }
-            });
-            if (targetUser?.wxUserId) {
-                recipientId = targetUser.wxUserId;
-            }
+        if (!username) {
+            return NextResponse.json({ success: false, message: 'Username is required' }, { status: 400 });
         }
 
-        if (!recipientId || !targetUser) {
-            console.log(`User not found for username: ${username}`);
-            return NextResponse.json({ success: false, message: 'Recipient (wxUserId) not found' }, { status: 404 });
+        // Fetch user
+        const { data: targetUser, error: userError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('username', username)
+            .single();
+
+        if (userError || !targetUser) {
+            return NextResponse.json({ success: false, message: 'User not found' }, { status: 404 });
         }
 
+        const recipientId = targetUser.wx_user_id;
 
+        if (!recipientId) {
+            return NextResponse.json({ success: false, message: 'Recipient (wxUserId) not set' }, { status: 404 });
+        }
 
-
-        // Rate limiting check
+        // Rate limiting check using monitor_tasks
         let monitorTask = null;
         if (productId) {
-            const frequencyInMinutes = targetUser.notifyFrequency || 60;
+            const frequencyInMinutes = targetUser.notify_frequency || 60;
 
-            // Try to find the monitoring task first
-            monitorTask = await prisma.monitorTask.findFirst({
-                where: {
-                    userId: targetUser.id,
-                    productId: productId,
-                    ...(style && { style }),
-                    ...(size && { size }),
-                }
-            });
-            console.log(`[Notify] Finding task for user ${targetUser.id}, product ${productId}:`, monitorTask ? `Found (ID: ${monitorTask.id})` : 'Not Found');
-            console.log('monitorTask Search Params:', { userId: targetUser.id, productId, style, size });
+            const { data: task } = await supabase
+                .from('monitor_tasks')
+                .select('*')
+                .eq('user_id', targetUser.id)
+                .eq('product_id', productId)
+                .eq('style', style || null)
+                .eq('size', size || null)
+                .maybeSingle();
 
-            if (monitorTask && monitorTask.lastPushTime) {
-                // Parse "yyyy-MM-dd HH:mm:ss" - replace space with T
-                const lastPushStr = monitorTask.lastPushTime.replace(' ', 'T');
+            monitorTask = task;
+
+            if (monitorTask && monitorTask.last_push_time) {
+                // Parse "yyyy-MM-dd HH:mm:ss"
+                const lastPushStr = monitorTask.last_push_time.replace(' ', 'T');
                 const lastPush = new Date(lastPushStr).getTime();
                 const now = Date.now();
                 const diffInMinutes = (now - lastPush) / (1000 * 60);
 
-                console.log(`[RateLimit] LastData: ${monitorTask.lastPushTime}, LastISO: ${lastPushStr}, Now: ${now}, Diff: ${diffInMinutes}`);
-
                 if (diffInMinutes < frequencyInMinutes) {
                     const remaining = Math.ceil(frequencyInMinutes - diffInMinutes);
-                    console.log(`Rate limit hit (Task): ${remaining} remaining`);
                     return NextResponse.json({
                         success: true,
                         skipped: true,
@@ -67,41 +61,6 @@ export async function POST(req: Request) {
                         frequency: frequencyInMinutes,
                         message: `Notification skipped due to rate limit (${remaining} mins remaining)`
                     });
-                }
-            } else {
-                // Fallback to NotificationLog if no task or no lastPushTime (e.g. first run or manual check without task)
-                const lastLog = await prisma.notificationLog.findFirst({
-                    where: {
-                        userId: targetUser.id,
-                        productId: productId,
-                        ...(style && { style }),
-                        ...(size && { size }),
-                        timestamp: {
-                            // gte: new Date(Date.now() - frequencyInMinutes * 60 * 1000)
-                            // String comparision 'gte' works for ISO-like strings "yyyy-MM-dd HH:mm:ss"
-                            gte: new Date(Date.now() - frequencyInMinutes * 60 * 1000).toISOString().replace('T', ' ').slice(0, 19)
-                        }
-                    },
-                    orderBy: { timestamp: 'desc' }
-                });
-
-                if (lastLog) {
-                    const lastPushStr = lastLog.timestamp.replace(' ', 'T');
-                    const lastPush = new Date(lastPushStr).getTime();
-                    const now = Date.now();
-                    const diffInMinutes = (now - lastPush) / (1000 * 60);
-
-                    const remaining = Math.ceil(frequencyInMinutes - diffInMinutes);
-
-                    if (diffInMinutes < frequencyInMinutes) {
-                        return NextResponse.json({
-                            success: true,
-                            skipped: true,
-                            remainingMinutes: remaining,
-                            frequency: frequencyInMinutes,
-                            message: `Notification skipped due to rate limit (${remaining} mins)`
-                        });
-                    }
                 }
             }
         }
@@ -111,42 +70,34 @@ export async function POST(req: Request) {
         }
 
         const result = await sendWxNotification(recipientId, title, content);
-        console.log('[Notify] Send result:', result);
 
-        if (result.success && productId) {
-            const nowStr = formatToLocalTime(new Date());
+        if (result.success) {
+            const nowStr = formatToLocalTime();
 
             // Update MonitorTask lastPushTime
             if (monitorTask) {
-                console.log('[Notify] Updating task', monitorTask.id, 'lastPushTime', nowStr);
-                try {
-                    await prisma.monitorTask.update({
-                        where: { id: monitorTask.id },
-                        data: { lastPushTime: nowStr }
-                    });
-                    console.log('[Notify] Task updated');
-                } catch (err) {
-                    console.error('[Notify] Failed to update task:', err);
-                }
-            } else {
-                console.log('[Notify] No monitor task found to update');
+                await supabase
+                    .from('monitor_tasks')
+                    .update({ last_push_time: nowStr })
+                    .eq('id', monitorTask.id);
             }
 
-            // Log successful notification for history
-            console.log('[Notify] Creating notification log');
-            await prisma.notificationLog.create({
-                data: {
-                    userId: targetUser.id,
-                    productId: productId,
-                    style: style || null,
-                    size: size || null,
-                    timestamp: nowStr
-                }
-            });
+            // Log notification for history
+            await supabase
+                .from('notification_logs')
+                .insert([
+                    {
+                        user_id: targetUser.id,
+                        title,
+                        content,
+                        timestamp: nowStr
+                    }
+                ]);
         }
 
-        return NextResponse.json({ ...result, frequency: targetUser.notifyFrequency || 60 });
+        return NextResponse.json({ ...result, frequency: targetUser.notify_frequency || 60 });
     } catch (error) {
-        return NextResponse.json({ success: false, message: 'Internal server error', error }, { status: 500 });
+        console.error('Notify Error:', error);
+        return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
     }
 }

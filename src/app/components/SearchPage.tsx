@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useState, useMemo, useEffect } from 'react';
 
 import { FavoriteItem, StockItem } from '@/types';
+import { parseLocalTime } from '@/lib/date-utils';
 
 type GroupedData = {
     key: string;
@@ -48,15 +49,16 @@ export default function SearchPage() {
                     const data = await res.json();
                     if (data.success) {
                         const mapped = data.favorites.map((f: any) => ({
-                            key: `${f.style}-${f.size}`,
-                            productId: f.productId,
+                            id: f.id,
+                            key: f.id ? f.id.toString() : `${f.style}-${f.size}`,
+                            productId: f.product_id || f.productId,
                             code: f.code,
                             name: f.name,
-                            color: f.style || '',
+                            color: f.style || f.color || '',
                             size: f.size || '',
                             price: f.price,
-                            timestamp: new Date(f.createdAt).getTime(),
-                            imageUrl: f.imageUrl
+                            timestamp: parseLocalTime(f.created_at || f.createdAt || f.timestamp).getTime(),
+                            imageUrl: f.image_url || f.imageUrl
                         }));
                         setFavorites(mapped);
                     }
@@ -121,7 +123,7 @@ export default function SearchPage() {
         if (!result) return;
 
         const key = `${style}-${size}`;
-        const isFav = favorites.some(f => f.key === key);
+        const isFav = favorites.some(f => f.productId === result.productId && f.color === style && f.size === size);
 
         const userStr = localStorage.getItem('user');
         if (!userStr) {
@@ -134,10 +136,10 @@ export default function SearchPage() {
         if (user.id === -1) {
             let newFavs;
             if (isFav) {
-                newFavs = favorites.filter(f => f.key !== key);
+                newFavs = favorites.filter(f => !(f.productId === result.productId && f.color === style && f.size === size));
             } else {
                 const newItem: FavoriteItem = {
-                    key,
+                    key: `${result.productId}-${style}-${size}`, // Temp key for guest
                     productId: result.productId,
                     code: result.code,
                     name: result.productName,
@@ -156,13 +158,16 @@ export default function SearchPage() {
 
         try {
             if (isFav) {
-                const itemToRemove = favorites.find(f => f.key === key);
+                const itemToRemove = favorites.find(f => f.productId === result.productId && f.color === style && f.size === size);
                 if (itemToRemove) {
-                    await fetch(`/api/favorites?userId=${user.id}&productId=${itemToRemove.productId}&style=${style}&size=${size}`, {
+                    const query = itemToRemove.id
+                        ? `/api/favorites?id=${itemToRemove.id}`
+                        : `/api/favorites?userId=${user.id}&productId=${itemToRemove.productId}&style=${style}&size=${size}`;
+                    await fetch(query, {
                         method: 'DELETE'
                     });
                 }
-                setFavorites(favorites.filter(f => f.key !== key));
+                setFavorites(favorites.filter(f => !(f.productId === result.productId && f.color === style && f.size === size)));
             } else {
                 const newItem = {
                     userId: user.id,
@@ -185,7 +190,7 @@ export default function SearchPage() {
                     // Optimistic add or refetch?
                     // Let's refetch to get the correct object or just construct one
                     const addedFav: FavoriteItem = {
-                        key,
+                        key: `${result.productId}-${style}-${size}`,
                         productId: result.productId,
                         code: result.code,
                         name: result.productName,
@@ -445,8 +450,12 @@ export default function SearchPage() {
                                                         ?.subItems.map((sub, idx) => {
                                                             const style = viewMode === 'color' ? expandedGroup : sub.key;
                                                             const size = viewMode === 'color' ? sub.key : expandedGroup;
-                                                            const favKey = `${style}-${size}`;
-                                                            const isFav = favorites.some(f => f.key === favKey);
+                                                            // Check by attributes, not key
+                                                            const isFav = favorites.some(f =>
+                                                                f.productId === result.productId &&
+                                                                f.color === style &&
+                                                                f.size === size
+                                                            );
 
                                                             return (
                                                                 <div key={idx} className="flex justify-between items-center p-3 bg-gray-50 rounded border border-gray-100">

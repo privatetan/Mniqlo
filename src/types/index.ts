@@ -1,4 +1,5 @@
 export type FavoriteItem = {
+    id?: number;
     key: string;
     productId: string;
     code: string;
@@ -6,7 +7,7 @@ export type FavoriteItem = {
     color: string;
     size: string;
     price: number;
-    timestamp: number;
+    timestamp: string | number;
 };
 
 export type StockItem = {
