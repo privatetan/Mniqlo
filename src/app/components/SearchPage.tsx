@@ -18,9 +18,9 @@ type GroupedData = {
 export default function SearchPage() {
     const [query, setQuery] = useState('');
     const [loading, setLoading] = useState(false);
-    const [result, setResult] = useState<any>(null);
+    const [results, setResults] = useState<any[] | null>(null);
     const [viewMode, setViewMode] = useState<'color' | 'size'>('color');
-    const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
+    const [expandedState, setExpandedState] = useState<{ pid: string; key: string } | null>(null);
     const [history, setHistory] = useState<string[]>([]);
 
     const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
@@ -90,18 +90,13 @@ export default function SearchPage() {
                         const res = await fetch(`/api/search/history?userId=${user.id}`);
                         const data = await res.json();
                         if (data.success) {
-                            // Merge with local history or just set it?
-                            // Let's prefer server history but keep local if unique?
-                            // Simple approach: Server history takes precedence
                             const serverKeywords = data.history.map((h: any) => h.keyword);
-                            // Combine with local unique
                             const localHistory = JSON.parse(localStorage.getItem('searchHistory') || '[]');
                             const combined = Array.from(new Set([...serverKeywords, ...localHistory])).slice(0, 10);
                             setHistory(combined);
                             localStorage.setItem('searchHistory', JSON.stringify(combined));
                         }
                     } else {
-                        // Guest: Load from local
                         const saved = localStorage.getItem('searchHistory');
                         if (saved) setHistory(JSON.parse(saved));
                     }
@@ -119,15 +114,15 @@ export default function SearchPage() {
         fetchHistory();
     }, []);
 
-    const toggleFavorite = async (style: string, size: string) => {
-        if (!result) return;
+    const toggleFavorite = async (product: any, style: string, size: string) => {
+        if (!product) return;
 
         const key = `${style}-${size}`;
-        const isFav = favorites.some(f => f.productId === result.productId && f.color === style && f.size === size);
+        const isFav = favorites.some(f => f.productId === product.productId && f.color === style && f.size === size);
 
         const userStr = localStorage.getItem('user');
         if (!userStr) {
-            alert('Please login to use favorites'); // Should be covered by route protection but just in case
+            alert('Please login to use favorites');
             return;
         }
         const user = JSON.parse(userStr);
@@ -136,16 +131,16 @@ export default function SearchPage() {
         if (user.id === -1) {
             let newFavs;
             if (isFav) {
-                newFavs = favorites.filter(f => !(f.productId === result.productId && f.color === style && f.size === size));
+                newFavs = favorites.filter(f => !(f.productId === product.productId && f.color === style && f.size === size));
             } else {
                 const newItem: FavoriteItem = {
-                    key: `${result.productId}-${style}-${size}`, // Temp key for guest
-                    productId: result.productId,
-                    code: result.code,
-                    name: result.productName,
+                    key: `${product.productId}-${style}-${size}`, // Temp key for guest
+                    productId: product.productId,
+                    code: product.code,
+                    name: product.productName,
                     color: style,
                     size: size,
-                    price: result.minPrice,
+                    price: product.minPrice,
                     timestamp: Date.now()
                 };
                 newFavs = [...favorites, newItem];
@@ -158,7 +153,7 @@ export default function SearchPage() {
 
         try {
             if (isFav) {
-                const itemToRemove = favorites.find(f => f.productId === result.productId && f.color === style && f.size === size);
+                const itemToRemove = favorites.find(f => f.productId === product.productId && f.color === style && f.size === size);
                 if (itemToRemove) {
                     const query = itemToRemove.id
                         ? `/api/favorites?id=${itemToRemove.id}`
@@ -167,17 +162,17 @@ export default function SearchPage() {
                         method: 'DELETE'
                     });
                 }
-                setFavorites(favorites.filter(f => !(f.productId === result.productId && f.color === style && f.size === size)));
+                setFavorites(favorites.filter(f => !(f.productId === product.productId && f.color === style && f.size === size)));
             } else {
                 const newItem = {
                     userId: user.id,
-                    productId: result.productId,
-                    code: result.code,
-                    name: result.productName,
-                    price: result.minPrice,
+                    productId: product.productId,
+                    code: product.code,
+                    name: product.productName,
+                    price: product.minPrice,
                     style,
                     size,
-                    imageUrl: null // TODO?
+                    imageUrl: null
                 };
 
                 const res = await fetch('/api/favorites', {
@@ -187,16 +182,14 @@ export default function SearchPage() {
                 });
 
                 if (res.ok) {
-                    // Optimistic add or refetch?
-                    // Let's refetch to get the correct object or just construct one
                     const addedFav: FavoriteItem = {
-                        key: `${result.productId}-${style}-${size}`,
-                        productId: result.productId,
-                        code: result.code,
-                        name: result.productName,
+                        key: `${product.productId}-${style}-${size}`,
+                        productId: product.productId,
+                        code: product.code,
+                        name: product.productName,
                         color: style,
                         size: size,
-                        price: result.minPrice,
+                        price: product.minPrice,
                         timestamp: Date.now()
                     };
                     setFavorites([...favorites, addedFav]);
@@ -225,12 +218,9 @@ export default function SearchPage() {
         const searchText = overrideQuery || query;
         if (!searchText.trim()) return;
 
-        // Update query state if triggered via history click
         if (overrideQuery) setQuery(overrideQuery);
-
         updateHistory(searchText);
 
-        // Save to DB
         const userStr = localStorage.getItem('user');
         if (userStr) {
             try {
@@ -240,7 +230,7 @@ export default function SearchPage() {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ userId: user.id, keyword: searchText })
-                    }); // Fire and forget
+                    });
                 }
             } catch (e) {
                 console.error('Failed to save search history', e);
@@ -248,12 +238,18 @@ export default function SearchPage() {
         }
 
         setLoading(true);
-        setResult(null);
-        setExpandedGroup(null);
+        setResults(null);
+        setExpandedState(null);
         try {
             const res = await fetch(`/api/search?code=${searchText}`);
             const data = await res.json();
-            setResult(data);
+            // Handle array or error object
+            if (data.error) {
+                setResults([{ error: data.error }]);
+            } else {
+                const list = Array.isArray(data) ? data : [data];
+                setResults(list);
+            }
             console.log('Search Result:', data);
         } catch (error) {
             console.error('Search error:', error);
@@ -262,49 +258,56 @@ export default function SearchPage() {
         }
     };
 
-    const groupedData = useMemo(() => {
-        if (!result?.items) return [];
+    const processedResults = useMemo(() => {
+        if (!results) return [];
+        return results.map(product => {
+            if (product.error) return product;
+            if (!product.items) return { ...product, groupedData: [] };
 
-        const groups = new Map<string, Map<string, StockItem[]>>();
+            const groups = new Map<string, Map<string, StockItem[]>>();
 
-        result.items.forEach((item: StockItem) => {
-            const primaryKey = viewMode === 'color' ? item.style : item.size;
-            const secondaryKey = viewMode === 'color' ? item.size : item.style;
+            product.items.forEach((item: StockItem) => {
+                const primaryKey = viewMode === 'color' ? item.style : item.size;
+                const secondaryKey = viewMode === 'color' ? item.size : item.style;
 
-            if (!groups.has(primaryKey)) {
-                groups.set(primaryKey, new Map());
-            }
-            const subGroup = groups.get(primaryKey)!;
-            if (!subGroup.has(secondaryKey)) {
-                subGroup.set(secondaryKey, []);
-            }
-            subGroup.get(secondaryKey)!.push(item);
-        });
+                if (!groups.has(primaryKey)) {
+                    groups.set(primaryKey, new Map());
+                }
+                const subGroup = groups.get(primaryKey)!;
+                if (!subGroup.has(secondaryKey)) {
+                    subGroup.set(secondaryKey, []);
+                }
+                subGroup.get(secondaryKey)!.push(item);
+            });
 
-        const list: GroupedData[] = [];
-        groups.forEach((subMap, primaryKey) => {
-            const subItemsList: GroupedData['subItems'] = [];
-            let groupTotal = 0;
+            const list: GroupedData[] = [];
+            groups.forEach((subMap, primaryKey) => {
+                const subItemsList: GroupedData['subItems'] = [];
+                let groupTotal = 0;
 
-            subMap.forEach((items, secondaryKey) => {
-                const subTotal = items.reduce((sum, i) => sum + i.stock, 0);
-                groupTotal += subTotal;
-                subItemsList.push({
-                    key: secondaryKey,
-                    stock: subTotal,
-                    breakdown: items
+                subMap.forEach((items, secondaryKey) => {
+                    const subTotal = items.reduce((sum, i) => sum + i.stock, 0);
+                    groupTotal += subTotal;
+                    subItemsList.push({
+                        key: secondaryKey,
+                        stock: subTotal,
+                        breakdown: items
+                    });
+                });
+
+                list.push({
+                    key: primaryKey,
+                    totalStock: groupTotal,
+                    subItems: subItemsList
                 });
             });
 
-            list.push({
-                key: primaryKey,
-                totalStock: groupTotal,
-                subItems: subItemsList
-            });
+            return {
+                ...product,
+                groupedData: list
+            };
         });
-
-        return list;
-    }, [result, viewMode]);
+    }, [results, viewMode]);
 
     return (
         <div className="h-full flex flex-col text-[#0f172a] font-sans w-full overflow-hidden">
@@ -376,24 +379,25 @@ export default function SearchPage() {
 
             <main className="px-4 py-8 flex-1 overflow-y-auto">
                 {/* Search Results / Loading */}
-                {(loading || result) && (
-                    <section className="mb-10">
+                {(loading || results) && (
+                    <section className="mb-10 space-y-8">
                         {loading && <div className="text-center py-4 text-gray-500">搜索中...</div>}
-                        {result && (
-                            <div className="bg-gray-50 p-6 rounded-lg">
-                                {result.error ? (
-                                    <p className="text-red-500">{result.error}</p>
+
+                        {processedResults.map((product: any, idx) => (
+                            <div key={product.productId || idx} className="bg-gray-50 p-6 rounded-lg shadow-sm">
+                                {product.error ? (
+                                    <p className="text-red-500">{product.error}</p>
                                 ) : (
                                     <div>
                                         <div className="flex justify-between items-start mb-6">
                                             <div>
-                                                <h3 className="font-semibold text-lg">{result.productName}</h3>
+                                                <h3 className="font-semibold text-lg">{product.productName}</h3>
                                                 <div className="flex items-center gap-3">
-                                                    <p className="text-sm text-gray-600">Product ID: {result.productId}</p>
+                                                    <p className="text-sm text-gray-600">Product ID: {product.productId}</p>
                                                     <div className="flex items-baseline gap-2">
-                                                        <p className="text-lg font-bold text-red-600">¥{result.minPrice}</p>
-                                                        {result.originPrice > result.minPrice && (
-                                                            <p className="text-xs text-gray-400 line-through">¥{result.originPrice}</p>
+                                                        <p className="text-lg font-bold text-red-600">¥{product.minPrice}</p>
+                                                        {product.originPrice > product.minPrice && (
+                                                            <p className="text-xs text-gray-400 line-through">¥{product.originPrice}</p>
                                                         )}
                                                     </div>
                                                 </div>
@@ -404,7 +408,7 @@ export default function SearchPage() {
                                             className="mb-4 flex items-center gap-1 text-sm font-bold border border-gray-200 rounded px-3 py-1 inline-flex cursor-pointer hover:bg-gray-50 transition-colors"
                                             onClick={() => {
                                                 setViewMode(viewMode === 'color' ? 'size' : 'color');
-                                                setExpandedGroup(null);
+                                                setExpandedState(null);
                                             }}
                                         >
                                             <span className={viewMode === 'color' ? 'text-green-500' : 'text-gray-400'}>
@@ -418,41 +422,44 @@ export default function SearchPage() {
 
                                         {/* Group Buttons */}
                                         <div className="flex flex-wrap gap-3 mb-6">
-                                            {groupedData.map((group) => (
-                                                <button
-                                                    key={group.key}
-                                                    onClick={() => setExpandedGroup(expandedGroup === group.key ? null : group.key)}
-                                                    className={`
-                                                        px-4 py-2 rounded-lg border text-sm font-medium transition flex flex-col items-center gap-1 min-w-[80px]
-                                                        ${expandedGroup === group.key
-                                                            ? 'border-black bg-transparent text-black'
-                                                            : 'border-gray-200 bg-transparent text-gray-700 hover:border-gray-300'
-                                                        }
-                                                    `}
-                                                >
-                                                    <span>{group.key}</span>
-                                                    <span className={`text-xs ${expandedGroup === group.key ? 'text-gray-300' : 'text-gray-500'}`}>
-                                                        库存: {group.totalStock}
-                                                    </span>
-                                                </button>
-                                            ))}
+                                            {product.groupedData.map((group: GroupedData) => {
+                                                const isExpanded = expandedState?.pid === product.productId && expandedState?.key === group.key;
+                                                return (
+                                                    <button
+                                                        key={group.key}
+                                                        onClick={() => setExpandedState(isExpanded ? null : { pid: product.productId, key: group.key })}
+                                                        className={`
+                                                            px-4 py-2 rounded-lg border text-sm font-medium transition flex flex-col items-center gap-1 min-w-[80px]
+                                                            ${isExpanded
+                                                                ? 'border-black bg-transparent text-black'
+                                                                : 'border-gray-200 bg-transparent text-gray-700 hover:border-gray-300'
+                                                            }
+                                                        `}
+                                                    >
+                                                        <span>{group.key}</span>
+                                                        <span className={`text-xs ${isExpanded ? 'text-gray-300' : 'text-gray-500'}`}>
+                                                            库存: {group.totalStock}
+                                                        </span>
+                                                    </button>
+                                                );
+                                            })}
                                         </div>
 
                                         {/* Expanded Detail View */}
-                                        {expandedGroup && (
+                                        {expandedState?.pid === product.productId && (
                                             <div className="bg-white rounded-lg border border-gray-100 p-4 animate-in fade-in slide-in-from-top-2 duration-200">
                                                 <h4 className="text-sm font-medium text-gray-500 mb-3">
-                                                    <span className="text-black">{expandedGroup}</span> 库存详情:
+                                                    <span className="text-black">{expandedState.key}</span> 库存详情:
                                                 </h4>
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                                    {groupedData
-                                                        .find(g => g.key === expandedGroup)
-                                                        ?.subItems.map((sub, idx) => {
-                                                            const style = viewMode === 'color' ? expandedGroup : sub.key;
-                                                            const size = viewMode === 'color' ? sub.key : expandedGroup;
+                                                    {product.groupedData
+                                                        .find((g: GroupedData) => g.key === expandedState.key)
+                                                        ?.subItems.map((sub: any, idx: number) => {
+                                                            const style = viewMode === 'color' ? expandedState.key : sub.key;
+                                                            const size = viewMode === 'color' ? sub.key : expandedState.key;
                                                             // Check by attributes, not key
                                                             const isFav = favorites.some(f =>
-                                                                f.productId === result.productId &&
+                                                                f.productId === product.productId &&
                                                                 f.color === style &&
                                                                 f.size === size
                                                             );
@@ -467,7 +474,7 @@ export default function SearchPage() {
                                                                                 <button
                                                                                     onClick={(e) => {
                                                                                         e.stopPropagation();
-                                                                                        toggleFavorite(style, size);
+                                                                                        toggleFavorite(product, style, size);
                                                                                     }}
                                                                                     className={`p-1.5 rounded-full border shadow-sm transition-all ${isFav
                                                                                         ? 'bg-red-50 border-red-200 text-red-500'
@@ -501,7 +508,7 @@ export default function SearchPage() {
                                     </div>
                                 )}
                             </div>
-                        )}
+                        ))}
                     </section>
                 )}
             </main>

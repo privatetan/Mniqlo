@@ -7,12 +7,19 @@ Mniqlo is a specialized application for monitoring Uniqlo product stock and mana
 ## ✨ Features
 
 - **User Authentication**: Login, registration, and guest mode support
+  - **Secure**: Passwords are encrypted using MD5.
 - **Stock Monitoring**: Real-time tracking of Uniqlo product availability
 - **WeChat Notifications**: Get instant alerts when items are back in stock
-- **Favorites Management**: Save and organize your favorite items
+- **Favorites Management**: 
+  - **Grouped Display**: Items are automatically grouped by product ID.
+  - **Smart Expansion**: Expand groups to view all size/color variants inline.
+  - **Price Tracking**: View initial (origin) price alongside current status.
 - **Smart Monitoring Rules**: Configure target price, frequency (e.g., check every 1 min), and specific time windows (e.g., 08:00 - 22:00) to avoid disturbing at night.
 - **Intelligent Rate Limiting**: Prevents notification spam by respecting user-defined frequency settings.
 - **Automated Tasks**: Reliable background scheduling for periodic stock checks with success/failure logging.
+- **Search Optimization**: 
+  - **Multi-Product Support**: Handles cases where one code matches multiple products.
+  - **Detailed Info**: Fetches full product details including stock and price.
 - **Responsive UI**: Optimized for both desktop and mobile devices
 - **Cloud Database**: Managed storage with Supabase (PostgreSQL)
 
@@ -103,9 +110,9 @@ Mniqlo/
 
 ## 📝 API Routes
 
-- `POST /api/auth/login` - User login
-- `POST /api/auth/register` - User registration
-- `GET /api/products` - Search Uniqlo products
+- `POST /api/auth/login` - User login (MD5 encrypted)
+- `POST /api/auth/register` - User registration (MD5 encrypted)
+- `GET /api/search` - Search Uniqlo products (supports multi-product results)
 - `GET /api/favorites` - Get user favorites
 - `POST /api/favorites` - Add to favorites
 - `DELETE /api/favorites` - Remove from favorites

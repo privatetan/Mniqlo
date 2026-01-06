@@ -4,7 +4,10 @@ const STOCK_URL = 'https://d.uniqlo.cn/p/stock/stock/query/zh_CN';
 /**
  * Get Product ID by 6-digit code
  */
-export async function getProductIdByCode(code: string): Promise<{ id: string; code: string; minPrice: number; originPrice: number } | null> {
+/**
+ * Get Product ID by 6-digit code
+ */
+export async function getProductIdByCode(code: string): Promise<Array<{ id: string; code: string; minPrice: number; originPrice: number }> | null> {
 
     const body = {
         belongTo: 'pc',
@@ -32,13 +35,12 @@ export async function getProductIdByCode(code: string): Promise<{ id: string; co
             return null;
         }
 
-        const product = data.resp[1][0];
-        return {
+        return data.resp[1].map((product: any) => ({
             id: product.productCode,
             code: product.code,
             minPrice: parseFloat(product.minPrice),
             originPrice: parseFloat(product.originPrice)
-        };
+        }));
     } catch (error) {
         console.error('getProductIdByCode error:', error);
         return null;
@@ -104,56 +106,64 @@ export async function getStockByProductId(productId: string) {
 /**
  * Orchestrator: Get Product Stock by Code (Description ID)
  * Matches ProductService.getProductStockByDescriptionIdOld
+ * Returns an array of product info
  */
 export async function getProductInfoByCode(code: string) {
 
-    // 1. Get Product ID
-    const productData = await getProductIdByCode(code);
-    if (!productData) return null;
-    const productId = productData.id;
+    // 1. Get Product IDs
+    const productList = await getProductIdByCode(code);
+    if (!productList || productList.length === 0) return null;
 
-    // 2. Get Stock
-    const stockData = await getStockByProductId(productId);
-    if (!stockData || !stockData.resp || !stockData.resp[0]) return null;
+    const results = [];
 
-    const stockMap = stockData.resp[0];
-    const bplStocks = stockMap.bplStocks || {};
-    const skuStocks = stockMap.skuStocks || {};
-    const expressSkuStocks = stockMap.expressSkuStocks || {};
+    for (const productData of productList) {
+        const productId = productData.id;
 
-    // 3. Get Details
-    const details = await getDetailByProductId(productId);
-    if (!details || details.length === 0) return null;
+        // 2. Get Stock
+        const stockData = await getStockByProductId(productId);
+        if (!stockData || !stockData.resp || !stockData.resp[0]) continue;
 
-    const items: { size: string; style: string; type: string; stock: number }[] = [];
+        const stockMap = stockData.resp[0];
+        const bplStocks = stockMap.bplStocks || {};
+        const skuStocks = stockMap.skuStocks || {};
+        const expressSkuStocks = stockMap.expressSkuStocks || {};
 
-    for (const row of details) {
-        const pid = row.productId;
-        const size = row.size;
-        const style = row.style;
+        // 3. Get Details
+        const details = await getDetailByProductId(productId);
+        if (!details || details.length === 0) continue;
 
-        let totalStock = 0;
+        const items: { size: string; style: string; type: string; stock: number }[] = [];
 
-        if (skuStocks[pid] !== undefined) {
-            totalStock += parseInt(skuStocks[pid], 10) || 0;
+        for (const row of details) {
+            const pid = row.productId;
+            const size = row.size;
+            const style = row.style;
+
+            let totalStock = 0;
+
+            if (skuStocks[pid] !== undefined) {
+                totalStock += parseInt(skuStocks[pid], 10) || 0;
+            }
+            if (expressSkuStocks[pid] !== undefined) {
+                totalStock += parseInt(expressSkuStocks[pid], 10) || 0;
+            }
+
+            if (totalStock > 0 || skuStocks[pid] !== undefined || expressSkuStocks[pid] !== undefined) {
+                items.push({ size, style, type: 'Sum', stock: totalStock });
+            }
         }
-        if (expressSkuStocks[pid] !== undefined) {
-            totalStock += parseInt(expressSkuStocks[pid], 10) || 0;
-        }
 
-        if (totalStock > 0 || skuStocks[pid] !== undefined || expressSkuStocks[pid] !== undefined) {
-            items.push({ size, style, type: 'Sum', stock: totalStock });
-        }
+        results.push({
+            productId: productData.id,
+            code: productData.code,
+            productName: details[0]?.name || '',
+            price: details[0]?.varyPrice || 0,
+            minPrice: productData.minPrice,
+            originPrice: productData.originPrice,
+            items: items,
+            rawStock: stockMap
+        });
     }
 
-    return {
-        productId: productData.id,
-        code: productData.code,
-        productName: details[0]?.name || '',
-        price: details[0]?.varyPrice || 0,
-        minPrice: productData.minPrice,
-        originPrice: productData.originPrice,
-        items: items,
-        rawStock: stockMap
-    };
+    return results.length > 0 ? results : null;
 }

@@ -8,6 +8,7 @@ import { parseLocalTime } from '@/lib/date-utils';
 export default function FavoritePage() {
     const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
     const [stockStatus, setStockStatus] = useState<Record<string, boolean | null>>({});
+    const [productDetails, setProductDetails] = useState<Record<string, { originPrice: number }>>({});
     const [checking, setChecking] = useState(false);
     const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
 
@@ -15,6 +16,7 @@ export default function FavoritePage() {
         setChecking(true);
         const codes = Array.from(new Set(favorites.map(f => f.code).filter(Boolean)));
         const newStatus: Record<string, boolean> = {};
+        const newDetails: Record<string, { originPrice: number }> = {};
 
         try {
             await Promise.all(codes.map(async (code) => {
@@ -22,9 +24,20 @@ export default function FavoritePage() {
                     const res = await fetch(`/api/search?code=${code}`);
                     const data = await res.json();
 
-                    if (data && data.items) {
+                    if (data) {
+                        const products = Array.isArray(data) ? data : [data];
+
+                        // Update product details (origin price)
+                        products.forEach((p: any) => {
+                            if (p.productId && p.originPrice) {
+                                newDetails[p.productId] = { originPrice: p.originPrice };
+                            }
+                        });
+
+                        const allItems = products.flatMap((p: any) => p.items || []);
+
                         favorites.filter(f => f.code === code).forEach(fav => {
-                            const stockItem = data.items.find((item: any) =>
+                            const stockItem = allItems.find((item: any) =>
                                 item.style === fav.color && item.size === fav.size
                             );
                             newStatus[fav.key] = stockItem ? stockItem.stock > 0 : false;
@@ -35,6 +48,7 @@ export default function FavoritePage() {
                 }
             }));
             setStockStatus(prev => ({ ...prev, ...newStatus }));
+            setProductDetails(prev => ({ ...prev, ...newDetails }));
         } finally {
             setChecking(false);
         }
@@ -44,8 +58,20 @@ export default function FavoritePage() {
         try {
             const res = await fetch(`/api/search?code=${item.code}`);
             const data = await res.json();
-            if (data && data.items) {
-                const stockItem = data.items.find((si: any) =>
+            if (data) {
+                const products = Array.isArray(data) ? data : [data];
+
+                // Update product details
+                const newDetails: Record<string, { originPrice: number }> = {};
+                products.forEach((p: any) => {
+                    if (p.productId && p.originPrice) {
+                        newDetails[p.productId] = { originPrice: p.originPrice };
+                    }
+                });
+                setProductDetails(prev => ({ ...prev, ...newDetails }));
+
+                const allItems = products.flatMap((p: any) => p.items || []);
+                const stockItem = allItems.find((si: any) =>
                     si.style === item.color && si.size === item.size
                 );
                 return stockItem ? stockItem.stock > 0 : false;
@@ -203,6 +229,7 @@ export default function FavoritePage() {
 
                         const representative = groupItems[0];
                         const isExpanded = selectedProductId === pid;
+                        const details = productDetails[pid];
                         // Always treated as a group even if only 1 item, to maintain consistent look?
                         // Or only simplified if expanded? 
                         // User said "The clicked item only has...".
@@ -210,18 +237,23 @@ export default function FavoritePage() {
                         // Let's make the "Header" simple.
 
                         return (
-                            <div key={pid} className="flex flex-col bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden transition-all duration-300">
+                            <div key={pid} className="flex flex-col bg-white rounded-xl border border-gray-100 shadow-sm transition-all duration-300">
                                 {/* Simplified Group Header */}
                                 <div
                                     onClick={() => setSelectedProductId(isExpanded ? null : pid)}
-                                    className="p-4 cursor-pointer hover:bg-gray-50 flex items-center justify-between relative"
+                                    className={`p-4 cursor-pointer hover:bg-gray-50 flex items-center justify-between relative rounded-t-xl ${!isExpanded ? 'rounded-b-xl' : ''}`}
                                 >
                                     <div className="flex flex-col gap-1">
                                         <div className="flex items-center gap-2">
                                             <span className="font-mono text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded">{representative.code}</span>
                                             <span className="text-xs text-gray-300">ID: {pid}</span>
                                         </div>
-                                        <h3 className="font-medium text-sm text-gray-900">{representative.name}</h3>
+                                        <div className="flex items-baseline gap-2">
+                                            <h3 className="font-medium text-sm text-gray-900">{representative.name}</h3>
+                                            {details?.originPrice && (
+                                                <span className="text-xs text-gray-400 line-through">¥{details.originPrice}</span>
+                                            )}
+                                        </div>
                                     </div>
 
                                     <div className="flex items-center gap-2 text-xs text-gray-400">
@@ -238,7 +270,7 @@ export default function FavoritePage() {
 
                                 {/* Expanded List - Show ALL items when expanded */}
                                 {isExpanded && (
-                                    <div className="border-t border-gray-100 bg-gray-50/50 p-2 space-y-2 animate-in fade-in slide-in-from-top-1">
+                                    <div className="border-t border-gray-100 bg-gray-50/50 p-2 space-y-2 animate-in fade-in slide-in-from-top-1 rounded-b-xl">
                                         {groupItems.map((item) => (
                                             <FavoriteItemRow
                                                 key={item.key}
@@ -247,6 +279,7 @@ export default function FavoritePage() {
                                                 onRemove={removeFavorite}
                                                 onCheckSingle={checkSingleStock}
                                                 hideProductInfo={true}
+                                                originPrice={details?.originPrice}
                                             />
                                         ))}
                                     </div>

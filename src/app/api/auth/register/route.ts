@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { formatToLocalTime } from '@/lib/date-utils';
+import crypto from 'crypto';
 
 export async function POST(req: Request) {
     try {
@@ -21,13 +22,16 @@ export async function POST(req: Request) {
             return NextResponse.json({ success: false, message: 'Username already exists' }, { status: 409 });
         }
 
-        // In a real app, hash the password!
+        // Hash the password with MD5
+        const hashedPassword = crypto.createHash('md5').update(password).digest('hex');
+
+        // Insert new user
         const { data: newUser, error: createError } = await supabase
             .from('users')
             .insert([
                 {
                     username,
-                    password,
+                    password: hashedPassword,
                     role: 'USER',
                     created_at: formatToLocalTime()
                 }

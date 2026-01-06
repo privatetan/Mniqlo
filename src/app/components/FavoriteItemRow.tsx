@@ -238,7 +238,7 @@ export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle, hi
         handleSaveTask(true, ms, startTime, endTime);
         setTimeout(() => {
             start();
-            setShowScheduler(false);
+            // popup stays open
         }, 0);
     };
 
@@ -370,11 +370,16 @@ export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle, hi
                         // Default stacked layout
                         <>
                             <div className="flex justify-between items-start mb-1">
-                                <h3 className="font-medium text-sm text-gray-900 truncate flex-1 mr-2">
-                                    {item.code && <span className="font-mono text-green-500 mr-2">{item.code}</span>}
-                                    {item.name}
-                                </h3>
-                                <div className="flex items-center gap-2">
+                                <div className="flex-1 mr-2 flex items-baseline gap-2 truncate">
+                                    <h3 className="font-medium text-sm text-gray-900 truncate">
+                                        {item.code && <span className="font-mono text-green-500 mr-2">{item.code}</span>}
+                                        {item.name}
+                                    </h3>
+                                    {originPrice && (
+                                        <span className="text-xs text-gray-400 line-through shrink-0">¥{originPrice}</span>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
                                     {localStockStatus !== undefined && localStockStatus !== null && (
                                         <span className={`text-[10px] px-1.5 py-0.5 rounded border ${localStockStatus
                                             ? 'bg-green-50 text-green-600 border-green-100'
