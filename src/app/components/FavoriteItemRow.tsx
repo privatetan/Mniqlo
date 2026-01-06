@@ -213,6 +213,8 @@ export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle }: 
                 body: JSON.stringify({
                     userId: user.id,
                     productId: item.productId,
+                    productName: item.name,
+                    productCode: item.code,
                     style: item.color,
                     size: item.size,
                     frequency: freq,

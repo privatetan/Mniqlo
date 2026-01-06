@@ -15,6 +15,20 @@ interface User {
     };
 }
 
+interface MonitorTask {
+    id: number;
+    productId: string;
+    productName: string | null;
+    productCode: string | null;
+    style: string | null;
+    size: string | null;
+    targetPrice: number | null;
+    frequency: number;
+    isActive: boolean;
+    lastPushTime: string | null;
+    createdAt: string;
+}
+
 export default function AdminUsersPage() {
     const router = useRouter();
     const [users, setUsers] = useState<User[]>([]);
@@ -25,6 +39,12 @@ export default function AdminUsersPage() {
     const [editForm, setEditForm] = useState<{ wxUserId: string; notifyFrequency: string }>({ wxUserId: '', notifyFrequency: '' });
     const [savingUserId, setSavingUserId] = useState<number | null>(null);
 
+    // Task modal states
+    const [selectedTasks, setSelectedTasks] = useState<MonitorTask[]>([]);
+    const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+    const [loadingTasks, setLoadingTasks] = useState(false);
+    const [selectedUser, setSelectedUser] = useState<User | null>(null);
+
     useEffect(() => {
         const userStr = localStorage.getItem('user');
         if (!userStr) {
@@ -32,13 +52,24 @@ export default function AdminUsersPage() {
             return;
         }
 
-        fetchUsers();
+        const user = JSON.parse(userStr);
+        if (user.role !== 'ADMIN') {
+            router.push('/');
+            return;
+        }
+
+        fetchUsers(user.username);
     }, [router]);
 
-    const fetchUsers = async () => {
+    const fetchUsers = async (username?: string) => {
         try {
             setLoading(true);
-            const response = await fetch('/api/admin/users');
+            const currentUser = username || JSON.parse(localStorage.getItem('user') || '{}').username;
+            const response = await fetch('/api/admin/users', {
+                headers: {
+                    'X-Admin-User': currentUser
+                }
+            });
             const data = await response.json();
             if (data.success) {
                 setUsers(data.users);
@@ -88,6 +119,32 @@ export default function AdminUsersPage() {
         }
     };
 
+    const fetchUserTasks = async (user: User) => {
+        try {
+            setSelectedUser(user);
+            setLoadingTasks(true);
+            setIsTaskModalOpen(true);
+
+            const currentUser = JSON.parse(localStorage.getItem('user') || '{}').username;
+            const response = await fetch(`/api/admin/users/${user.id}/tasks`, {
+                headers: {
+                    'X-Admin-User': currentUser
+                }
+            });
+            const data = await response.json();
+            if (data.success) {
+                setSelectedTasks(data.tasks);
+            } else {
+                alert(data.message || '获取任务失败');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('获取任务时发生错误');
+        } finally {
+            setLoadingTasks(false);
+        }
+    };
+
     const filteredUsers = users.filter(user =>
         user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (user.wxUserId && user.wxUserId.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -132,7 +189,7 @@ export default function AdminUsersPage() {
                                 <span>返回</span>
                             </button>
                             <button
-                                onClick={fetchUsers}
+                                onClick={() => fetchUsers()}
                                 className="flex items-center justify-center p-2.5 text-gray-400 hover:text-[#0b5fff] transition-all rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-blue-50"
                                 title="刷新"
                             >
@@ -167,7 +224,7 @@ export default function AdminUsersPage() {
                         <div className="bg-red-50 border border-red-100 text-red-600 p-6 rounded-2xl text-center shadow-sm">
                             <p className="font-bold mb-1">加载失败</p>
                             <p className="text-sm opacity-80">{error}</p>
-                            <button onClick={fetchUsers} className="mt-4 text-xs font-bold uppercase tracking-wider bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">重试</button>
+                            <button onClick={() => fetchUsers()} className="mt-4 text-xs font-bold uppercase tracking-wider bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">重试</button>
                         </div>
                     ) : (
                         <div className="space-y-4">
@@ -285,10 +342,13 @@ export default function AdminUsersPage() {
                                                     <p className="text-[9px] text-gray-400 uppercase font-black tracking-tighter">收藏</p>
                                                 </div>
                                                 <div className="w-px bg-gray-100 my-1 font-black"></div>
-                                                <div className="flex-1 text-center group/stat">
+                                                <span
+                                                    onClick={() => user._count.tasks > 0 && fetchUserTasks(user)}
+                                                    className={`flex-1 text-center group/stat transition-all ${user._count.tasks > 0 ? 'cursor-pointer hover:bg-gray-50 rounded-xl' : 'cursor-default'}`}
+                                                >
                                                     <p className="text-xl font-black text-gray-900 group-hover/stat:text-amber-500 transition-colors">{user._count.tasks}</p>
                                                     <p className="text-[9px] text-gray-400 uppercase font-black tracking-tighter">任务</p>
-                                                </div>
+                                                </span>
                                             </div>
                                         </div>
                                     ))}
@@ -297,6 +357,93 @@ export default function AdminUsersPage() {
                         </div>
                     )}
                 </div>
+
+                {/* Task Details Modal */}
+                {isTaskModalOpen && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+                        <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                                <div>
+                                    <h2 className="text-xl font-black text-gray-900 leading-tight">用户任务详情</h2>
+                                    <p className="text-xs text-gray-400 mt-1">正在查看 <span className="font-bold text-[#0b5fff]">{selectedUser?.username}</span> 的监控任务</p>
+                                </div>
+                                <button
+                                    onClick={() => setIsTaskModalOpen(false)}
+                                    className="p-2 hover:bg-gray-100 rounded-xl transition-colors text-gray-400 hover:text-gray-600"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                                </button>
+                            </div>
+
+                            <div className="flex-1 overflow-auto p-6">
+                                {loadingTasks ? (
+                                    <div className="flex flex-col items-center justify-center py-20 gap-4">
+                                        <div className="animate-spin rounded-full h-10 w-10 border-2 border-[#0b5fff] border-t-transparent"></div>
+                                        <p className="text-sm text-gray-400 font-medium">正在获取任务数据...</p>
+                                    </div>
+                                ) : selectedTasks.length === 0 ? (
+                                    <div className="text-center py-20 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                                        <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                                            <svg className="text-gray-300" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" /><polyline points="14 2 14 8 20 8" /></svg>
+                                        </div>
+                                        <p className="text-gray-500 font-bold">该用户暂无任务</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {selectedTasks.map(task => (
+                                            <div key={task.id} className="bg-gray-50 p-4 rounded-2xl border border-gray-100 hover:border-[#0b5fff]/20 transition-all group">
+                                                <div className="flex justify-between items-start mb-3">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm text-[#0b5fff] font-bold group-hover:scale-110 transition-transform shrink-0">
+                                                            {task.productId.slice(0, 2)}
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <p className="text-sm font-black text-gray-900 flex items-center gap-2">
+                                                                <span className="font-mono text-[#0b5fff] shrink-0">{task.productCode || 'N/A'}</span>
+                                                                <span className="truncate">{task.productName || '未知商品'}</span>
+                                                            </p>
+                                                            <p className="text-[10px] text-gray-400 font-mono tracking-tighter uppercase mt-0.5">
+                                                                ID: {task.productId} • {task.style || 'ANY COLOR'} • {task.size || 'ANY SIZE'}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter ${task.isActive ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-200 text-gray-500'}`}>
+                                                        {task.isActive ? '正在运行' : '已停止'}
+                                                    </div>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-200/50">
+                                                    <div>
+                                                        <p className="text-[9px] text-gray-400 uppercase font-black tracking-widest leading-none mb-1">目标价格</p>
+                                                        <p className="text-xs font-bold text-gray-700">¥{task.targetPrice || '无限制'}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[9px] text-gray-400 uppercase font-black tracking-widest leading-none mb-1">检查频率</p>
+                                                        <p className="text-xs font-bold text-gray-700">{task.frequency} min</p>
+                                                    </div>
+                                                </div>
+                                                {task.lastPushTime && (
+                                                    <div className="mt-3 pt-2 border-t border-gray-200/50">
+                                                        <p className="text-[9px] text-gray-400 uppercase font-black tracking-widest leading-none mb-1">最近推送</p>
+                                                        <p className="text-[10px] text-gray-500 font-mono uppercase">{task.lastPushTime}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+                                <button
+                                    onClick={() => setIsTaskModalOpen(false)}
+                                    className="px-6 py-2 bg-gray-900 text-white rounded-xl text-sm font-bold shadow-lg shadow-gray-200 active:scale-95 transition-all"
+                                >
+                                    完成
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </main>
 
             <style jsx global>{`

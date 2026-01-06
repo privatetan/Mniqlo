@@ -36,7 +36,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { userId, productId, style, size, targetPrice, frequency, isActive, startTime, endTime } = body;
+        const { userId, productId, productName, productCode, style, size, targetPrice, frequency, isActive, startTime, endTime } = body;
 
         if (!userId || !productId) {
             return NextResponse.json({ success: false, message: 'Missing required fields' }, { status: 400 });
@@ -57,6 +57,8 @@ export async function POST(req: Request) {
             task = await prisma.monitorTask.update({
                 where: { id: existing.id },
                 data: {
+                    productName: productName || existing.productName,
+                    productCode: productCode || existing.productCode,
                     targetPrice: targetPrice !== undefined ? parseFloat(targetPrice) : existing.targetPrice,
                     frequency: frequency || existing.frequency,
                     isActive: isActive !== undefined ? isActive : existing.isActive,
@@ -69,6 +71,8 @@ export async function POST(req: Request) {
                 data: {
                     userId: parseInt(userId, 10),
                     productId,
+                    productName,
+                    productCode,
                     style,
                     size,
                     targetPrice: targetPrice ? parseFloat(targetPrice) : null,
