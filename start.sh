@@ -10,6 +10,16 @@ NC='\033[0m' # No Color
 
 echo -e "${BLUE}🚀 Starting Mniqlo Setup & Launch...${NC}"
 
+# 0. Try to load NVM (Node Version Manager)
+export NVM_DIR="$HOME/.nvm"
+if [ -s "$NVM_DIR/nvm.sh" ]; then
+	echo -e "${BLUE}ℹ️  Loading NVM...${NC}"
+	. "$NVM_DIR/nvm.sh"
+elif [ -s "/usr/local/nvm/nvm.sh" ]; then
+	echo -e "${BLUE}ℹ️  Loading NVM from /usr/local/nvm...${NC}"
+	. "/usr/local/nvm/nvm.sh"
+fi
+
 # 1. Check for Node.js
 if ! command -v node &> /dev/null; then
     echo -e "${RED}❌ Node.js is not installed. Please install Node.js 18+ first.${NC}"
