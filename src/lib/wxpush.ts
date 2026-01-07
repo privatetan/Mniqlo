@@ -35,7 +35,8 @@ export async function sendWxNotification(userid: string, title: string, content:
         }
 
         return { success: response.ok, data };
-    } catch (error) {
-        return { success: false, error };
+    } catch (error: any) {
+        console.error('WxPush Error:', error);
+        return { success: false, message: error.message || String(error) };
     }
 }
