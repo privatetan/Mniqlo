@@ -449,14 +449,14 @@ export default function SearchPage() {
                                         {expandedState?.pid === product.productId && (
                                             <div className="bg-white rounded-lg border border-gray-100 p-4 animate-in fade-in slide-in-from-top-2 duration-200">
                                                 <h4 className="text-sm font-medium text-gray-500 mb-3">
-                                                    <span className="text-black">{expandedState.key}</span> 库存详情:
+                                                    <span className="text-black">{expandedState?.key}</span> 库存详情:
                                                 </h4>
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                                     {product.groupedData
-                                                        .find((g: GroupedData) => g.key === expandedState.key)
+                                                        .find((g: GroupedData) => g.key === expandedState?.key)
                                                         ?.subItems.map((sub: any, idx: number) => {
-                                                            const style = viewMode === 'color' ? expandedState.key : sub.key;
-                                                            const size = viewMode === 'color' ? sub.key : expandedState.key;
+                                                            const style = viewMode === 'color' ? expandedState?.key : sub.key;
+                                                            const size = viewMode === 'color' ? sub.key : expandedState?.key;
                                                             // Check by attributes, not key
                                                             const isFav = favorites.some(f =>
                                                                 f.productId === product.productId &&
