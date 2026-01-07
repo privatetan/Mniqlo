@@ -118,11 +118,28 @@ class WeChatTemplateService {
         try {
             const token = await this.getAccessToken();
 
+            // 构建包含消息内容的 URL
+            let notificationUrl = options?.url || this.baseUrl;
+
+            // 如果有 baseUrl,将消息内容编码到 URL 参数中
+            if (notificationUrl && !options?.miniprogram) {
+                const urlObj = new URL(notificationUrl);
+
+                // 将 data 中的内容编码到 URL 参数
+                Object.keys(data).forEach(key => {
+                    if (data[key]?.value) {
+                        urlObj.searchParams.set(key, data[key].value);
+                    }
+                });
+
+                notificationUrl = urlObj.toString();
+            }
+
             const sendData: WeChatTemplateSendData = {
                 touser,
                 template_id: this.templateId,
                 data,
-                url: options?.url || this.baseUrl,
+                url: notificationUrl,
                 ...options,
             };
 
@@ -178,11 +195,28 @@ class WeChatTemplateService {
         try {
             const token = await this.getAccessToken();
 
+            // 构建包含消息内容的 URL
+            let notificationUrl = options?.url || this.baseUrl;
+
+            // 如果有 baseUrl,将消息内容编码到 URL 参数中
+            if (notificationUrl && !options?.miniprogram) {
+                const urlObj = new URL(notificationUrl);
+
+                // 将 data 中的内容编码到 URL 参数
+                Object.keys(data).forEach(key => {
+                    if (data[key]?.value) {
+                        urlObj.searchParams.set(key, data[key].value);
+                    }
+                });
+
+                notificationUrl = urlObj.toString();
+            }
+
             const sendData: WeChatTemplateSendData = {
                 touser,
                 template_id: templateId,
                 data,
-                url: options?.url || this.baseUrl,
+                url: notificationUrl,
                 ...options,
             };
 

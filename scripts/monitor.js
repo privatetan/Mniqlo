@@ -58,6 +58,12 @@ async function sendWxNotification(openId, title, content, productId) {
     try {
         const token = await getAccessToken();
 
+        // 构建带参数的跳转链接, 方便详情页展示
+        const notificationUrl = new URL(`${WECHAT_CONFIG.base_url}/notification`);
+        notificationUrl.searchParams.set('first', title);
+        notificationUrl.searchParams.set('keyword1', content);
+        notificationUrl.searchParams.set('keyword2', new Date().toLocaleString('zh-CN'));
+
         const sendData = {
             touser: openId,
             template_id: WECHAT_CONFIG.template_id,
@@ -77,7 +83,7 @@ async function sendWxNotification(openId, title, content, productId) {
                     color: '#FF0000'
                 }
             },
-            url: `${WECHAT_CONFIG.base_url}/favorites`
+            url: notificationUrl.toString()
         };
 
         const url = new URL('https://api.weixin.qq.com/cgi-bin/message/template/send');
@@ -229,8 +235,8 @@ async function run() {
             const title = `库存提醒: ${matchedItem.name}`;
             const content = `您监控的商品 [${task.product_id}] ${matchedItem.name} (${matchedItem.style}/${matchedItem.size}) 现在有货了！`;
 
-            // Save notification to database first
-            const { data: savedNotification, error: insertError } = await supabase
+            // Save notification to database first (for history)
+            const { error: insertError } = await supabase
                 .from('notification_logs')
                 .insert({
                     user_id: task.user_id,
@@ -239,19 +245,16 @@ async function run() {
                     product_id: task.product_id,
                     style: task.style || null,
                     size: task.size || null,
-                })
-                .select()
-                .single();
+                });
 
-            if (insertError || !savedNotification) {
+            if (insertError) {
                 console.error('Failed to save notification:', insertError);
-                continue;
             }
 
-            // Build notification detail page URL
-            const notificationUrl = `${WECHAT_CONFIG.base_url}/notification?id=${savedNotification.id}`;
+            // Use baseUrl directly, message content will be encoded in URL params
+            const notificationUrl = `${WECHAT_CONFIG.base_url}/notification`;
 
-            // Send WeChat notification with detail page link
+            // Send WeChat notification, content will be auto-encoded in URL
             const result = await sendWxNotification(task.users.wx_user_id, title, content, notificationUrl);
 
             if (result.success) {
