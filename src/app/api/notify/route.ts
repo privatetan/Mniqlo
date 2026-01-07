@@ -69,11 +69,37 @@ export async function POST(req: Request) {
             return NextResponse.json({ success: false, message: 'Title and content are required' }, { status: 400 });
         }
 
-        const result = await sendWxNotification(recipientId, title, content);
+        // 先保存通知记录到数据库
+        const nowStr = formatToLocalTime();
+        const { data: savedNotification, error: insertError } = await supabase
+            .from('notification_logs')
+            .insert([
+                {
+                    user_id: targetUser.id,
+                    title,
+                    content,
+                    product_id: productId || null,
+                    style: style || null,
+                    size: size || null,
+                    timestamp: nowStr
+                }
+            ])
+            .select()
+            .single();
+
+        if (insertError || !savedNotification) {
+            console.error('Failed to save notification:', insertError);
+            return NextResponse.json({ success: false, message: 'Failed to save notification' }, { status: 500 });
+        }
+
+        // 构建通知详情页链接
+        const baseUrl = process.env.WECHAT_BASE_URL || 'http://localhost:3000';
+        const notificationUrl = `${baseUrl}/notification?id=${savedNotification.id}`;
+
+        // 发送微信通知,包含详情页链接
+        const result = await sendWxNotification(recipientId, title, content, notificationUrl);
 
         if (result.success) {
-            const nowStr = formatToLocalTime();
-
             // Update MonitorTask lastPushTime
             if (monitorTask) {
                 await supabase
@@ -81,18 +107,6 @@ export async function POST(req: Request) {
                     .update({ last_push_time: nowStr })
                     .eq('id', monitorTask.id);
             }
-
-            // Log notification for history
-            await supabase
-                .from('notification_logs')
-                .insert([
-                    {
-                        user_id: targetUser.id,
-                        title,
-                        content,
-                        timestamp: nowStr
-                    }
-                ]);
         }
 
         return NextResponse.json({ ...result, frequency: targetUser.notify_frequency || 60 });

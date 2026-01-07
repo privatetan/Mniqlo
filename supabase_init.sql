@@ -68,5 +68,8 @@ CREATE TABLE IF NOT EXISTS notification_logs (
     user_id BIGINT NOT NULL,
     title TEXT,
     content TEXT,
+    product_id TEXT,
+    style TEXT,
+    size TEXT,
     timestamp TEXT NOT NULL
 );
