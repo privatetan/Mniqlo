@@ -19,7 +19,12 @@ export async function sendWxNotification(userid: string, title: string, content:
     const fullUrl = `${WX_PUSH_CONFIG.url}?${params.toString()}`;
 
     try {
-        const response = await fetch(fullUrl);
+        const response = await fetch(fullUrl, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': '*/*'
+            }
+        });
         const text = await response.text();
 
         let data;
