@@ -1,3 +1,5 @@
+import { HttpsProxyAgent } from 'https-proxy-agent';
+
 export const WX_PUSH_CONFIG = {
     url: process.env.WX_PUSH_URL || 'https://mniqlo-wxpush.pittlucy9.workers.dev/wxsend',
     template_id: process.env.WX_PUSH_TEMPLATE_ID || '',
@@ -19,12 +21,21 @@ export async function sendWxNotification(userid: string, title: string, content:
     const fullUrl = `${WX_PUSH_CONFIG.url}?${params.toString()}`;
 
     try {
-        const response = await fetch(fullUrl, {
+        const proxyUrl = process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
+        const options: RequestInit = {
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                 'Accept': '*/*'
             }
-        });
+        };
+
+        if (proxyUrl) {
+            console.log(`[WxPush] Using Proxy: ${proxyUrl}`);
+            // @ts-ignore - undici/fetch types alignment
+            options.agent = new HttpsProxyAgent(proxyUrl);
+        }
+
+        const response = await fetch(fullUrl, options);
         const text = await response.text();
 
         let data;
