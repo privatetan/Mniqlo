@@ -47,6 +47,7 @@ fi
 
 # 4. Build Project
 echo -e "${BLUE}🏗️  Building project...${NC}"
+export NODE_OPTIONS="--dns-result-order=ipv4first"
 npm run build
 if [ $? -ne 0 ]; then
     echo -e "${RED}❌ Build failed!${NC}"
