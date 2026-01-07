@@ -10,9 +10,10 @@ interface FavoriteItemRowProps {
     onRemove: (e: React.MouseEvent, key: string) => void;
     onCheckSingle: (item: FavoriteItem) => Promise<boolean>;
     hideProductInfo?: boolean;
+    originPrice?: number;
 }
 
-export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle, hideProductInfo = false }: FavoriteItemRowProps) {
+export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle, hideProductInfo = false, originPrice }: FavoriteItemRowProps) {
     const [showScheduler, setShowScheduler] = useState(false);
     const [localStockStatus, setLocalStockStatus] = useState<boolean | null>(stockStatus);
     const popupRef = useRef<HTMLDivElement>(null);
