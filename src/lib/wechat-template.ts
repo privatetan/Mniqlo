@@ -118,6 +118,10 @@ class WeChatTemplateService {
         try {
             const token = await this.getAccessToken();
 
+            console.log('--- WeChat Template Send Debug ---');
+            console.log('To User:', touser);
+            console.log('Input Data:', JSON.stringify(data, null, 2));
+
             // 构建包含消息内容的 URL
             let notificationUrl = options?.url || this.baseUrl;
 
@@ -142,6 +146,9 @@ class WeChatTemplateService {
                 url: notificationUrl,
                 ...options,
             };
+
+            console.log('Final SendData (with encoded URL):', JSON.stringify(sendData, null, 2));
+            console.log('---------------------------------');
 
             const url = new URL('https://api.weixin.qq.com/cgi-bin/message/template/send');
             url.searchParams.append('access_token', token);

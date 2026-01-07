@@ -8,6 +8,7 @@ interface NotificationDetail {
     title: string;
     content: string;
     timestamp: string;
+    templateData?: Record<string, string>; // 存储原始模板数据
     productId?: string;
     style?: string;
     size?: string;
@@ -23,23 +24,29 @@ function NotificationContent() {
     useEffect(() => {
         const fetchNotification = async () => {
             try {
-                // 优先从 URL 参数获取消息内容 (由 wechat-template.ts 自动编码)
-                // first -> title
-                // keyword1 -> content
-                // keyword2 -> timestamp
-                const first = searchParams.get('first');
-                const keyword1 = searchParams.get('keyword1');
-                const keyword2 = searchParams.get('keyword2');
-                const keyword3 = searchParams.get('keyword3');
+                // 收集所有 URL 参数中可能存在的模板数据
+                const dataMap: Record<string, string> = {};
+                let hasData = false;
 
-                // 如果 URL 参数中有消息内容,直接使用
-                if (first || keyword1) {
+                searchParams.forEach((value, key) => {
+                    console.log(`URL Param Received - ${key}:`, value);
+                    if (key === 'first' || key.startsWith('keyword') || key === 'remark') {
+                        dataMap[key] = value;
+                        hasData = true;
+                    }
+                });
+
+                console.log('Parsed Template Data Map:', dataMap);
+
+                // 如果 URL 参数中有消息内容,直接解析展示
+                if (hasData) {
                     setNotification({
                         id: 'url-params',
-                        title: first || '消息通知',
-                        content: keyword1 || '',
-                        timestamp: keyword2 || new Date().toLocaleString('zh-CN'),
-                        productId: keyword3 || undefined,
+                        title: dataMap['first'] || '消息通知',
+                        content: dataMap['keyword1'] || '',
+                        timestamp: dataMap['keyword2'] || new Date().toLocaleString('zh-CN'),
+                        productId: dataMap['keyword3'] || undefined,
+                        templateData: dataMap
                     });
                     setLoading(false);
                     return;
@@ -108,7 +115,7 @@ function NotificationContent() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full overflow-hidden transform transition-all duration-300 hover:shadow-indigo-200">
+            <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full overflow-hidden">
                 {/* Header */}
                 <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-8 text-white">
                     <div className="flex items-center">
@@ -118,7 +125,7 @@ function NotificationContent() {
                             </svg>
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold tracking-tight">消息详情</h1>
+                            <h1 className="text-2xl font-bold tracking-tight">通知详情</h1>
                             <p className="text-indigo-100/80 text-sm mt-1">{notification.timestamp}</p>
                         </div>
                     </div>
@@ -126,21 +133,51 @@ function NotificationContent() {
 
                 {/* Content Body */}
                 <div className="p-8">
-                    {/* Title Section */}
-                    <div className="mb-8">
-                        <h2 className="text-3xl font-extrabold text-gray-900 mb-3 leading-tight">
-                            {notification.title}
-                        </h2>
-                        <div className="h-1.5 w-24 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full shadow-sm"></div>
-                    </div>
+                    {/* Main Display Area */}
+                    <div className="space-y-6">
+                        {/* Title / First */}
+                        <div className="border-b border-gray-100 pb-6">
+                            <h2 className="text-3xl font-extrabold text-gray-900 leading-tight">
+                                {notification.title}
+                            </h2>
+                        </div>
 
-                    {/* Content Box */}
-                    <div className="bg-indigo-50/50 backdrop-blur-sm border border-indigo-100 rounded-2xl p-6 mb-8 shadow-sm">
-                        <p className="text-gray-800 text-xl leading-relaxed whitespace-pre-wrap font-medium">
-                            {notification.content}
-                        </p>
-                    </div>
+                        {/* Template Data Fields */}
+                        {notification.templateData ? (
+                            <div className="space-y-4">
+                                {Object.entries(notification.templateData)
+                                    .filter(([key]) => key !== 'first' && key !== 'remark')
+                                    .sort(([a], [b]) => a.localeCompare(b))
+                                    .map(([key, value]) => (
+                                        <div key={key} className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-4 pb-4 border-b border-gray-50 last:border-0">
+                                            <span className="text-sm font-bold text-indigo-400 uppercase tracking-widest w-24 flex-shrink-0">
+                                                {key === 'keyword1' ? '提醒内容' :
+                                                    key === 'keyword2' ? '时间戳' :
+                                                        key === 'keyword3' ? '商品信息' : key}
+                                            </span>
+                                            <span className="text-lg text-gray-800 font-medium break-words">
+                                                {value}
+                                            </span>
+                                        </div>
+                                    ))}
 
+                                {notification.templateData['remark'] && (
+                                    <div className="bg-gray-50 rounded-2xl p-5 border border-gray-100 mt-6">
+                                        <p className="text-gray-500 text-sm italic">
+                                            {notification.templateData['remark']}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            // Fallback content if no templateData
+                            <div className="bg-indigo-50/50 rounded-2xl p-6 border border-indigo-100">
+                                <p className="text-gray-800 text-xl leading-relaxed whitespace-pre-wrap font-medium">
+                                    {notification.content}
+                                </p>
+                            </div>
+                        )}
+                    </div>
                     {/* Product Details Section (if exists) */}
                     {(notification.productId || notification.style || notification.size) && (
                         <div className="border-t border-gray-100 pt-8 mt-4">
