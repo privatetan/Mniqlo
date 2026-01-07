@@ -296,7 +296,7 @@ export default function AdminUsersPage() {
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 17a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9.5C2 7 4 5 6.5 5H18c2.2 0 4 1.8 4 4v8Z" /><path d="M15 9V5" /><path d="M9 9V5" /><path d="M2 13h20" /><path d="M11 13v6" /><path d="M15 13v6" /><path d="M7 13v6" /></svg>
                                                     </div>
                                                     <div className="flex-1 min-w-0">
-                                                        <p className="text-[9px] text-gray-400 uppercase font-bold tracking-widest leading-none mb-1">推送绑定 ID</p>
+                                                        <p className="text-[9px] text-gray-400 uppercase font-bold tracking-widest leading-none mb-1">推送微信ID</p>
                                                         {editingUserId === user.id ? (
                                                             <input
                                                                 type="text"
@@ -318,7 +318,7 @@ export default function AdminUsersPage() {
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
                                                     </div>
                                                     <div className="flex-1">
-                                                        <p className="text-[9px] text-gray-400 uppercase font-bold tracking-widest leading-none mb-1">轮询检查频率</p>
+                                                        <p className="text-[9px] text-gray-400 uppercase font-bold tracking-widest leading-none mb-1">微信推送频率</p>
                                                         {editingUserId === user.id ? (
                                                             <div className="flex items-center gap-1.5">
                                                                 <input
@@ -327,10 +327,10 @@ export default function AdminUsersPage() {
                                                                     onChange={(e) => setEditForm(prev => ({ ...prev, notifyFrequency: e.target.value }))}
                                                                     className="w-16 text-xs font-bold text-gray-700 bg-gray-50 border-gray-100 rounded px-1.5 py-0.5 focus:border-[#0b5fff] outline-none"
                                                                 />
-                                                                <span className="text-[10px] text-gray-400 font-normal">min</span>
+                                                                <span className="text-[10px] text-gray-400 font-normal">分钟</span>
                                                             </div>
                                                         ) : (
-                                                            <span className="text-sm font-bold text-gray-700">{user.notifyFrequency} <span className="text-[10px] text-gray-400 font-normal">min / request</span></span>
+                                                            <span className="text-sm font-bold text-gray-700">{user.notifyFrequency} <span className="text-[10px] text-gray-400 font-normal">分钟/次</span></span>
                                                         )}
                                                     </div>
                                                 </div>
