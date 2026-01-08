@@ -38,7 +38,25 @@ function NotificationContent() {
 
                 console.log('Parsed Template Data Map:', dataMap);
 
-                // 如果 URL 参数中有消息内容,直接解析展示
+                // Check for explicitly named parameters first (the new standard)
+                const titleParam = searchParams.get('title');
+                const messageParam = searchParams.get('message');
+                const dateParam = searchParams.get('date');
+
+                if (titleParam || messageParam) {
+                    setNotification({
+                        id: 'url-params-explicit',
+                        title: titleParam || '消息通知',
+                        content: messageParam || '',
+                        timestamp: dateParam || new Date().toLocaleString('zh-CN'),
+                        // Merge with any other template data found
+                        templateData: hasData ? dataMap : undefined
+                    });
+                    setLoading(false);
+                    return;
+                }
+
+                // URL Params Legacy Support (template data encoding)
                 if (hasData) {
                     setNotification({
                         id: 'url-params',

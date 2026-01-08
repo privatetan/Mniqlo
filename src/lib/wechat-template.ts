@@ -1,3 +1,5 @@
+import { HttpsProxyAgent } from 'https-proxy-agent';
+
 /**
  * WeChat Template Message Configuration
  */
@@ -43,12 +45,19 @@ class WeChatTemplateService {
         token: string;
         expiresAt: number;
     } | null = null;
+    private proxyAgent: any = null;
 
     constructor() {
         this.appid = process.env.WECHAT_APPID || '';
         this.appsecret = process.env.WECHAT_APPSECRET || '';
         this.templateId = process.env.WECHAT_TEMPLATE_ID || '';
         this.baseUrl = process.env.WECHAT_BASE_URL || '';
+
+        const proxyUrl = process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
+        if (proxyUrl) {
+            console.log(`[WeChat] Using Proxy: ${proxyUrl}`);
+            this.proxyAgent = new HttpsProxyAgent(proxyUrl);
+        }
 
         if (!this.appid || !this.appsecret || !this.templateId) {
             console.warn('WeChat configuration is incomplete. Please check your .env file.');
@@ -71,7 +80,16 @@ class WeChatTemplateService {
             url.searchParams.append('appid', this.appid);
             url.searchParams.append('secret', this.appsecret);
 
-            const response = await fetch(url.toString());
+            const options: RequestInit = {
+                method: 'GET',
+            };
+
+            if (this.proxyAgent) {
+                // @ts-ignore
+                options.agent = this.proxyAgent;
+            }
+
+            const response = await fetch(url.toString(), options);
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -153,13 +171,20 @@ class WeChatTemplateService {
             const url = new URL('https://api.weixin.qq.com/cgi-bin/message/template/send');
             url.searchParams.append('access_token', token);
 
-            const response = await fetch(url.toString(), {
+            const fetchOptions: RequestInit = {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(sendData),
-            });
+            };
+
+            if (this.proxyAgent) {
+                // @ts-ignore
+                fetchOptions.agent = this.proxyAgent;
+            }
+
+            const response = await fetch(url.toString(), fetchOptions);
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -230,13 +255,20 @@ class WeChatTemplateService {
             const url = new URL('https://api.weixin.qq.com/cgi-bin/message/template/send');
             url.searchParams.append('access_token', token);
 
-            const response = await fetch(url.toString(), {
+            const fetchOptions: RequestInit = {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(sendData),
-            });
+            };
+
+            if (this.proxyAgent) {
+                // @ts-ignore
+                fetchOptions.agent = this.proxyAgent;
+            }
+
+            const response = await fetch(url.toString(), fetchOptions);
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);

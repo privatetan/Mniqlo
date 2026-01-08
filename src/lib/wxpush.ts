@@ -28,10 +28,17 @@ export async function sendWxNotification(
             },
         };
 
+        const notificationUrl = url || `${wechatTemplateService['baseUrl'] || 'http://localhost:3000'}/notification`;
+
+        const finalUrl = new URL(notificationUrl);
+        finalUrl.searchParams.append('title', title);
+        finalUrl.searchParams.append('message', content);
+        finalUrl.searchParams.append('date', new Date().toLocaleString('zh-CN'));
+
         const result = await wechatTemplateService.sendTemplateMessage(
             openId,
             templateData,
-            url ? { url } : undefined
+            { url: finalUrl.toString() }
         );
 
         return {
