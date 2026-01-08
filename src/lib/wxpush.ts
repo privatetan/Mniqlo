@@ -28,7 +28,7 @@ export async function sendWxNotification(
             },
         };
 
-        const notificationUrl = url || `${wechatTemplateService['baseUrl'] || 'http://localhost:3000'}/notification`;
+        const notificationUrl = url || `${wechatTemplateService['baseUrl']}/notification`;
 
         const finalUrl = new URL(notificationUrl);
         finalUrl.searchParams.append('title', title);

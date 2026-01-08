@@ -90,7 +90,7 @@ export async function POST(req: Request) {
         }
 
         // 直接使用 baseUrl,消息内容会自动编码到 URL 参数中
-        const baseUrl = process.env.WECHAT_BASE_URL || 'http://localhost:3000';
+        const baseUrl = process.env.WECHAT_BASE_URL;
         const notificationUrl = `${baseUrl}/notification`;
 
         // 发送微信通知,消息内容会自动编码到 URL 参数

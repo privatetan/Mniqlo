@@ -183,7 +183,7 @@ export async function sendTaskNotification(
             openId,
             templateData,
             {
-                url: `${process.env.WECHAT_BASE_URL || 'http://localhost:3000'}/tasks`,
+                url: `${process.env.WECHAT_BASE_URL}/tasks`,
             }
         );
         console.log('Task notification sent successfully:', result);

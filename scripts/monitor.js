@@ -10,7 +10,7 @@ const WECHAT_CONFIG = {
     appid: process.env.WECHAT_APPID,
     appsecret: process.env.WECHAT_APPSECRET,
     template_id: process.env.WECHAT_TEMPLATE_ID,
-    base_url: process.env.WECHAT_BASE_URL || 'http://localhost:3000'
+    base_url: process.env.WECHAT_BASE_URL,
 };
 
 // Token cache
