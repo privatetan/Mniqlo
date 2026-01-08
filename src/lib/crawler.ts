@@ -198,54 +198,106 @@ async function processProduct(productCode: string, targetGender?: string): Promi
 }
 
 /**
- * Save crawled items to database in batches
- * 分批保存爬取的商品到数据库，避免大批量插入导致连接断开
+ * Save crawled items to database in batches, handling new items and sold-out items
+ * 分批处理商品入库：入库新商品，删除已售罄/下架商品
  */
-async function saveCrawledItems(items: CrawledItem[]): Promise<boolean> {
-    if (items.length === 0) {
-        return true;
+async function saveCrawledItems(items: CrawledItem[], targetGender?: string): Promise<{ newItems: CrawledItem[], soldOutItems: CrawledItem[] }> {
+    if (items.length === 0 && !targetGender) {
+        return { newItems: [], soldOutItems: [] };
     }
 
-    const batchSize = 50;
-    let allSuccess = true;
+    // 1. Fetch oldList from database for comparison
+    let query = supabase.from('crawled_products').select('*');
+    if (targetGender) {
+        query = query.filter('gender', 'ilike', `%${targetGender}%`);
+    }
 
-    for (let i = 0; i < items.length; i += batchSize) {
-        const batch = items.slice(i, i + batchSize).map(item => ({
-            product_id: item.product_id,
-            code: item.code,
-            name: item.name,
-            color: item.color,
-            size: item.size,
-            price: item.price,
-            min_price: item.min_price,
-            origin_price: item.origin_price,
-            stock: item.stock,
-            gender: item.gender,
-            sku_id: item.sku_id
-        }));
+    const { data: oldListData, error: fetchError } = await query;
+    if (fetchError) {
+        console.error('Error fetching existing items for comparison:', fetchError);
+    }
 
-        console.log(`Saving batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(items.length / batchSize)} (${batch.length} items)...`);
+    const oldList = (oldListData || []) as CrawledItem[];
+    const newList = items;
 
-        const { error } = await supabase
-            .from('crawled_products')
-            .insert(batch);
+    // Create keys for comparison: code-size-color
+    const getCompareKey = (item: any) => `${item.code}-${item.size}-${item.color}`;
 
-        if (error) {
-            console.error(`Error saving batch starting at index ${i}:`, error);
-            allSuccess = false;
-            // Record error but continue with next batch? 
-            // Better to return false to indicate incomplete save
+    const oldMap = new Map(oldList.map(item => [getCompareKey(item), item]));
+    const newMap = new Map(newList.map(item => [getCompareKey(item), item]));
+
+    // 2. Identify newItems (in newList but not in oldList)
+    const newItems = newList.filter(item => !oldMap.has(getCompareKey(item)));
+
+    // 3. Identify soldOutItems (in oldList but not in newList)
+    const soldOutItems = oldList.filter(item => !newMap.has(getCompareKey(item)));
+
+    console.log(`Inventory Sync: Total Found=${newList.length}, Existing=${oldList.length}, New=${newItems.length}, SoldOut=${soldOutItems.length}`);
+
+    // 4. Batch Delete soldOutItems
+    if (soldOutItems.length > 0) {
+        console.log(`Deleting ${soldOutItems.length} sold-out items...`);
+        // Batch deletion might be needed if there are thousands, but usually a few hundreds is fine with in()
+        const idsToDelete = soldOutItems.map(item => (item as any).id).filter(Boolean);
+
+        if (idsToDelete.length > 0) {
+            // If the table has IDs, use IDs for safety. If not, use composite match (more complex)
+            // Our schema has id SERIAL PRIMARY KEY
+            for (let i = 0; i < idsToDelete.length; i += 100) {
+                const batchIds = idsToDelete.slice(i, i + 100);
+                const { error } = await supabase.from('crawled_products').delete().in('id', batchIds);
+                if (error) console.error('Error deleting sold-out items:', error);
+            }
+        } else {
+            // Fallback to composite key deletion if no ID (not recommended for performance)
+            for (const item of soldOutItems) {
+                await supabase.from('crawled_products')
+                    .delete()
+                    .match({ code: item.code, size: item.size, color: item.color });
+            }
         }
     }
 
-    return allSuccess;
+    // 5. Batch Insert newItems
+    const successfullySavedItems: CrawledItem[] = [];
+    if (newItems.length > 0) {
+        const batchSize = 50;
+        for (let i = 0; i < newItems.length; i += batchSize) {
+            const batch = newItems.slice(i, i + batchSize);
+            const dbBatch = batch.map(item => ({
+                product_id: item.product_id,
+                code: item.code,
+                name: item.name,
+                color: item.color,
+                size: item.size,
+                price: item.price,
+                min_price: item.min_price,
+                origin_price: item.origin_price,
+                stock: item.stock,
+                gender: item.gender,
+                sku_id: item.sku_id
+            }));
+
+            const { error } = await supabase.from('crawled_products').insert(dbBatch);
+            if (error) {
+                console.error(`Error saving new items batch:`, error);
+            } else {
+                successfullySavedItems.push(...batch);
+            }
+        }
+    }
+
+    return {
+        newItems: successfullySavedItems,
+        soldOutItems: soldOutItems
+    };
 }
 
 /**
  * Main crawler function
  * 主爬虫函数：获取产品列表、处理每个产品、保存到数据库
  */
-export async function crawlUniqloProducts(targetGender?: string) {
+export async function crawlUniqloProducts(targetGender?: string): Promise<{ totalFound: number, newItems: CrawledItem[], soldOutItems: CrawledItem[] }> {
     console.log(`Starting Uniqlo crawl${targetGender ? ` for gender: ${targetGender}` : ''}...`);
 
     try {
@@ -255,7 +307,7 @@ export async function crawlUniqloProducts(targetGender?: string) {
 
         if (productCodes.length === 0) {
             console.log('No product codes found.');
-            return [];
+            return { totalFound: 0, newItems: [], soldOutItems: [] };
         }
 
         const allResults: CrawledItem[] = [];
@@ -286,18 +338,22 @@ export async function crawlUniqloProducts(targetGender?: string) {
         console.log(`Successfully fetched ${successCount} products with details.`);
         console.log(`Found ${allResults.length} in-stock items.`);
 
-        // 3. Save to database
-        if (allResults.length > 0) {
-            console.log('Saving to database...');
-            const saved = await saveCrawledItems(allResults);
-            if (saved) {
-                console.log('Successfully saved to database.');
-            } else {
-                console.error('Failed to save to database.');
-            }
-        }
+        // 3. Save to database results (New items vs Sold out)
+        let newItems: CrawledItem[] = [];
+        let soldOutItems: CrawledItem[] = [];
 
-        return allResults;
+        console.log('Checking inventory changes and updating database...');
+        const result = await saveCrawledItems(allResults, targetGender);
+        newItems = result.newItems;
+        soldOutItems = result.soldOutItems;
+
+        console.log(`Crawl result: Total Found=${allResults.length}, New Items=${newItems.length}, Sold Out Items=${soldOutItems.length}`);
+
+        return {
+            totalFound: allResults.length,
+            newItems,
+            soldOutItems
+        };
     } catch (error) {
         console.error('Crawler failed:', error);
         throw error;

@@ -6,11 +6,15 @@ export async function POST(request: Request) {
         const { searchParams } = new URL(request.url);
         const gender = searchParams.get('gender') || undefined;
 
-        const results = await crawlUniqloProducts(gender);
+        const { totalFound, newItems, soldOutItems } = await crawlUniqloProducts(gender);
         return NextResponse.json({
             success: true,
-            count: results.length,
-            message: `Successfully crawled ${results.length} items${gender ? ` for gender: ${gender}` : ''}.`
+            totalFound,
+            newCount: newItems.length,
+            newItems,
+            soldOutCount: soldOutItems.length,
+            soldOutItems,
+            message: `Successfully crawled ${totalFound} items${gender ? ` for gender: ${gender}` : ''}. Found ${newItems.length} new records and ${soldOutItems.length} sold out records.`
         });
     } catch (error: any) {
         console.error('Crawl API error:', error);

@@ -29,6 +29,20 @@ interface MonitorTask {
     createdAt: string;
 }
 
+interface CrawledItem {
+    product_id: string;
+    code: string;
+    name: string;
+    color: string;
+    size: string;
+    price: string;
+    min_price: string;
+    origin_price: string;
+    stock: string;
+    gender: string;
+    sku_id: string;
+}
+
 export default function AdminUsersPage() {
     const router = useRouter();
     const [users, setUsers] = useState<User[]>([]);
@@ -38,6 +52,14 @@ export default function AdminUsersPage() {
     const [editingUserId, setEditingUserId] = useState<number | null>(null);
     const [editForm, setEditForm] = useState<{ wxUserId: string; notifyFrequency: string }>({ wxUserId: '', notifyFrequency: '' });
     const [savingUserId, setSavingUserId] = useState<number | null>(null);
+    const [crawlLoading, setCrawlLoading] = useState<string | null>(null);
+
+    // Crawl result modal states
+    const [newItems, setNewItems] = useState<CrawledItem[]>([]);
+    const [soldOutItems, setSoldOutItems] = useState<CrawledItem[]>([]);
+    const [isNewItemsModalOpen, setIsNewItemsModalOpen] = useState(false);
+    const [crawlSummary, setCrawlSummary] = useState<{ totalFound: number; newCount: number; soldOutCount: number; gender: string } | null>(null);
+    const [activeResultTab, setActiveResultTab] = useState<'new' | 'soldout'>('new');
 
     // Task modal states
     const [selectedTasks, setSelectedTasks] = useState<MonitorTask[]>([]);
@@ -145,6 +167,48 @@ export default function AdminUsersPage() {
         }
     };
 
+    const handleSyncCrawl = async (gender: string) => {
+        if (crawlLoading) return;
+
+        const confirmResult = confirm(`确定开始同步【${gender}】的数据吗？将对数据库进行去重校验，这可能需要几十秒时间。`);
+        if (!confirmResult) return;
+
+        try {
+            setCrawlLoading(gender);
+            const response = await fetch(`/api/crawl?gender=${encodeURIComponent(gender)}`, {
+                method: 'POST'
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                setNewItems(data.newItems || []);
+                setSoldOutItems(data.soldOutItems || []);
+                setCrawlSummary({
+                    totalFound: data.totalFound,
+                    newCount: data.newCount,
+                    soldOutCount: data.soldOutCount,
+                    gender: gender
+                });
+
+                // Reset tab to 'new' if there are new items, otherwise 'soldout'
+                setActiveResultTab(data.newCount > 0 ? 'new' : 'soldout');
+
+                if (data.newCount > 0 || data.soldOutCount > 0) {
+                    setIsNewItemsModalOpen(true);
+                } else {
+                    alert(`同步完成！共发现 ${data.totalFound} 条数据，数据库中已存在，没有发现任何库存变动。`);
+                }
+            } else {
+                alert(`同步失败: ${data.error || '未知错误'}`);
+            }
+        } catch (err) {
+            console.error(err);
+            alert('同步请求发生错误');
+        } finally {
+            setCrawlLoading(null);
+        }
+    };
+
     const filteredUsers = users.filter(user =>
         user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (user.wxUserId && user.wxUserId.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -177,6 +241,44 @@ export default function AdminUsersPage() {
                             </div>
                         </div>
                     )}
+
+                    {/* Data Sync Section */}
+                    <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-[#0b5fff]/5 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-700"></div>
+
+                        <div className="flex items-center gap-3 mb-5">
+                            <div className="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center text-[#0b5fff]">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" /><path d="M16 16h5v5" /></svg>
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-black text-gray-900 leading-none">数据同步</h3>
+                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">实时抓取优衣库最新库存数据</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {[
+                                { name: '女装', color: 'bg-rose-50 text-rose-600 hover:bg-rose-100 border-rose-100' },
+                                { name: '男装', color: 'bg-blue-50 text-blue-600 hover:bg-blue-100 border-blue-100' },
+                                { name: '童装', color: 'bg-amber-50 text-amber-600 hover:bg-amber-100 border-amber-100' },
+                                { name: '婴幼儿装', color: 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border-emerald-100' }
+                            ].map((cat) => (
+                                <button
+                                    key={cat.name}
+                                    onClick={() => handleSyncCrawl(cat.name)}
+                                    disabled={crawlLoading !== null}
+                                    className={`flex flex-col items-center justify-center p-4 rounded-2xl border transition-all active:scale-95 ${cat.color} ${crawlLoading === cat.name ? 'ring-2 ring-offset-2 ring-gray-200 opacity-80' : ''} ${crawlLoading && crawlLoading !== cat.name ? 'opacity-40 grayscale pointer-events-none' : ''}`}
+                                >
+                                    {crawlLoading === cat.name ? (
+                                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-current border-t-transparent mb-1"></div>
+                                    ) : (
+                                        <span className="text-xl mb-1">📦</span>
+                                    )}
+                                    <span className="text-xs font-black tracking-tight">{crawlLoading === cat.name ? '正在同步...' : cat.name}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
 
                     {/* Controls */}
                     <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
@@ -439,6 +541,122 @@ export default function AdminUsersPage() {
                                     className="px-6 py-2 bg-gray-900 text-white rounded-xl text-sm font-bold shadow-lg shadow-gray-200 active:scale-95 transition-all"
                                 >
                                     完成
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Sync Results Modal */}
+                {isNewItemsModalOpen && (
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
+                        <div className="bg-white rounded-[2.5rem] w-full max-w-4xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-white/20">
+                            {/* Modal Header */}
+                            <div className="p-8 pb-6 border-b border-gray-100 flex justify-between items-start bg-gradient-to-br from-white to-[#0b5fff]/5">
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                        <span className="bg-[#0b5fff] text-white text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full">同步成功</span>
+                                        <h2 className="text-2xl font-black text-gray-900 tracking-tight">抓取完成：库存变动详情</h2>
+                                    </div>
+                                    <p className="text-sm text-gray-500 font-medium">
+                                        【{crawlSummary?.gender}】共找到 <span className="text-gray-900 font-bold">{crawlSummary?.totalFound}</span> 条库存 |
+                                        新增 <span className="text-[#0b5fff] font-black">{crawlSummary?.newCount}</span> |
+                                        下架 <span className="text-rose-500 font-black">{crawlSummary?.soldOutCount}</span>
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => setIsNewItemsModalOpen(false)}
+                                    className="p-3 hover:bg-white hover:shadow-lg rounded-2xl transition-all text-gray-400 hover:text-gray-900 active:scale-90"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                                </button>
+                            </div>
+
+                            {/* Tab Switcher */}
+                            <div className="px-8 flex gap-4 border-b border-gray-50 bg-white">
+                                <button
+                                    onClick={() => setActiveResultTab('new')}
+                                    className={`py-4 text-xs font-black uppercase tracking-widest border-b-2 transition-all ${activeResultTab === 'new' ? 'border-[#0b5fff] text-[#0b5fff]' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+                                >
+                                    新增库存 ({crawlSummary?.newCount})
+                                </button>
+                                <button
+                                    onClick={() => setActiveResultTab('soldout')}
+                                    className={`py-4 text-xs font-black uppercase tracking-widest border-b-2 transition-all ${activeResultTab === 'soldout' ? 'border-rose-500 text-rose-500' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+                                >
+                                    已下架/售罄 ({crawlSummary?.soldOutCount})
+                                </button>
+                            </div>
+
+                            {/* Modal Content */}
+                            <div className="flex-1 overflow-auto p-4 sm:p-8 bg-gray-50/50">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {(activeResultTab === 'new' ? newItems : soldOutItems).map((item, idx) => (
+                                        <div key={idx} className={`bg-white p-5 rounded-3xl border shadow-sm hover:shadow-md transition-all group flex flex-col ${activeResultTab === 'new' ? 'border-gray-100 hover:border-[#0b5fff]/30' : 'border-rose-100 hover:border-rose-300'}`}>
+                                            <div className="flex justify-between items-start mb-3">
+                                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xs shadow-inner group-hover:scale-110 transition-transform overflow-hidden ${activeResultTab === 'new' ? 'bg-gray-50 text-[#0b5fff]' : 'bg-rose-50 text-rose-500'}`}>
+                                                    {item.product_id.slice(0, 4)}
+                                                </div>
+                                                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest ${activeResultTab === 'new' ? 'text-blue-400 bg-blue-50' : 'text-rose-400 bg-rose-50'}`}>
+                                                    {activeResultTab === 'new' ? 'NEW' : 'GONE'}
+                                                </span>
+                                            </div>
+
+                                            <h4 className={`text-sm font-black text-gray-900 mb-1 line-clamp-1 transition-colors ${activeResultTab === 'new' ? 'group-hover:text-[#0b5fff]' : 'group-hover:text-rose-500'}`}>
+                                                {item.name}
+                                            </h4>
+
+                                            <div className="space-y-2 mt-auto">
+                                                <div className="flex items-center justify-between text-[10px] font-bold">
+                                                    <span className="text-gray-400 uppercase tracking-tighter">货号</span>
+                                                    <span className="text-gray-700 font-mono tracking-tighter">{item.code}</span>
+                                                </div>
+
+                                                <div className="flex gap-2">
+                                                    <div className="flex-1 bg-gray-50 rounded-xl p-2 flex flex-col items-center">
+                                                        <span className="text-[8px] text-gray-400 uppercase font-black tracking-widest leading-none mb-1">颜色</span>
+                                                        <span className="text-[10px] font-bold text-gray-700">{item.color}</span>
+                                                    </div>
+                                                    <div className="flex-1 bg-gray-50 rounded-xl p-2 flex flex-col items-center">
+                                                        <span className="text-[8px] text-gray-400 uppercase font-black tracking-widest leading-none mb-1">尺寸</span>
+                                                        <span className="text-[10px] font-bold text-gray-700">{item.size}</span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center justify-between pt-2 border-t border-dashed border-gray-100">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[8px] text-gray-400 uppercase font-black tracking-widest leading-none mb-1">抓取价格</span>
+                                                        <span className={`text-sm font-black ${activeResultTab === 'new' ? 'text-rose-500' : 'text-gray-400'}`}>¥{item.price}</span>
+                                                    </div>
+                                                    <div className="flex flex-col items-end">
+                                                        <span className="text-[8px] text-gray-400 uppercase font-black tracking-widest leading-none mb-1">状态</span>
+                                                        <span className={`text-sm font-black ${activeResultTab === 'new' ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                                            {activeResultTab === 'new' ? (item.stock === '0' ? '无货' : '有货') : '已下架/售罄'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {(activeResultTab === 'new' ? newItems : soldOutItems).length === 0 && (
+                                        <div className="col-span-full py-20 text-center space-y-4">
+                                            <div className="text-4xl text-gray-200">🌑</div>
+                                            <p className="text-gray-400 font-black uppercase tracking-widest text-xs">此处没有变动记录</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Modal Footer */}
+                            <div className="p-6 bg-white border-t border-gray-100 flex justify-between items-center sm:px-8">
+                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                                    Antigravity Crawler Engine • {new Date().toLocaleDateString()}
+                                </p>
+                                <button
+                                    onClick={() => setIsNewItemsModalOpen(false)}
+                                    className="px-10 py-3 bg-gray-900 text-white rounded-2xl text-sm font-black shadow-xl shadow-gray-200 hover:shadow-[#0b5fff]/20 hover:bg-[#0b5fff] active:scale-95 transition-all"
+                                >
+                                    查看完毕
                                 </button>
                             </div>
                         </div>
