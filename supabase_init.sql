@@ -73,3 +73,26 @@ CREATE TABLE IF NOT EXISTS notification_logs (
     size TEXT,
     timestamp TEXT NOT NULL
 );
+
+-- 7. Crawled Products table (爬虫抓取的商品数据)
+CREATE TABLE IF NOT EXISTS crawled_products (
+    id BIGSERIAL PRIMARY KEY,
+    product_id TEXT NOT NULL,            -- 商品ID (产品代码，例如: u0000000066997)
+    code TEXT NOT NULL,                  -- 货号 (6位数字代码，例如: 469746)
+    name TEXT NOT NULL,                  -- 商品名称
+    color TEXT,                          -- 颜色 (style)
+    size TEXT,                           -- 尺寸
+    price DOUBLE PRECISION,              -- 当前价格 (varyPrice)
+    min_price DOUBLE PRECISION,          -- 最低价格
+    origin_price DOUBLE PRECISION,       -- 原价
+    stock INTEGER DEFAULT 0,             -- 库存数量
+    gender TEXT,                         -- 性别 (男装/女装/童装等)
+    sku_id TEXT,                         -- SKU ID (唯一SKU标识)
+    created_at TIMESTAMPTZ DEFAULT NOW() -- 创建时间
+);
+
+-- Create indexes for better query performance
+CREATE INDEX IF NOT EXISTS idx_crawled_products_product_id ON crawled_products(product_id);
+CREATE INDEX IF NOT EXISTS idx_crawled_products_code ON crawled_products(code);
+CREATE INDEX IF NOT EXISTS idx_crawled_products_gender ON crawled_products(gender);
+CREATE INDEX IF NOT EXISTS idx_crawled_products_stock ON crawled_products(stock);
