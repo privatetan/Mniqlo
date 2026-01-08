@@ -230,7 +230,7 @@ function NotificationContent() {
                         </div>
                     )}
 
-                    {/* Buttons */}
+                    {/* Buttons
                     <div className="mt-10 flex flex-col sm:flex-row gap-4">
                         <a
                             href="/favorites"
@@ -244,7 +244,7 @@ function NotificationContent() {
                         >
                             返回主页
                         </a>
-                    </div>
+                    </div> */}
                 </div>
 
                 {/* Footer */}
