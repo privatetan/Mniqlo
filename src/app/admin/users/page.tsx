@@ -43,6 +43,14 @@ interface CrawledItem {
     sku_id: string;
 }
 
+interface PushSettings {
+    user_id: number;
+    is_enabled: boolean;
+    channel: string;
+    frequency: number;
+    genders: string[];
+}
+
 export default function AdminUsersPage() {
     const router = useRouter();
     const [users, setUsers] = useState<User[]>([]);
@@ -68,6 +76,12 @@ export default function AdminUsersPage() {
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [expandedSyncCode, setExpandedSyncCode] = useState<string | null>(null);
     const [expandedTaskProductId, setExpandedTaskProductId] = useState<string | null>(null);
+
+    // Super Selection Push Settings states
+    const [isPushSettingsModalOpen, setIsPushSettingsModalOpen] = useState(false);
+    const [selectedPushSettings, setSelectedPushSettings] = useState<PushSettings | null>(null);
+    const [savingPushSettings, setSavingPushSettings] = useState(false);
+    const [loadingPushSettings, setLoadingPushSettings] = useState(false);
 
     useEffect(() => {
         const userStr = localStorage.getItem('user');
@@ -167,6 +181,61 @@ export default function AdminUsersPage() {
             alert('获取任务时发生错误');
         } finally {
             setLoadingTasks(false);
+        }
+    };
+
+    const fetchPushSettings = async (user: User) => {
+        try {
+            setSelectedUser(user);
+            setLoadingPushSettings(true);
+            setIsPushSettingsModalOpen(true);
+
+            const currentUser = JSON.parse(localStorage.getItem('user') || '{}').username;
+            const response = await fetch(`/api/admin/users/${user.id}/push-settings`, {
+                headers: {
+                    'X-Admin-User': currentUser
+                }
+            });
+            const data = await response.json();
+            if (data.success) {
+                setSelectedPushSettings(data.settings);
+            } else {
+                alert(data.message || '获取推送设置失败');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('获取推送设置时发生错误');
+        } finally {
+            setLoadingPushSettings(false);
+        }
+    };
+
+    const handleSavePushSettings = async () => {
+        if (!selectedUser || !selectedPushSettings) return;
+
+        try {
+            setSavingPushSettings(true);
+            const currentUser = JSON.parse(localStorage.getItem('user') || '{}').username;
+            const response = await fetch(`/api/admin/users/${selectedUser.id}/push-settings`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Admin-User': currentUser
+                },
+                body: JSON.stringify(selectedPushSettings)
+            });
+            const data = await response.json();
+            if (data.success) {
+                setIsPushSettingsModalOpen(false);
+                alert('推送设置已更新');
+            } else {
+                alert(data.message || '更新推送设置失败');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('更新设置时发生错误');
+        } finally {
+            setSavingPushSettings(false);
         }
     };
 
@@ -369,6 +438,13 @@ export default function AdminUsersPage() {
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => fetchPushSettings(user)}
+                                                        className="text-gray-400 hover:text-emerald-500 transition-colors p-1"
+                                                        title="推送设置"
+                                                    >
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg>
+                                                    </button>
                                                     {editingUserId === user.id ? (
                                                         <div className="flex gap-1.5">
                                                             <button
@@ -743,6 +819,146 @@ export default function AdminUsersPage() {
                                     className="px-10 py-3 bg-gray-900 text-white rounded-2xl text-sm font-black shadow-xl shadow-gray-200 hover:shadow-[#0b5fff]/20 hover:bg-[#0b5fff] active:scale-95 transition-all"
                                 >
                                     查看完毕
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Super Selection Push Settings Modal */}
+                {isPushSettingsModalOpen && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+                        <div className="bg-white rounded-[2.5rem] w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col">
+                            {/* Modal Header */}
+                            <div className="p-8 pb-6 border-b border-gray-100 bg-gradient-to-br from-white to-emerald-50/30">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-sm">Notification</span>
+                                            <h2 className="text-2xl font-black text-gray-900 tracking-tight">超值精选推送设置</h2>
+                                        </div>
+                                        <p className="text-xs text-gray-400 font-medium">设置 <span className="font-bold text-gray-900">{selectedUser?.username}</span> 的全局库存推送权限</p>
+                                    </div>
+                                    <button
+                                        onClick={() => setIsPushSettingsModalOpen(false)}
+                                        className="p-3 hover:bg-white hover:shadow-lg rounded-2xl transition-all text-gray-400 hover:text-gray-900 active:scale-90"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="p-8 space-y-8 flex-1 overflow-auto">
+                                {loadingPushSettings ? (
+                                    <div className="flex flex-col items-center justify-center py-20 gap-4">
+                                        <div className="animate-spin rounded-full h-10 w-10 border-2 border-emerald-500 border-t-transparent"></div>
+                                        <p className="text-sm text-gray-400 font-medium">正在获取配置...</p>
+                                    </div>
+                                ) : selectedPushSettings && (
+                                    <>
+                                        {/* Status Toggle */}
+                                        <div className="flex items-center justify-between p-6 bg-gray-50 rounded-3xl border border-gray-100 group">
+                                            <div>
+                                                <h4 className="text-sm font-black text-gray-900 uppercase tracking-tight">推送开关</h4>
+                                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">是否向该用户推送新增库存消息</p>
+                                            </div>
+                                            <button
+                                                onClick={() => setSelectedPushSettings({ ...selectedPushSettings, is_enabled: !selectedPushSettings.is_enabled })}
+                                                className={`w-14 h-8 rounded-full transition-all relative ${selectedPushSettings.is_enabled ? 'bg-emerald-500 shadow-lg shadow-emerald-100' : 'bg-gray-200'}`}
+                                            >
+                                                <div className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full transition-transform shadow-sm ${selectedPushSettings.is_enabled ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                                            </button>
+                                        </div>
+
+                                        {/* Channel Info */}
+                                        <div className="space-y-4">
+                                            <div className="flex items-center gap-2 px-1">
+                                                <div className="w-1 h-1 rounded-full bg-emerald-500"></div>
+                                                <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest">推送配置详情</span>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm space-y-2">
+                                                    <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest">通知渠道</p>
+                                                    <div className="flex items-center gap-2 text-[#07c160] font-black">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                                                        <span className="text-sm uppercase">{selectedPushSettings.channel}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm space-y-2">
+                                                    <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest">推送频率 (分钟)</p>
+                                                    <input
+                                                        type="number"
+                                                        value={selectedPushSettings.frequency}
+                                                        onChange={(e) => setSelectedPushSettings({ ...selectedPushSettings, frequency: parseInt(e.target.value) || 60 })}
+                                                        className="w-full text-sm font-black text-gray-900 border-none p-0 focus:ring-0 outline-none"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Gender Filter */}
+                                        <div className="space-y-4">
+                                            <div className="flex items-center gap-2 px-1">
+                                                <div className="w-1 h-1 rounded-full bg-emerald-500"></div>
+                                                <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest">订阅栏目权限</span>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-3">
+                                                {['女装', '男装', '童装', '婴幼儿装'].map((gender) => {
+                                                    const isSelected = selectedPushSettings.genders.includes(gender);
+                                                    return (
+                                                        <button
+                                                            key={gender}
+                                                            onClick={() => {
+                                                                const newGenders = isSelected
+                                                                    ? selectedPushSettings.genders.filter(g => g !== gender)
+                                                                    : [...selectedPushSettings.genders, gender];
+                                                                setSelectedPushSettings({ ...selectedPushSettings, genders: newGenders });
+                                                            }}
+                                                            className={`p-4 rounded-2xl border flex items-center justify-between transition-all ${isSelected ? 'bg-emerald-50 border-emerald-500 ring-4 ring-emerald-500/10' : 'bg-white border-gray-100 hover:border-gray-300'}`}
+                                                        >
+                                                            <span className={`text-xs font-black transition-colors ${isSelected ? 'text-emerald-700' : 'text-gray-600'}`}>{gender}</span>
+                                                            {isSelected && (
+                                                                <div className="w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center shadow-sm">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                                                                </div>
+                                                            )}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+
+                                        {/* WeChat Binding Status */}
+                                        {!selectedUser?.wxUserId && (
+                                            <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100 flex items-center gap-3">
+                                                <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 shrink-0">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>
+                                                </div>
+                                                <p className="text-[10px] text-orange-700 font-bold leading-relaxed">
+                                                    该用户尚未绑定微信 (X-Admin-User ID)，即使开启通知也无法成功接收微信消息。
+                                                </p>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </div>
+
+                            {/* Footer */}
+                            <div className="p-8 bg-white border-t border-gray-100 flex gap-3">
+                                <button
+                                    onClick={() => setIsPushSettingsModalOpen(false)}
+                                    className="flex-1 py-4 text-xs font-black text-gray-500 uppercase tracking-widest hover:bg-gray-50 rounded-2xl transition-all"
+                                >
+                                    取消
+                                </button>
+                                <button
+                                    onClick={handleSavePushSettings}
+                                    disabled={savingPushSettings || !selectedPushSettings}
+                                    className="flex-[2] py-4 bg-gray-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-gray-200 hover:shadow-emerald-500/20 hover:bg-emerald-500 active:scale-95 transition-all disabled:opacity-50 disabled:grayscale disabled:scale-100"
+                                >
+                                    {savingPushSettings ? '正在保存...' : '保存配置'}
                                 </button>
                             </div>
                         </div>

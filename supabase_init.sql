@@ -96,3 +96,17 @@ CREATE INDEX IF NOT EXISTS idx_crawled_products_product_id ON crawled_products(p
 CREATE INDEX IF NOT EXISTS idx_crawled_products_code ON crawled_products(code);
 CREATE INDEX IF NOT EXISTS idx_crawled_products_gender ON crawled_products(gender);
 CREATE INDEX IF NOT EXISTS idx_crawled_products_stock ON crawled_products(stock);
+
+-- 8. Super Selection Push Subscriptions (超值精选推送权限)
+CREATE TABLE IF NOT EXISTS super_push_subscriptions (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL,            -- 关联用户ID
+    is_enabled BOOLEAN DEFAULT FALSE,   -- 是否开启通知
+    channel TEXT DEFAULT 'WECHAT',      -- 通知渠道 (默认微信)
+    frequency INTEGER DEFAULT 60,       -- 通知频率 (分钟)
+    genders TEXT[] DEFAULT '{}',        -- 订阅性别 (['女装', '男装']等)
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create index for user_id
+CREATE INDEX IF NOT EXISTS idx_super_push_subscriptions_user_id ON super_push_subscriptions(user_id);
