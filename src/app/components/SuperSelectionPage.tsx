@@ -224,7 +224,7 @@ export default function SuperSelectionPage() {
             {/* Header: Tabs & Search */}
             <div className="bg-white border-b border-gray-100 shrink-0">
                 <div className="px-4 pt-4 pb-3">
-                    <div className="flex gap-4 overflow-x-auto no-scrollbar mb-4">
+                    <div className="flex gap-2 mb-4">
                         {categories.map(cat => (
                             <button
                                 key={cat}
@@ -283,7 +283,7 @@ export default function SuperSelectionPage() {
                         <p className="text-sm">暂无商品</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-3">
                         {sortedProducts.map(product => (
                             <div key={product.code} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                                 <div
@@ -426,7 +426,7 @@ export default function SuperSelectionPage() {
                                             </div>
                                         )}
 
-                                        <div className="mt-4">
+                                        {/* <div className="mt-4">
                                             <a
                                                 href={`https://www.uniqlo.cn/hmall-sc/jp/zh_CN/goods-detail.html?productCode=${product.product_id}`}
                                                 target="_blank"
@@ -435,7 +435,7 @@ export default function SuperSelectionPage() {
                                             >
                                                 去官网查看详情
                                             </a>
-                                        </div>
+                                        </div> */}
                                     </div>
                                 )}
                             </div>

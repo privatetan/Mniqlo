@@ -459,34 +459,34 @@ export async function crawlUniqloProducts(targetGender?: string): Promise<{ tota
 
                     console.log(`[Notification] Found ${subscriptions.length} eligible subscribers for category "${targetGender}".`);
 
-                    for (const sub of subscriptions) {
-                        const user = sub.users as any;
-                        if (!user?.wx_user_id) {
-                            console.log(`[Notification] User ${user?.username || sub.user_id} has no wx_user_id, skipping.`);
-                            continue;
-                        }
+                    // for (const sub of subscriptions) {
+                    //     const user = sub.users as any;
+                    //     if (!user?.wx_user_id) {
+                    //         console.log(`[Notification] User ${user?.username || sub.user_id} has no wx_user_id, skipping.`);
+                    //         continue;
+                    //     }
 
-                        for (const code in itemsByCode) {
-                            const items = itemsByCode[code];
-                            const firstItem = items[0];
-                            const title = `超值精选新增：${firstItem.name}`;
-                            const content = `发现货号 ${code} 有新库存！包含 ${items.length} 个规格。价格: ¥${firstItem.price}${firstItem.origin_price && parseFloat(firstItem.origin_price as any) > parseFloat(firstItem.price as any) ? ` (原价: ¥${firstItem.origin_price})` : ''}。`;
+                    //     for (const code in itemsByCode) {
+                    //         const items = itemsByCode[code];
+                    //         const firstItem = items[0];
+                    //         const title = `超值精选新增：${firstItem.name}`;
+                    //         const content = `发现货号 ${code} 有新库存！包含 ${items.length} 个规格。价格: ¥${firstItem.price}${firstItem.origin_price && parseFloat(firstItem.origin_price as any) > parseFloat(firstItem.price as any) ? ` (原价: ¥${firstItem.origin_price})` : ''}。`;
 
-                            // Send individual notification
-                            const notificationResult = await sendWxNotification( // Renamed 'result' to 'notificationResult' to avoid conflict
-                                user.wx_user_id,
-                                title,
-                                content,
-                                `https://www.uniqlo.cn/hmall-sc/jp/zh_CN/goods-detail.html?productCode=${firstItem.product_id}`
-                            );
+                    //         // Send individual notification
+                    //         const notificationResult = await sendWxNotification( // Renamed 'result' to 'notificationResult' to avoid conflict
+                    //             user.wx_user_id,
+                    //             title,
+                    //             content,
+                    //             `https://www.uniqlo.cn/hmall-sc/jp/zh_CN/goods-detail.html?productCode=${firstItem.product_id}`
+                    //         );
 
-                            if (notificationResult.success) {
-                                console.log(`[Notification] Sent to ${user.username} for code ${code}`);
-                            } else {
-                                console.error(`[Notification] Failed to send to ${user.username} for code ${code}:`, notificationResult.error);
-                            }
-                        }
-                    }
+                    //         if (notificationResult.success) {
+                    //             console.log(`[Notification] Sent to ${user.username} for code ${code}`);
+                    //         } else {
+                    //             console.error(`[Notification] Failed to send to ${user.username} for code ${code}:`, notificationResult.error);
+                    //         }
+                    //     }
+                    // }
                 }
             } catch (notifyError) {
                 console.error('[Notification] Error in super selection notification flow:', notifyError);
