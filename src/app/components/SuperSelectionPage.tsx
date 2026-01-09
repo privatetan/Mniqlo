@@ -62,7 +62,19 @@ export default function SuperSelectionPage() {
                 const res = await fetch(`/api/favorites?userId=${user.id}`);
                 const data = await res.json();
                 if (data.success) {
-                    setFavorites(data.favorites);
+                    // Map favorites to ensure consistent structure
+                    const mapped = data.favorites.map((f: any) => ({
+                        id: f.id,
+                        key: f.id ? f.id.toString() : `${f.style}-${f.size}`,
+                        productId: f.product_id || f.productId,
+                        code: f.code,
+                        name: f.name,
+                        color: f.style || f.color || '',
+                        size: f.size || '',
+                        price: f.price,
+                        timestamp: f.created_at || f.createdAt || f.timestamp
+                    }));
+                    setFavorites(mapped);
                 }
             } catch (e) {
                 console.error(e);
@@ -79,7 +91,7 @@ export default function SuperSelectionPage() {
         return () => window.removeEventListener('favorites-updated', handleFavoritesUpdated);
     }, [activeGender]); // Add activeGender to dependency array
 
-    const toggleFavorite = async (item: CrawledItem) => {
+    const toggleFavorite = async (item: CrawledItem, overrideStyle?: string, overrideSize?: string) => {
         const userStr = localStorage.getItem('user');
         if (!userStr) {
             alert('请先登录');
@@ -88,11 +100,14 @@ export default function SuperSelectionPage() {
         const user = JSON.parse(userStr);
         if (user.id === -1) return;
 
-        const isFav = favorites.some(f => f.productId === item.product_id && (f as any).style === item.color && f.size === item.size);
+        const style = overrideStyle || item.color;
+        const size = overrideSize || item.size;
+
+        const isFav = favorites.some(f => f.productId === item.product_id && f.color === style && f.size === size);
 
         try {
             if (isFav) {
-                const fav = favorites.find(f => f.productId === item.product_id && (f as any).style === item.color && f.size === item.size);
+                const fav = favorites.find(f => f.productId === item.product_id && f.color === style && f.size === size);
                 if (fav) {
                     await fetch(`/api/favorites?id=${fav.id}`, { method: 'DELETE' });
                 }
@@ -106,8 +121,8 @@ export default function SuperSelectionPage() {
                         code: item.code,
                         name: item.name,
                         price: parseFloat(item.price),
-                        style: item.color,
-                        size: item.size
+                        style: style,
+                        size: size
                     })
                 });
             }
@@ -382,7 +397,7 @@ export default function SuperSelectionPage() {
                                                             const item = sub.breakdown[0]; // Get first item for product_id
                                                             const isFav = favorites.some(f =>
                                                                 f.productId === item.product_id &&
-                                                                (f as any).style === style &&
+                                                                f.color === style &&
                                                                 f.size === size
                                                             );
 
@@ -396,7 +411,7 @@ export default function SuperSelectionPage() {
                                                                         <button
                                                                             onClick={(e) => {
                                                                                 e.stopPropagation();
-                                                                                toggleFavorite(item);
+                                                                                toggleFavorite(item, style, size);
                                                                             }}
                                                                             className={`p-1.5 rounded-full border shadow-sm transition-all ${isFav
                                                                                 ? 'bg-red-50 border-red-200 text-red-500'
