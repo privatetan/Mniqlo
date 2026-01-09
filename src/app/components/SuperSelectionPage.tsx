@@ -346,6 +346,11 @@ export default function SuperSelectionPage() {
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-base text-green-600 font-bold font-mono">{product.code}</span>
                                                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 font-medium">{product.gender}</span>
+                                                    {product.items.some(i => i.stock_status === 'new') && (
+                                                        <span className="px-1.5 py-0.5 text-[9px] font-bold bg-red-500 text-white rounded uppercase tracking-wide shadow-sm animate-pulse">
+                                                            NEW
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <h3 className="text-xs text-gray-500 truncate">{product.name}</h3>
                                             </div>

@@ -36,6 +36,15 @@ function standardizeGender(rawGender: string): string {
     return rawGender || '未知';
 }
 
+/**
+ * Clean string: trim and normalize spaces
+ * 清理字符串:去除前后空格并标准化内部空格
+ */
+function cleanString(str: any): string {
+    if (!str) return '';
+    return String(str).trim().replace(/\s+/g, ' ');
+}
+
 export interface CrawledItem {
     product_id: string;      // 商品ID (产品代码, 例如 u0000000066997)
     code: string;            // 货号 (6位数字代码)
@@ -249,17 +258,17 @@ async function processProduct(productCode: string, targetGender?: string): Promi
                 const minPrice = parseFloat(row.minPrice || summary.minPrice || varyPrice);
 
                 results.push({
-                    product_id: productCode,
-                    code: itemCode,
-                    name: productName,
-                    color: row.style || row.styleText || '',
-                    size: row.size || row.sizeText || '',
+                    product_id: cleanString(productCode),
+                    code: cleanString(itemCode),
+                    name: cleanString(productName),
+                    color: cleanString(row.style || row.styleText || ''),
+                    size: cleanString(row.size || row.sizeText || ''),
                     price: varyPrice,
                     min_price: minPrice,
                     origin_price: originPrice,
                     stock: stockCount,
-                    gender: gender,
-                    sku_id: skuId
+                    gender: cleanString(gender),
+                    sku_id: cleanString(skuId)
                 });
             }
         }
@@ -281,24 +290,75 @@ async function saveCrawledItems(items: CrawledItem[], targetGender?: string): Pr
     }
 
     // 1. Fetch oldList from database for comparison
-    let query = supabase.from('crawled_products').select('*');
-    if (targetGender) {
-        query = query.filter('gender', 'ilike', `%${targetGender}%`);
+    // NOTE: Supabase has a default limit of 1000 rows, we need to fetch all data
+    let allOldData: any[] = [];
+    let from = 0;
+    const pageSize = 1000;
+    let hasMore = true;
+
+    while (hasMore) {
+        let query = supabase
+            .from('crawled_products')
+            .select('*')
+            .range(from, from + pageSize - 1);
+
+        if (targetGender) {
+            query = query.filter('gender', 'ilike', `%${targetGender}%`);
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+            console.error('Error fetching existing items for comparison:', error);
+            break;
+        }
+
+        if (data && data.length > 0) {
+            allOldData = allOldData.concat(data);
+            from += pageSize;
+            hasMore = data.length === pageSize; // If less than pageSize, we've reached the end
+        } else {
+            hasMore = false;
+        }
     }
 
-    const { data: oldListData, error: fetchError } = await query;
-    if (fetchError) {
-        console.error('Error fetching existing items for comparison:', fetchError);
-    }
-
-    const oldList = (oldListData || []) as CrawledItem[];
+    const oldList = allOldData as CrawledItem[];
+    console.log(`[Database] Fetched ${oldList.length} existing items for comparison`);
     const newList = items;
 
-    // Create keys for comparison: code-size-color
-    const getCompareKey = (item: any) => `${item.code}-${item.size}-${item.color}`;
+    // Normalize string for comparison: trim, lowercase, remove extra spaces
+    const normalizeString = (str: any): string => {
+        if (!str) return '';
+        return String(str).trim().toLowerCase().replace(/\s+/g, ' ');
+    };
+
+    // Create keys for comparison: prefer sku_id, fallback to code-size-color (normalized)
+    const getCompareKey = (item: any) => {
+        // Priority 1: Use sku_id if available (most reliable)
+        if (item.sku_id) {
+            return `sku:${normalizeString(item.sku_id)}`;
+        }
+
+        // Priority 2: Use normalized code-size-color combination
+        const code = normalizeString(item.code);
+        const size = normalizeString(item.size);
+        const color = normalizeString(item.color);
+        return `combo:${code}|||${size}|||${color}`;
+    };
 
     const oldMap = new Map(oldList.map(item => [getCompareKey(item), item]));
     const newMap = new Map(newList.map(item => [getCompareKey(item), item]));
+
+    // Debug: Log sample keys for verification
+    if (oldList.length > 0 && newList.length > 0) {
+        console.log('[Debug] Sample old key:', getCompareKey(oldList[0]));
+        console.log('[Debug] Sample new key:', getCompareKey(newList[0]));
+        console.log('[Debug] Old map size:', oldMap.size, 'New map size:', newMap.size);
+
+        // Check for potential duplicates in the comparison
+        const duplicateCheck = newList.filter(item => oldMap.has(getCompareKey(item)));
+        console.log('[Debug] Matching items found:', duplicateCheck.length);
+    }
 
     // 2. Identify newItems (in newList but not in oldList)
     const newItems = newList.filter(item => !oldMap.has(getCompareKey(item)));
@@ -347,18 +407,18 @@ async function saveCrawledItems(items: CrawledItem[], targetGender?: string): Pr
                 const oldItem = oldMap.get(getCompareKey(item));
                 return {
                     id: (oldItem as any).id,
-                    product_id: item.product_id,
-                    code: item.code,
-                    name: item.name,
-                    color: item.color,
-                    size: item.size,
+                    product_id: cleanString(item.product_id),
+                    code: cleanString(item.code),
+                    name: cleanString(item.name),
+                    color: cleanString(item.color),
+                    size: cleanString(item.size),
                     price: item.price,
                     min_price: item.min_price,
                     origin_price: item.origin_price,
                     stock: item.stock,
                     stock_status: 'old',
-                    gender: item.gender,
-                    sku_id: item.sku_id
+                    gender: cleanString(item.gender),
+                    sku_id: cleanString(item.sku_id)
                 };
             }).filter(item => item.id); // Only include items with valid IDs
 
@@ -386,18 +446,18 @@ async function saveCrawledItems(items: CrawledItem[], targetGender?: string): Pr
         for (let i = 0; i < newItems.length; i += batchSize) {
             const batch = newItems.slice(i, i + batchSize);
             const dbBatch = batch.map(item => ({
-                product_id: item.product_id,
-                code: item.code,
-                name: item.name,
-                color: item.color,
-                size: item.size,
+                product_id: cleanString(item.product_id),
+                code: cleanString(item.code),
+                name: cleanString(item.name),
+                color: cleanString(item.color),
+                size: cleanString(item.size),
                 price: item.price,
                 min_price: item.min_price,
                 origin_price: item.origin_price,
                 stock: item.stock,
                 stock_status: 'new',
-                gender: item.gender,
-                sku_id: item.sku_id
+                gender: cleanString(item.gender),
+                sku_id: cleanString(item.sku_id)
             }));
 
             const { error } = await supabase.from('crawled_products').insert(dbBatch);
@@ -436,8 +496,33 @@ export async function crawlUniqloProducts(targetGender?: string): Promise<{ tota
         let processedCount = 0;
         let successCount = 0;
 
-        // 2. Process each product
-        for (const code of productCodes) {
+        // 2. Process each product with concurrency limit
+        const CONCURRENCY_LIMIT = 20;
+
+        // Custom Concurrency Handler
+        const runWithConcurrency = async <T>(items: T[], fn: (item: T) => Promise<void>, limit: number) => {
+            const results = [];
+            const executing = new Set<Promise<void>>();
+
+            for (const item of items) {
+                const p = Promise.resolve().then(() => fn(item));
+                executing.add(p);
+
+                const clean = () => executing.delete(p);
+                p.then(clean).catch(clean);
+
+                if (executing.size >= limit) {
+                    await Promise.race(executing);
+                }
+            }
+            return Promise.all(executing);
+        };
+
+        await runWithConcurrency(productCodes, async (code) => {
+            // Add small random delay to prevent exact burst
+            const randomDelay = Math.floor(Math.random() * 50);
+            await new Promise(resolve => setTimeout(resolve, randomDelay));
+
             const items = await processProduct(code, targetGender);
 
             if (items.length > 0) {
@@ -451,10 +536,7 @@ export async function crawlUniqloProducts(targetGender?: string): Promise<{ tota
             if (processedCount % 10 === 0) {
                 console.log(`Progress: ${processedCount}/${productCodes.length} products processed, ${allResults.length} items with stock found`);
             }
-
-            // Rate limiting: 150ms delay between requests
-            await new Promise(resolve => setTimeout(resolve, 150));
-        }
+        }, CONCURRENCY_LIMIT);
 
         console.log(`Processed ${processedCount}/${productCodes.length} products.`);
         console.log(`Successfully fetched ${successCount} products with details.`);
@@ -470,6 +552,15 @@ export async function crawlUniqloProducts(targetGender?: string): Promise<{ tota
         soldOutItems = result.soldOutItems;
 
         console.log(`Crawl result: Total Found=${allResults.length}, New Items=${newItems.length}, Sold Out Items=${soldOutItems.length}`);
+
+        if (newItems.length > 0) {
+            console.log('\n=== Newly Added Items ===');
+            newItems.forEach(item => {
+                console.log(`[NEW] ${item.name} | Color: ${item.color} | Size: ${item.size} | Code: ${item.code} | Price: ${item.price}`);
+            });
+            console.log('=========================\n');
+        }
+
         // --- Notification Logic for Super Selection ---
         if (newItems.length > 0) {
             try {

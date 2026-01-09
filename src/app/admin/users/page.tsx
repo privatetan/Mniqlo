@@ -764,11 +764,21 @@ export default function AdminUsersPage() {
                                                                 <div className="flex gap-3">
                                                                     <div className="flex flex-col">
                                                                         <span className="text-[8px] text-gray-400 uppercase font-black tracking-widest leading-none mb-1 text-center">颜色</span>
-                                                                        <span className="text-xs font-bold text-gray-700 bg-gray-50 px-3 py-1 rounded-lg">{item.color}</span>
+                                                                        <div className="flex items-center gap-1">
+                                                                            <span className="text-xs font-bold text-gray-700 bg-gray-50 px-3 py-1 rounded-lg">{item.color}</span>
+                                                                            {activeResultTab === 'new' && (
+                                                                                <span className="text-[8px] font-black text-white bg-red-500 px-1 py-0.5 rounded leading-none animate-pulse">NEW</span>
+                                                                            )}
+                                                                        </div>
                                                                     </div>
                                                                     <div className="flex flex-col">
                                                                         <span className="text-[8px] text-gray-400 uppercase font-black tracking-widest leading-none mb-1 text-center">尺寸</span>
-                                                                        <span className="text-xs font-bold text-gray-700 bg-gray-50 px-3 py-1 rounded-lg">{item.size}</span>
+                                                                        <div className="flex items-center gap-1">
+                                                                            <span className="text-xs font-bold text-gray-700 bg-gray-50 px-3 py-1 rounded-lg">{item.size}</span>
+                                                                            {activeResultTab === 'new' && (
+                                                                                <span className="text-[8px] font-black text-white bg-red-500 px-1 py-0.5 rounded leading-none animate-pulse">NEW</span>
+                                                                            )}
+                                                                        </div>
                                                                     </div>
                                                                 </div>
 
