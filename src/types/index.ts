@@ -27,6 +27,7 @@ export interface CrawledItem {
     min_price: string;
     origin_price?: string;
     stock: number;
+    stock_status?: string;
     gender: string;
     sku_id: string;
 }

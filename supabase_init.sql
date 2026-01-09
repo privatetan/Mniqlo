@@ -86,6 +86,7 @@ CREATE TABLE IF NOT EXISTS crawled_products (
     min_price DOUBLE PRECISION,          -- 最低价格
     origin_price DOUBLE PRECISION,       -- 原价
     stock INTEGER DEFAULT 0,             -- 库存数量
+    stock_status TEXT DEFAULT 'new',     -- 库存状态 ('new': 新增库存, 'old': 现有库存)
     gender TEXT,                         -- 性别 (男装/女装/童装等)
     sku_id TEXT,                         -- SKU ID (唯一SKU标识)
     created_at TIMESTAMPTZ DEFAULT NOW() -- 创建时间
@@ -96,6 +97,7 @@ CREATE INDEX IF NOT EXISTS idx_crawled_products_product_id ON crawled_products(p
 CREATE INDEX IF NOT EXISTS idx_crawled_products_code ON crawled_products(code);
 CREATE INDEX IF NOT EXISTS idx_crawled_products_gender ON crawled_products(gender);
 CREATE INDEX IF NOT EXISTS idx_crawled_products_stock ON crawled_products(stock);
+CREATE INDEX IF NOT EXISTS idx_crawled_products_composite ON crawled_products(code, size, color);
 
 -- 8. Super Selection Push Subscriptions (超值精选推送权限)
 CREATE TABLE IF NOT EXISTS super_push_subscriptions (

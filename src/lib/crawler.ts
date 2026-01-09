@@ -43,6 +43,7 @@ export interface CrawledItem {
     min_price: number;       // 最低价格
     origin_price: number;    // 原价
     stock: number;           // 库存数量
+    stock_status?: string;   // 库存状态 ('new': 新增库存, 'old': 现有库存)
     gender: string;          // 性别
     sku_id: string;          // SKU ID (唯一SKU标识，例如 u0000000066997001)
 }
@@ -297,12 +298,15 @@ async function saveCrawledItems(items: CrawledItem[], targetGender?: string): Pr
     // 2. Identify newItems (in newList but not in oldList)
     const newItems = newList.filter(item => !oldMap.has(getCompareKey(item)));
 
-    // 3. Identify soldOutItems (in oldList but not in newList)
+    // 3. Identify existingItems (in both oldList and newList) - need to update to 'old'
+    const existingItems = newList.filter(item => oldMap.has(getCompareKey(item)));
+
+    // 4. Identify soldOutItems (in oldList but not in newList)
     const soldOutItems = oldList.filter(item => !newMap.has(getCompareKey(item)));
 
-    console.log(`Inventory Sync: Total Found=${newList.length}, Existing=${oldList.length}, New=${newItems.length}, SoldOut=${soldOutItems.length}`);
+    console.log(`Inventory Sync: Total Found=${newList.length}, Existing=${oldList.length}, New=${newItems.length}, Existing=${existingItems.length}, SoldOut=${soldOutItems.length}`);
 
-    // 4. Batch Delete soldOutItems
+    // 5. Batch Delete soldOutItems
     if (soldOutItems.length > 0) {
         console.log(`Deleting ${soldOutItems.length} sold-out items...`);
         // Batch deletion might be needed if there are thousands, but usually a few hundreds is fine with in()
@@ -326,7 +330,51 @@ async function saveCrawledItems(items: CrawledItem[], targetGender?: string): Pr
         }
     }
 
-    // 5. Batch Insert newItems
+    // 6. Batch Update existingItems to set stock_status = 'old'
+    if (existingItems.length > 0) {
+        console.log(`Updating ${existingItems.length} existing items to 'old' status...`);
+
+        // Batch update using upsert for better performance
+        const batchSize = 100;
+        for (let i = 0; i < existingItems.length; i += batchSize) {
+            const batch = existingItems.slice(i, i + batchSize);
+            const updates = batch.map(item => {
+                const oldItem = oldMap.get(getCompareKey(item));
+                return {
+                    id: (oldItem as any).id,
+                    product_id: item.product_id,
+                    code: item.code,
+                    name: item.name,
+                    color: item.color,
+                    size: item.size,
+                    price: item.price,
+                    min_price: item.min_price,
+                    origin_price: item.origin_price,
+                    stock: item.stock,
+                    stock_status: 'old',
+                    gender: item.gender,
+                    sku_id: item.sku_id
+                };
+            }).filter(item => item.id); // Only include items with valid IDs
+
+            // Deduplicate by ID to prevent "cannot affect row a second time" error
+            const uniqueUpdates = Array.from(
+                new Map(updates.map(item => [item.id, item])).values()
+            );
+
+            if (uniqueUpdates.length > 0) {
+                const { error } = await supabase
+                    .from('crawled_products')
+                    .upsert(uniqueUpdates, { onConflict: 'id' });
+
+                if (error) {
+                    console.error('Error batch updating existing items:', error);
+                }
+            }
+        }
+    }
+
+    // 7. Batch Insert newItems with stock_status = 'new'
     const successfullySavedItems: CrawledItem[] = [];
     if (newItems.length > 0) {
         const batchSize = 50;
@@ -342,6 +390,7 @@ async function saveCrawledItems(items: CrawledItem[], targetGender?: string): Pr
                 min_price: item.min_price,
                 origin_price: item.origin_price,
                 stock: item.stock,
+                stock_status: 'new',
                 gender: item.gender,
                 sku_id: item.sku_id
             }));

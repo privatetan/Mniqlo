@@ -400,10 +400,19 @@ export default function SuperSelectionPage() {
                                                                 f.color === style &&
                                                                 f.size === size
                                                             );
+                                                            // Check if this is a new stock item
+                                                            const isNewStock = item.stock_status === 'new';
 
                                                             return (
-                                                                <div key={idx} className="flex justify-between items-center p-2 bg-white rounded border border-gray-100">
-                                                                    <span className="font-medium text-xs text-gray-700">{sub.key}</span>
+                                                                <div key={idx} className="flex justify-between items-center p-2 bg-white rounded border border-gray-100 relative">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="font-medium text-xs text-gray-700">{sub.key}</span>
+                                                                        {isNewStock && (
+                                                                            <span className="px-1.5 py-0.5 text-[9px] font-bold bg-gradient-to-r from-orange-500 to-red-500 text-white rounded uppercase tracking-wide shadow-sm">
+                                                                                NEW
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
                                                                     <div className="flex items-center gap-2">
                                                                         <div className={`text-xs font-bold ${sub.stock > 0 ? 'text-green-600' : 'text-red-500'}`}>
                                                                             {sub.stock > 0 ? sub.stock : '售罄'}
