@@ -189,7 +189,16 @@ export async function sendWxNotification(
             remark: { value: '点击查看详情', color: '#FF0000' },
         };
 
-        const result = await wxPushService.sendTemplateMessage(openId, templateData, { url });
+        // Add explicit title and content parameters to the URL for reliable access
+        let notificationUrl = url;
+        if (notificationUrl) {
+            const urlObj = new URL(notificationUrl);
+            urlObj.searchParams.set('title', title);
+            urlObj.searchParams.set('content', content);
+            notificationUrl = urlObj.toString();
+        }
+
+        const result = await wxPushService.sendTemplateMessage(openId, templateData, { url: notificationUrl });
 
         return {
             success: true,

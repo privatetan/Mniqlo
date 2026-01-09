@@ -24,7 +24,25 @@ function NotificationContent() {
     useEffect(() => {
         const fetchNotification = async () => {
             try {
-                // 收集所有 URL 参数中可能存在的模板数据
+                // 优先检查显式的 title 和 content 参数
+                const titleParam = searchParams.get('title');
+                const contentParam = searchParams.get('content');
+
+                console.log('Explicit params - title:', titleParam, 'content:', contentParam);
+
+                if (titleParam || contentParam) {
+                    // 使用显式参数
+                    setNotification({
+                        id: 'url-params-explicit',
+                        title: titleParam || '消息通知',
+                        content: contentParam || '',
+                        timestamp: new Date().toLocaleString('zh-CN'),
+                    });
+                    setLoading(false);
+                    return;
+                }
+
+                // 收集所有 URL 参数中可能存在的模板数据(备用方案)
                 const dataMap: Record<string, string> = {};
                 let hasData = false;
 
@@ -38,39 +56,20 @@ function NotificationContent() {
 
                 console.log('Parsed Template Data Map:', dataMap);
 
-                // Check for explicitly named parameters first (the new standard)
-                const titleParam = searchParams.get('title');
-                const messageParam = searchParams.get('message');
-                const dateParam = searchParams.get('date');
-
-                if (titleParam || messageParam) {
+                // 使用微信模板数据作为备用方案
+                if (hasData && dataMap['first']) {
                     setNotification({
-                        id: 'url-params-explicit',
-                        title: titleParam || '消息通知',
-                        content: messageParam || '',
-                        timestamp: dateParam || new Date().toLocaleString('zh-CN'),
-                        // Merge with any other template data found
-                        templateData: hasData ? dataMap : undefined
-                    });
-                    setLoading(false);
-                    return;
-                }
-
-                // URL Params Legacy Support (template data encoding)
-                if (hasData) {
-                    setNotification({
-                        id: 'url-params',
-                        title: dataMap['first'] || '消息通知',
+                        id: 'wechat-template',
+                        title: dataMap['first'],
                         content: dataMap['keyword1'] || '',
                         timestamp: dataMap['keyword2'] || new Date().toLocaleString('zh-CN'),
-                        productId: dataMap['keyword3'] || undefined,
                         templateData: dataMap
                     });
                     setLoading(false);
                     return;
                 }
 
-                // 否则尝试从 API 获取 (如果带有 id 参数)
+                // 尝试从 API 获取 (如果带有 id 参数)
                 const notificationId = searchParams.get('id');
                 if (notificationId) {
                     const response = await fetch(`/api/notifications/${notificationId}`);
