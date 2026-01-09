@@ -307,17 +307,24 @@ export default function SuperSelectionPage() {
                                 >
                                     <div className="flex justify-between items-start mb-2">
                                         <div className="flex-1 min-w-0 pr-4">
-                                            <h3 className="font-bold text-gray-900 truncate">{product.name}</h3>
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 font-medium">{product.gender}</span>
-                                                <span className="text-[10px] text-gray-400">货号: {product.code}</span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-base text-green-600 font-bold font-mono shrink-0">{product.code}</span>
+                                                <h3 className="font-bold text-gray-900 truncate min-w-0">{product.name}</h3>
+                                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 font-medium shrink-0">{product.gender}</span>
                                             </div>
                                         </div>
                                         <div className="text-right shrink-0">
-                                            <div className="text-red-600 font-bold">¥{product.minPrice}</div>
-                                            {product.originPrice > product.minPrice && (
-                                                <div className="text-[10px] text-gray-400 line-through">¥{product.originPrice}</div>
-                                            )}
+                                            <div className="flex items-baseline gap-1 justify-end">
+                                                <div className="text-red-600 font-bold">¥{product.minPrice}</div>
+                                                {product.originPrice > product.minPrice && (
+                                                    <>
+                                                        <div className="text-[10px] text-gray-400 line-through">¥{product.originPrice}</div>
+                                                        <div className="text-[10px] text-red-500 font-medium">
+                                                            {(Math.floor((product.minPrice / product.originPrice) * 100) / 10).toFixed(1)}折
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-between mt-3 text-[11px] text-gray-500">
