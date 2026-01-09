@@ -66,6 +66,8 @@ export default function AdminUsersPage() {
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
     const [loadingTasks, setLoadingTasks] = useState(false);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
+    const [expandedSyncCode, setExpandedSyncCode] = useState<string | null>(null);
+    const [expandedTaskProductId, setExpandedTaskProductId] = useState<string | null>(null);
 
     useEffect(() => {
         const userStr = localStorage.getItem('user');
@@ -146,6 +148,7 @@ export default function AdminUsersPage() {
             setSelectedUser(user);
             setLoadingTasks(true);
             setIsTaskModalOpen(true);
+            setExpandedTaskProductId(null);
 
             const currentUser = JSON.parse(localStorage.getItem('user') || '{}').username;
             const response = await fetch(`/api/admin/users/${user.id}/tasks`, {
@@ -195,6 +198,7 @@ export default function AdminUsersPage() {
 
                 if (data.newCount > 0 || data.soldOutCount > 0) {
                     setIsNewItemsModalOpen(true);
+                    setExpandedSyncCode(null);
                 } else {
                     alert(`同步完成！共发现 ${data.totalFound} 条数据，数据库中已存在，没有发现任何库存变动。`);
                 }
@@ -251,7 +255,7 @@ export default function AdminUsersPage() {
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" /><path d="M16 16h5v5" /></svg>
                             </div>
                             <div>
-                                <h3 className="text-lg font-black text-gray-900 leading-none">数据同步</h3>
+                                <h3 className="text-lg font-black text-gray-900 leading-none">超值精选</h3>
                                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">实时抓取优衣库最新库存数据</p>
                             </div>
                         </div>
@@ -492,45 +496,78 @@ export default function AdminUsersPage() {
                                     </div>
                                 ) : (
                                     <div className="space-y-4">
-                                        {selectedTasks.map(task => (
-                                            <div key={task.id} className="bg-gray-50 p-4 rounded-2xl border border-gray-100 hover:border-[#0b5fff]/20 transition-all group">
-                                                <div className="flex justify-between items-start mb-3">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm text-[#0b5fff] font-bold group-hover:scale-110 transition-transform shrink-0">
-                                                            {task.productId.slice(0, 2)}
+                                        {Object.entries(selectedTasks.reduce((acc, task) => {
+                                            const pid = task.productId;
+                                            if (!acc[pid]) acc[pid] = [];
+                                            acc[pid].push(task);
+                                            return acc;
+                                        }, {} as Record<string, MonitorTask[]>)).map(([pid, tasks]) => {
+                                            const representative = tasks[0];
+                                            const isExpanded = expandedTaskProductId === pid;
+
+                                            return (
+                                                <div key={pid} className="bg-gray-50 rounded-2xl border border-gray-100 overflow-hidden transition-all duration-300">
+                                                    <div
+                                                        onClick={() => setExpandedTaskProductId(isExpanded ? null : pid)}
+                                                        className="p-4 cursor-pointer hover:bg-white flex justify-between items-center group/card"
+                                                    >
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm text-[#0b5fff] font-bold group-hover/card:scale-110 transition-transform shrink-0">
+                                                                {representative.productId.slice(0, 2)}
+                                                            </div>
+                                                            <div className="min-w-0">
+                                                                <p className="text-sm font-black text-gray-900 flex items-center gap-2">
+                                                                    <span className="font-mono text-[#0b5fff] shrink-0">{representative.productCode || 'N/A'}</span>
+                                                                    <span className="truncate">{representative.productName || '未知商品'}</span>
+                                                                </p>
+                                                                <p className="text-[10px] text-gray-400 font-mono tracking-tighter uppercase mt-0.5">
+                                                                    ID: {representative.productId} • {tasks.length} 个规格
+                                                                </p>
+                                                            </div>
                                                         </div>
-                                                        <div className="min-w-0">
-                                                            <p className="text-sm font-black text-gray-900 flex items-center gap-2">
-                                                                <span className="font-mono text-[#0b5fff] shrink-0">{task.productCode || 'N/A'}</span>
-                                                                <span className="truncate">{task.productName || '未知商品'}</span>
-                                                            </p>
-                                                            <p className="text-[10px] text-gray-400 font-mono tracking-tighter uppercase mt-0.5">
-                                                                ID: {task.productId} • {task.style || 'ANY COLOR'} • {task.size || 'ANY SIZE'}
-                                                            </p>
+                                                        <svg className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                                                        </svg>
+                                                    </div>
+
+                                                    {isExpanded && (
+                                                        <div className="border-t border-gray-200/50 bg-white/50 p-2 space-y-2 animate-in fade-in slide-in-from-top-1">
+                                                            {tasks.map(task => (
+                                                                <div key={task.id} className="bg-white p-3 rounded-xl border border-gray-100">
+                                                                    <div className="flex justify-between items-center mb-2">
+                                                                        <div className="flex gap-2">
+                                                                            <span className="text-[10px] font-bold px-2 py-0.5 bg-gray-100 rounded text-gray-700">{task.style || 'ANY COLOR'}</span>
+                                                                            <span className="text-[10px] font-bold px-2 py-0.5 bg-gray-100 rounded text-gray-700">{task.size || 'ANY SIZE'}</span>
+                                                                        </div>
+                                                                        <div className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter ${task.isActive ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-200 text-gray-500'}`}>
+                                                                            {task.isActive ? '运行中' : '静默'}
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="flex justify-between items-end">
+                                                                        <div className="flex gap-4">
+                                                                            <div>
+                                                                                <p className="text-[8px] text-gray-400 uppercase font-black leading-none mb-1">目标</p>
+                                                                                <p className="text-[10px] font-bold text-gray-700">¥{task.targetPrice || '不限'}</p>
+                                                                            </div>
+                                                                            <div>
+                                                                                <p className="text-[8px] text-gray-400 uppercase font-black leading-none mb-1">频率</p>
+                                                                                <p className="text-[10px] font-bold text-gray-700">{task.frequency}min</p>
+                                                                            </div>
+                                                                        </div>
+                                                                        {task.lastPushTime && (
+                                                                            <div className="text-right">
+                                                                                <p className="text-[8px] text-gray-400 uppercase font-black leading-none mb-1">最后推送</p>
+                                                                                <p className="text-[9px] text-gray-500 font-mono">{task.lastPushTime}</p>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            ))}
                                                         </div>
-                                                    </div>
-                                                    <div className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter ${task.isActive ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-200 text-gray-500'}`}>
-                                                        {task.isActive ? '正在运行' : '已停止'}
-                                                    </div>
+                                                    )}
                                                 </div>
-                                                <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-200/50">
-                                                    <div>
-                                                        <p className="text-[9px] text-gray-400 uppercase font-black tracking-widest leading-none mb-1">目标价格</p>
-                                                        <p className="text-xs font-bold text-gray-700">¥{task.targetPrice || '无限制'}</p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-[9px] text-gray-400 uppercase font-black tracking-widest leading-none mb-1">检查频率</p>
-                                                        <p className="text-xs font-bold text-gray-700">{task.frequency} min</p>
-                                                    </div>
-                                                </div>
-                                                {task.lastPushTime && (
-                                                    <div className="mt-3 pt-2 border-t border-gray-200/50">
-                                                        <p className="text-[9px] text-gray-400 uppercase font-black tracking-widest leading-none mb-1">最近推送</p>
-                                                        <p className="text-[10px] text-gray-500 font-mono uppercase">{task.lastPushTime}</p>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 )}
                             </div>
@@ -560,86 +597,135 @@ export default function AdminUsersPage() {
                                     </div>
                                     <p className="text-sm text-gray-500 font-medium">
                                         【{crawlSummary?.gender}】共找到 <span className="text-gray-900 font-bold">{crawlSummary?.totalFound}</span> 条库存 |
-                                        新增 <span className="text-[#0b5fff] font-black">{crawlSummary?.newCount}</span> |
-                                        下架 <span className="text-rose-500 font-black">{crawlSummary?.soldOutCount}</span>
+                                        新增 <span className="text-[#0b5fff] font-black">{crawlSummary?.newCount}</span> 条 (共 <span className="text-[#0b5fff] font-black">{
+                                            Object.keys((activeResultTab === 'new' ? newItems : soldOutItems).reduce((acc, item) => {
+                                                if (!acc[item.code]) acc[item.code] = [];
+                                                acc[item.code].push(item);
+                                                return acc;
+                                            }, {} as Record<string, CrawledItem[]>)).length
+                                        }</span> 款) |
+                                        已下架 <span className="text-rose-500 font-black">{crawlSummary?.soldOutCount}</span>
                                     </p>
                                 </div>
-                                <button
+                                <span
                                     onClick={() => setIsNewItemsModalOpen(false)}
                                     className="p-3 hover:bg-white hover:shadow-lg rounded-2xl transition-all text-gray-400 hover:text-gray-900 active:scale-90"
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
-                                </button>
+                                </span>
                             </div>
 
                             {/* Tab Switcher */}
                             <div className="px-8 flex gap-4 border-b border-gray-50 bg-white">
-                                <button
+                                <span
                                     onClick={() => setActiveResultTab('new')}
                                     className={`py-4 text-xs font-black uppercase tracking-widest border-b-2 transition-all ${activeResultTab === 'new' ? 'border-[#0b5fff] text-[#0b5fff]' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
                                 >
                                     新增库存 ({crawlSummary?.newCount})
-                                </button>
-                                <button
+                                </span>
+                                <span
                                     onClick={() => setActiveResultTab('soldout')}
                                     className={`py-4 text-xs font-black uppercase tracking-widest border-b-2 transition-all ${activeResultTab === 'soldout' ? 'border-rose-500 text-rose-500' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
                                 >
                                     已下架/售罄 ({crawlSummary?.soldOutCount})
-                                </button>
+                                </span>
                             </div>
 
                             {/* Modal Content */}
                             <div className="flex-1 overflow-auto p-4 sm:p-8 bg-gray-50/50">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {(activeResultTab === 'new' ? newItems : soldOutItems).map((item, idx) => (
-                                        <div key={idx} className={`bg-white p-5 rounded-3xl border shadow-sm hover:shadow-md transition-all group flex flex-col ${activeResultTab === 'new' ? 'border-gray-100 hover:border-[#0b5fff]/30' : 'border-rose-100 hover:border-rose-300'}`}>
-                                            <div className="flex justify-between items-start mb-3">
-                                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xs shadow-inner group-hover:scale-110 transition-transform overflow-hidden ${activeResultTab === 'new' ? 'bg-gray-50 text-[#0b5fff]' : 'bg-rose-50 text-rose-500'}`}>
-                                                    {item.product_id.slice(0, 4)}
+                                <div className="space-y-4">
+                                    {Object.entries((activeResultTab === 'new' ? newItems : soldOutItems).reduce((acc, item) => {
+                                        if (!acc[item.code]) acc[item.code] = [];
+                                        acc[item.code].push(item);
+                                        return acc;
+                                    }, {} as Record<string, CrawledItem[]>)).map(([code, items]) => {
+                                        const representative = items[0];
+                                        const isExpanded = expandedSyncCode === code;
+
+                                        return (
+                                            <div key={code} className={`bg-white rounded-3xl border shadow-sm transition-all overflow-hidden ${isExpanded ? 'ring-2 ring-[#0b5fff]/20' : ''} ${activeResultTab === 'new' ? 'border-gray-100' : 'border-rose-100'}`}>
+                                                <div
+                                                    onClick={() => setExpandedSyncCode(isExpanded ? null : code)}
+                                                    className="p-5 cursor-pointer hover:bg-gray-50 flex items-center justify-between group/card"
+                                                >
+                                                    <div className="flex items-center gap-4">
+                                                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xs shadow-inner group-hover/card:scale-110 transition-transform overflow-hidden ${activeResultTab === 'new' ? 'bg-gray-50 text-[#0b5fff]' : 'bg-rose-50 text-rose-500'}`}>
+                                                            {representative.code}
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <div className="flex items-center gap-2 mb-0.5">
+                                                                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest ${activeResultTab === 'new' ? 'text-blue-400 bg-blue-50' : 'text-rose-400 bg-rose-50'}`}>
+                                                                    {activeResultTab === 'new' ? `${items.length} 个新增` : `${items.length} 个售罄`}
+                                                                </span>
+                                                            </div>
+                                                            <h4 className={`text-sm font-black text-gray-900 line-clamp-1 transition-colors ${activeResultTab === 'new' ? 'group-hover/card:text-[#0b5fff]' : 'group-hover/card:text-rose-500'}`}>
+                                                                {representative.name}
+                                                            </h4>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-6">
+                                                        <div className="flex flex-col items-end">
+                                                            <div className="flex items-baseline gap-1">
+                                                                {representative.origin_price && parseFloat(representative.origin_price as any) > parseFloat(representative.price as any) && (
+                                                                    <span className="text-[10px] text-gray-400 line-through">¥{representative.origin_price}</span>
+                                                                )}
+                                                                <span className={`text-base font-black ${activeResultTab === 'new' ? 'text-rose-500' : 'text-gray-400 line-through'}`}>
+                                                                    ¥{representative.price}
+                                                                </span>
+                                                            </div>
+                                                            <span className="text-[8px] text-gray-400 uppercase font-black tracking-widest mt-0.5">参考价</span>
+                                                        </div>
+                                                        <svg className={`w-6 h-6 text-gray-300 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                                                        </svg>
+                                                    </div>
                                                 </div>
-                                                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest ${activeResultTab === 'new' ? 'text-blue-400 bg-blue-50' : 'text-rose-400 bg-rose-50'}`}>
-                                                    {activeResultTab === 'new' ? 'NEW' : 'GONE'}
-                                                </span>
+
+                                                {isExpanded && (
+                                                    <div className="bg-gray-50/50 p-4 border-t border-gray-100 space-y-3 animate-in fade-in slide-in-from-top-2">
+                                                        {items.map((item, idx) => (
+                                                            <div key={idx} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+                                                                <div className="flex gap-3">
+                                                                    <div className="flex flex-col">
+                                                                        <span className="text-[8px] text-gray-400 uppercase font-black tracking-widest leading-none mb-1 text-center">颜色</span>
+                                                                        <span className="text-xs font-bold text-gray-700 bg-gray-50 px-3 py-1 rounded-lg">{item.color}</span>
+                                                                    </div>
+                                                                    <div className="flex flex-col">
+                                                                        <span className="text-[8px] text-gray-400 uppercase font-black tracking-widest leading-none mb-1 text-center">尺寸</span>
+                                                                        <span className="text-xs font-bold text-gray-700 bg-gray-50 px-3 py-1 rounded-lg">{item.size}</span>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="flex items-center gap-6">
+                                                                    <div className="flex flex-col items-end">
+                                                                        <span className="text-[8px] text-gray-400 uppercase font-black tracking-widest leading-none mb-1">价格</span>
+                                                                        <div className="flex items-baseline gap-1">
+                                                                            {item.origin_price && parseFloat(item.origin_price as any) > parseFloat(item.price as any) && (
+                                                                                <span className="text-[10px] text-gray-400 line-through">¥{item.origin_price}</span>
+                                                                            )}
+                                                                            <span className={`text-sm font-black ${activeResultTab === 'new' ? 'text-rose-500' : 'text-gray-400 line-through'}`}>¥{item.price}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="flex flex-col items-end w-12">
+                                                                        <span className="text-[8px] text-gray-400 uppercase font-black tracking-widest leading-none mb-1">数量</span>
+                                                                        <span className="text-xs font-bold text-gray-700">{item.stock}</span>
+                                                                    </div>
+                                                                    <div className="flex flex-col items-end w-16">
+                                                                        <span className="text-[8px] text-gray-400 uppercase font-black tracking-widest leading-none mb-1">当前状态</span>
+                                                                        <span className={`text-xs font-black ${activeResultTab === 'new' ? (parseFloat(item.stock as any) === 0 ? 'text-orange-500' : 'text-emerald-500') : 'text-rose-500'}`}>
+                                                                            {activeResultTab === 'new' ? (parseFloat(item.stock as any) === 0 ? '暂无' : '有货') : '已售罄'}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </div>
-
-                                            <h4 className={`text-sm font-black text-gray-900 mb-1 line-clamp-1 transition-colors ${activeResultTab === 'new' ? 'group-hover:text-[#0b5fff]' : 'group-hover:text-rose-500'}`}>
-                                                {item.name}
-                                            </h4>
-
-                                            <div className="space-y-2 mt-auto">
-                                                <div className="flex items-center justify-between text-[10px] font-bold">
-                                                    <span className="text-gray-400 uppercase tracking-tighter">货号</span>
-                                                    <span className="text-gray-700 font-mono tracking-tighter">{item.code}</span>
-                                                </div>
-
-                                                <div className="flex gap-2">
-                                                    <div className="flex-1 bg-gray-50 rounded-xl p-2 flex flex-col items-center">
-                                                        <span className="text-[8px] text-gray-400 uppercase font-black tracking-widest leading-none mb-1">颜色</span>
-                                                        <span className="text-[10px] font-bold text-gray-700">{item.color}</span>
-                                                    </div>
-                                                    <div className="flex-1 bg-gray-50 rounded-xl p-2 flex flex-col items-center">
-                                                        <span className="text-[8px] text-gray-400 uppercase font-black tracking-widest leading-none mb-1">尺寸</span>
-                                                        <span className="text-[10px] font-bold text-gray-700">{item.size}</span>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex items-center justify-between pt-2 border-t border-dashed border-gray-100">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-[8px] text-gray-400 uppercase font-black tracking-widest leading-none mb-1">抓取价格</span>
-                                                        <span className={`text-sm font-black ${activeResultTab === 'new' ? 'text-rose-500' : 'text-gray-400'}`}>¥{item.price}</span>
-                                                    </div>
-                                                    <div className="flex flex-col items-end">
-                                                        <span className="text-[8px] text-gray-400 uppercase font-black tracking-widest leading-none mb-1">状态</span>
-                                                        <span className={`text-sm font-black ${activeResultTab === 'new' ? 'text-emerald-500' : 'text-rose-500'}`}>
-                                                            {activeResultTab === 'new' ? (item.stock === '0' ? '无货' : '有货') : '已下架/售罄'}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                     {(activeResultTab === 'new' ? newItems : soldOutItems).length === 0 && (
-                                        <div className="col-span-full py-20 text-center space-y-4">
+                                        <div className="py-20 text-center space-y-4">
                                             <div className="text-4xl text-gray-200">🌑</div>
                                             <p className="text-gray-400 font-black uppercase tracking-widest text-xs">此处没有变动记录</p>
                                         </div>

@@ -4,6 +4,14 @@ const CONFIG_URL = 'https://www.uniqlo.cn/data/config_1/zh_CN/super-u_951462.jso
 const PRODUCT_DETAIL_URL = 'https://www.uniqlo.cn/data/products/spu/zh_CN';
 const STOCK_URL = 'https://d.uniqlo.cn/p/stock/stock/query/zh_CN';
 
+// Indicators in the JSON configuration that mark the end of a category's product list
+const CATEGORY_INDICATORS: Record<string, string> = {
+    'SALE_W': '女装',
+    'SALE_M': '男装',
+    'SALE_K': '童装',
+    'SALE_B': '婴幼儿装'
+};
+
 // Common headers for all requests
 const COMMON_HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -28,9 +36,9 @@ export interface CrawledItem {
 
 /**
  * Get Product Codes from Config
- * 从配置接口获取所有产品代码列表
+ * 从配置接口获取所有产品代码列表，支持按性别分类过滤
  */
-export async function getProductCodesFromConfig(): Promise<string[]> {
+export async function getProductCodesFromConfig(targetGender?: string): Promise<string[]> {
     try {
         const res = await fetch(CONFIG_URL, {
             headers: COMMON_HEADERS
@@ -44,9 +52,54 @@ export async function getProductCodesFromConfig(): Promise<string[]> {
         const configData = await res.json();
         const productCodes: string[] = [];
 
-        // Extract product codes from sections
-        for (const sectionKey in configData) {
+        // --- Dynamic Category Mapping Logic ---
+        // Group sections into category buckets based on the appearance of 'SALE_W/M/K/B' markers
+        const categoryGroups: Record<string, string[]> = {};
+        let currentGroupSections: string[] = [];
+
+        // Sort keys numerically (section01, section02...) to process in visual order
+        const sortedKeys = Object.keys(configData).sort((a, b) => {
+            const numA = parseInt(a.replace(/\D/g, ''), 10);
+            const numB = parseInt(b.replace(/\D/g, ''), 10);
+            return numA - numB;
+        });
+
+        for (const key of sortedKeys) {
+            currentGroupSections.push(key);
+            const sectionContent = JSON.stringify(configData[key]);
+
+            // Check if this section contains any category marker (e.g., "SALE_W")
+            let foundMarker: string | null = null;
+            for (const marker in CATEGORY_INDICATORS) {
+                if (sectionContent.includes(marker)) {
+                    foundMarker = CATEGORY_INDICATORS[marker];
+                    break;
+                }
+            }
+
+            // If a marker is found, it closes the current category group
+            if (foundMarker) {
+                categoryGroups[foundMarker] = [...currentGroupSections];
+                currentGroupSections = []; // Reset for next group
+            }
+        }
+
+        // Determine which sections to process based on targetGender
+        let sectionsToProcess: string[] = [];
+        if (targetGender && categoryGroups[targetGender]) {
+            sectionsToProcess = categoryGroups[targetGender];
+            console.log(`[Crawler] Target category "${targetGender}" identified. Processing ${sectionsToProcess.length} dynamically discovered sections.`);
+        } else {
+            // If no target or category not found, process everything
+            sectionsToProcess = sortedKeys;
+        }
+        // --------------------------------------
+
+        // Extract product codes from selected sections
+        sectionsToProcess.forEach(sectionKey => {
             const section = configData[sectionKey];
+            if (!section) return;
+
             if (section.componentType === 'productRecommed' || section.componentType === 'productRecommed_v2') {
                 if (Array.isArray(section.props)) {
                     section.props.forEach((propGroup: any) => {
@@ -60,7 +113,7 @@ export async function getProductCodesFromConfig(): Promise<string[]> {
                     });
                 }
             }
-        }
+        });
 
         return Array.from(new Set(productCodes));
     } catch (error) {
@@ -301,8 +354,8 @@ export async function crawlUniqloProducts(targetGender?: string): Promise<{ tota
     console.log(`Starting Uniqlo crawl${targetGender ? ` for gender: ${targetGender}` : ''}...`);
 
     try {
-        // 1. Get all product codes
-        const productCodes = await getProductCodesFromConfig();
+        // 1. Get all product codes (optionally filtered by category section logic)
+        const productCodes = await getProductCodesFromConfig(targetGender);
         console.log(`Found ${productCodes.length} unique product codes.`);
 
         if (productCodes.length === 0) {
