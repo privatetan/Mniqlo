@@ -406,23 +406,36 @@ export async function crawlUniqloProducts(targetGender?: string): Promise<{ tota
         if (newItems.length > 0) {
             try {
                 // 1. Fetch all enabled subscriptions that include this category
-                const { data: subscriptions, error: subError } = await supabase
+                const { data: rawSubscriptions, error: subError } = await supabase
                     .from('super_push_subscriptions')
-                    .select(`
-                        id,
-                        user_id,
-                        genders,
-                        users (
-                            username,
-                            wx_user_id
-                        )
-                    `)
+                    .select('id, user_id, genders')
                     .eq('is_enabled', true)
-                    .contains('genders', [targetGender]); // Use targetGender here
+                    .contains('genders', [targetGender]);
 
                 if (subError) throw subError;
 
-                if (subscriptions && subscriptions.length > 0) {
+                if (rawSubscriptions && rawSubscriptions.length > 0) {
+                    // 2. Fetch user details separately to avoid join relationship issues
+                    const userIds = Array.from(new Set(rawSubscriptions.map(s => s.user_id)));
+                    const { data: users, error: userError } = await supabase
+                        .from('users')
+                        .select('id, username, wx_user_id')
+                        .in('id', userIds);
+
+                    if (userError) throw userError;
+
+                    // 3. Map users for easy lookup
+                    const userMap = (users || []).reduce((acc, user) => {
+                        acc[user.id] = user;
+                        return acc;
+                    }, {} as Record<string, any>);
+
+                    // 4. Merge results
+                    const subscriptions = rawSubscriptions.map(sub => ({
+                        ...sub,
+                        users: userMap[sub.user_id]
+                    }));
+
                     // Group new items by code for individual notifications
                     const itemsByCode = newItems.reduce((acc, item) => {
                         if (!acc[item.code]) acc[item.code] = [];
