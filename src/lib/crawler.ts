@@ -26,10 +26,13 @@ const COMMON_HEADERS = {
  */
 function standardizeGender(rawGender: string): string {
     const gender = (rawGender || '').toLowerCase();
+    // Prioritize Baby/Kids because they might contain gender words (e.g. "女童")
+    if (gender.includes('baby') || gender.includes('infant') || gender.includes('幼')) return '婴幼儿装';
+    if (gender.includes('kids') || gender.includes('child') || gender.includes('kid') || gender.includes('童')) return '童装';
+
     if (gender.includes('women') || gender.includes('woman') || gender.includes('女')) return '女装';
     if (gender.includes('men') || gender.includes('man') || gender.includes('男')) return '男装';
-    if (gender.includes('kids') || gender.includes('child') || gender.includes('kid') || gender.includes('童')) return '童装';
-    if (gender.includes('baby') || gender.includes('infant') || gender.includes('幼')) return '婴幼儿装';
+
     return rawGender || '未知';
 }
 
@@ -214,6 +217,8 @@ async function processProduct(productCode: string, targetGender?: string): Promi
         const rawGender = summary.sex || summary.gDeptValue || '未知';
         const gender = standardizeGender(rawGender);
         const itemCode = summary.code || summary.oms_productCode || '';
+
+
 
         // Gender filter: only check stock if gender matches target
         // targetGender is already standardized (e.g., '女装')
