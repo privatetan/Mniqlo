@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { sendWxNotification } from './wxpush';
 
 const CONFIG_URL = 'https://www.uniqlo.cn/data/config_1/zh_CN/super-u_951462.json';
 const PRODUCT_DETAIL_URL = 'https://www.uniqlo.cn/data/products/spu/zh_CN';
@@ -401,11 +402,75 @@ export async function crawlUniqloProducts(targetGender?: string): Promise<{ tota
         soldOutItems = result.soldOutItems;
 
         console.log(`Crawl result: Total Found=${allResults.length}, New Items=${newItems.length}, Sold Out Items=${soldOutItems.length}`);
+        // --- Notification Logic for Super Selection ---
+        if (newItems.length > 0) {
+            try {
+                // 1. Fetch all enabled subscriptions that include this category
+                const { data: subscriptions, error: subError } = await supabase
+                    .from('super_push_subscriptions')
+                    .select(`
+                        id,
+                        user_id,
+                        genders,
+                        users (
+                            username,
+                            wx_user_id
+                        )
+                    `)
+                    .eq('is_enabled', true)
+                    .contains('genders', [targetGender]); // Use targetGender here
+
+                if (subError) throw subError;
+
+                if (subscriptions && subscriptions.length > 0) {
+                    // Group new items by code for individual notifications
+                    const itemsByCode = newItems.reduce((acc, item) => {
+                        if (!acc[item.code]) acc[item.code] = [];
+                        acc[item.code].push(item);
+                        return acc;
+                    }, {} as Record<string, CrawledItem[]>);
+
+                    console.log(`[Notification] Found ${subscriptions.length} eligible subscribers for category "${targetGender}".`);
+
+                    for (const sub of subscriptions) {
+                        const user = sub.users as any;
+                        if (!user?.wx_user_id) {
+                            console.log(`[Notification] User ${user?.username || sub.user_id} has no wx_user_id, skipping.`);
+                            continue;
+                        }
+
+                        for (const code in itemsByCode) {
+                            const items = itemsByCode[code];
+                            const firstItem = items[0];
+                            const title = `超值精选新增：${firstItem.name}`;
+                            const content = `发现货号 ${code} 有新库存！包含 ${items.length} 个规格。价格: ¥${firstItem.price}${firstItem.origin_price && parseFloat(firstItem.origin_price as any) > parseFloat(firstItem.price as any) ? ` (原价: ¥${firstItem.origin_price})` : ''}。`;
+
+                            // Send individual notification
+                            const notificationResult = await sendWxNotification( // Renamed 'result' to 'notificationResult' to avoid conflict
+                                user.wx_user_id,
+                                title,
+                                content,
+                                `https://www.uniqlo.cn/hmall-sc/jp/zh_CN/goods-detail.html?productCode=${firstItem.product_id}`
+                            );
+
+                            if (notificationResult.success) {
+                                console.log(`[Notification] Sent to ${user.username} for code ${code}`);
+                            } else {
+                                console.error(`[Notification] Failed to send to ${user.username} for code ${code}:`, notificationResult.error);
+                            }
+                        }
+                    }
+                }
+            } catch (notifyError) {
+                console.error('[Notification] Error in super selection notification flow:', notifyError);
+            }
+        }
+        // -----------------------------------------------
 
         return {
-            totalFound: allResults.length,
             newItems,
-            soldOutItems
+            soldOutItems,
+            totalFound: allResults.length
         };
     } catch (error) {
         console.error('Crawler failed:', error);
