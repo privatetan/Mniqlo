@@ -24,6 +24,30 @@ type GroupedData = {
     }[];
 };
 
+const getSizeWeight = (size: string): number => {
+    const s = size.toUpperCase();
+    const weights: { [key: string]: number } = {
+        'XXS': 10,
+        'XS': 20,
+        'S': 30,
+        'M': 40,
+        'L': 50,
+        'XL': 60,
+        'XXL': 70,
+        '3XL': 80,
+        '4XL': 90,
+    };
+    if (weights[s]) return weights[s];
+
+    // Attempt to parse number for numeric sizes (e.g. 29, 160/80A)
+    const match = s.match(/^(\d+)/);
+    if (match) {
+        return 100 + parseFloat(match[1]); // Offset to separate from S/M/L
+    }
+
+    return 9999; // Unknown last
+};
+
 export default function SuperSelectionPage() {
     const [loading, setLoading] = useState(true);
     const [items, setItems] = useState<CrawledItem[]>([]);
@@ -205,6 +229,17 @@ export default function SuperSelectionPage() {
                     subItems: subItemsList
                 });
             });
+
+            // Sort logic
+            if (viewMode === 'size') {
+                // If viewing by size, sort the main groups (keys are sizes)
+                groupedData.sort((a, b) => getSizeWeight(a.key) - getSizeWeight(b.key));
+            } else {
+                // If viewing by color, sort the sub-items within each color group (keys are sizes)
+                groupedData.forEach(group => {
+                    group.subItems.sort((a, b) => getSizeWeight(a.key) - getSizeWeight(b.key));
+                });
+            }
 
             return {
                 ...product,
