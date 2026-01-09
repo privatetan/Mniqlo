@@ -307,10 +307,12 @@ export default function SuperSelectionPage() {
                                 >
                                     <div className="flex justify-between items-start mb-2">
                                         <div className="flex-1 min-w-0 pr-4">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-base text-green-600 font-bold font-mono shrink-0">{product.code}</span>
-                                                <h3 className="font-bold text-gray-900 truncate min-w-0">{product.name}</h3>
-                                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 font-medium shrink-0">{product.gender}</span>
+                                            <div className="flex flex-col gap-0.5">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-base text-green-600 font-bold font-mono">{product.code}</span>
+                                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 font-medium">{product.gender}</span>
+                                                </div>
+                                                <h3 className="text-xs text-gray-500 truncate">{product.name}</h3>
                                             </div>
                                         </div>
                                         <div className="text-right shrink-0">
