@@ -187,12 +187,9 @@ export default function FavoritePage() {
         <div className="flex flex-col h-full w-full overflow-hidden">
             <div className="bg-white flex items-center justify-between p-4 border-b border-gray-100">
                 <div className="flex items-center gap-2">
-                    <h1 className="font-medium text-lg">
-                        我的收藏
-                        <span className="text-xs text-gray-500 font-normal ml-2">
-                            {uniqueProductIds.length} 个商品
-                        </span>
-                    </h1>
+                    <span className="text-xs text-gray-500 font-normal ml-2">
+                        共计： {uniqueProductIds.length} 个商品 / {favorites.length} 个规格
+                    </span>
                 </div>
 
                 {favorites.length > 0 && (

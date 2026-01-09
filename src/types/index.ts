@@ -16,3 +16,17 @@ export type StockItem = {
     size: string;
     style: string;
 };
+
+export interface CrawledItem {
+    product_id: string;
+    code: string;
+    name: string;
+    color: string;
+    size: string;
+    price: string;
+    min_price: string;
+    origin_price?: string;
+    stock: number;
+    gender: string;
+    sku_id: string;
+}

@@ -1,0 +1,2070 @@
+{
+	"section03": {
+		"componentType": "anchor",
+		"hideSpace": true,
+		"name": "",
+		"aspectRatio": 3.10881,
+		"urlPath": "/cms/f332a4dc1715f54432e745832116dc16.jpg",
+		"props": [
+			{
+				"rightBottomSpot": "99,134",
+				"leftTopSpot": "0,86",
+				"link": "section04",
+				"linkName": null
+			},
+			{
+				"rightBottomSpot": "200,133",
+				"leftTopSpot": "100,87",
+				"link": "section40",
+				"linkName": null
+			},
+			{
+				"rightBottomSpot": "298,133",
+				"leftTopSpot": "201,87",
+				"link": "section65",
+				"linkName": null
+			},
+			{
+				"rightBottomSpot": "400,134",
+				"leftTopSpot": "300,83",
+				"link": "section83",
+				"linkName": null
+			}
+		]
+	},
+	"section04": {
+		"componentType": "anchor",
+		"hideSpace": true,
+		"name": "",
+		"aspectRatio": 3.01205,
+		"urlPath": "/cms/1235d9ed15c898f97d2a428512fa006d.png",
+		"props": [
+			{
+				"rightBottomSpot": "81,87",
+				"leftTopSpot": "3,37",
+				"link": "section05",
+				"linkName": null
+			},
+			{
+				"rightBottomSpot": "159,87",
+				"leftTopSpot": "86,36",
+				"link": "section10",
+				"linkName": null
+			},
+			{
+				"rightBottomSpot": "237,88",
+				"leftTopSpot": "162,39",
+				"link": "section17",
+				"linkName": null
+			},
+			{
+				"rightBottomSpot": "313,90",
+				"leftTopSpot": "237,44",
+				"link": "section20",
+				"linkName": null
+			},
+			{
+				"rightBottomSpot": "396,89",
+				"leftTopSpot": "316,48",
+				"link": "section27",
+				"linkName": null
+			},
+			{
+				"rightBottomSpot": "84,133",
+				"leftTopSpot": "4,86",
+				"link": "section31",
+				"linkName": null
+			}
+		]
+	},
+	"section05": {
+		"componentType": "banner",
+		"kvAreaFlag": "N",
+		"link": null,
+		"aspectRatio": 7.65306,
+		"media": null,
+		"urlPath": "/cms/0c35c8174004c4a872e92961a5a603bd.png",
+		"linkName": null,
+		"displayMode": null,
+		"url": null,
+		"hideSpace": true,
+		"name": "",
+		"subcategoryCode": null,
+		"posterPath": null
+	},
+	"section06": {
+		"enable_video_streaming": "",
+		"componentType": "productRecommed",
+		"titleCss": "1",
+		"quantity": "",
+		"windowShopping": "",
+		"hideSpace": true,
+		"name": "",
+		"subcategoryCode": null,
+		"linkName": "",
+		"displayMode": "V",
+		"props": [
+			{
+				"videoChannelId": null,
+				"recomType": null,
+				"code": "47AEB7903BB438D0E06359011EAC6C3A",
+				"linkName": null,
+				"displayMode": null,
+				"props": [
+					{
+						"productCode": "u0000000055741"
+					},
+					{
+						"productCode": "u0000000066997"
+					},
+					{
+						"productCode": "u0000000069136"
+					},
+					{
+						"productCode": "u0000000069174"
+					},
+					{
+						"productCode": "u0000000069176"
+					},
+					{
+						"productCode": "u0000000066153"
+					},
+					{
+						"productCode": "u0000000066156"
+					},
+					{
+						"productCode": "u0000000066172"
+					},
+					{
+						"productCode": "u0000000066154"
+					},
+					{
+						"productCode": "u0000000066152"
+					},
+					{
+						"productCode": "u0000000065614"
+					},
+					{
+						"productCode": "u0000000069600"
+					},
+					{
+						"productCode": "u0000000065174"
+					},
+					{
+						"productCode": "u0000000065637"
+					},
+					{
+						"productCode": "u0000000069533"
+					},
+					{
+						"productCode": "u0000000068647"
+					},
+					{
+						"productCode": "u0000000065063"
+					},
+					{
+						"productCode": "u0000000066637"
+					},
+					{
+						"productCode": "u0000000065849"
+					},
+					{
+						"productCode": "u0000000069603"
+					},
+					{
+						"productCode": "u0000000056583"
+					},
+					{
+						"productCode": "u0000000069394"
+					},
+					{
+						"productCode": "u0000000069798"
+					},
+					{
+						"productCode": "u0000000056543"
+					},
+					{
+						"productCode": "u0000000065848"
+					},
+					{
+						"productCode": "u0000000065840"
+					},
+					{
+						"productCode": "u0000000066193"
+					},
+					{
+						"productCode": "u0000000064592"
+					},
+					{
+						"productCode": "u0000000068954"
+					},
+					{
+						"productCode": "u0000000068697"
+					}
+				],
+				"displayProductPrices": "Y",
+				"productGroup": 2418253,
+				"sceneType": null,
+				"displayProductTitles": "Y",
+				"personalizedRecomFlag": "N",
+				"name": "",
+				"sceneId": null,
+				"channelId": null
+			}
+		]
+	},
+	"section10": {
+		"componentType": "banner",
+		"kvAreaFlag": "N",
+		"link": null,
+		"aspectRatio": 7.65306,
+		"media": null,
+		"urlPath": "/cms/342f00296615067fd1f355f4762dbab5.png",
+		"linkName": null,
+		"displayMode": null,
+		"url": null,
+		"hideSpace": true,
+		"name": "",
+		"subcategoryCode": null,
+		"posterPath": null
+	},
+	"section11": {
+		"enable_video_streaming": "",
+		"componentType": "productRecommed",
+		"titleCss": "1",
+		"quantity": "",
+		"windowShopping": "",
+		"hideSpace": true,
+		"name": "",
+		"subcategoryCode": null,
+		"linkName": "",
+		"displayMode": "V",
+		"props": [
+			{
+				"videoChannelId": null,
+				"recomType": "recommendByUser",
+				"code": "47AEB7903BB738D0E06359011EAC6C3A",
+				"linkName": null,
+				"displayMode": null,
+				"props": [
+					{
+						"productCode": "u0000000065217"
+					},
+					{
+						"productCode": "u0000000065214"
+					},
+					{
+						"productCode": "u0000000066216"
+					},
+					{
+						"productCode": "u0000000065219"
+					},
+					{
+						"productCode": "u0000000065843"
+					},
+					{
+						"productCode": "u0000000065854"
+					},
+					{
+						"productCode": "u0000000065835"
+					},
+					{
+						"productCode": "u0000000066619"
+					},
+					{
+						"productCode": "u0000000064458"
+					},
+					{
+						"productCode": "u0000000067257"
+					},
+					{
+						"productCode": "u0000000064982"
+					},
+					{
+						"productCode": "u0000000068600"
+					},
+					{
+						"productCode": "u0000000064460"
+					},
+					{
+						"productCode": "u0000000064616"
+					},
+					{
+						"productCode": "u0000000062723"
+					},
+					{
+						"productCode": "u0000000065066"
+					},
+					{
+						"productCode": "u0000000065254"
+					},
+					{
+						"productCode": "u0000000064700"
+					},
+					{
+						"productCode": "u0000000066998"
+					},
+					{
+						"productCode": "u0000000069135"
+					},
+					{
+						"productCode": "u0000000063786"
+					},
+					{
+						"productCode": "u0000000063810"
+					},
+					{
+						"productCode": "u0000000065954"
+					},
+					{
+						"productCode": "u0000000063812"
+					},
+					{
+						"productCode": "u0000000067216"
+					},
+					{
+						"productCode": "u0000000063792"
+					},
+					{
+						"productCode": "u0000000063794"
+					},
+					{
+						"productCode": "u0000000063814"
+					},
+					{
+						"productCode": "u0000000063833"
+					},
+					{
+						"productCode": "u0000000068672"
+					},
+					{
+						"productCode": "u0000000067995"
+					},
+					{
+						"productCode": "u0000000064591"
+					},
+					{
+						"productCode": "u0000000065081"
+					},
+					{
+						"productCode": "u0000000066852"
+					}
+				],
+				"displayProductPrices": "Y",
+				"productGroup": 2418254,
+				"sceneType": null,
+				"displayProductTitles": "Y",
+				"personalizedRecomFlag": "N",
+				"name": "",
+				"sceneId": null,
+				"channelId": null
+			}
+		]
+	},
+	"section17": {
+		"componentType": "banner",
+		"kvAreaFlag": "N",
+		"link": null,
+		"aspectRatio": 7.65306,
+		"media": null,
+		"urlPath": "/cms/15adc447c8f096290fe32778b6b83257.png",
+		"linkName": null,
+		"displayMode": null,
+		"url": null,
+		"hideSpace": true,
+		"name": "",
+		"subcategoryCode": null,
+		"posterPath": null
+	},
+	"section18": {
+		"enable_video_streaming": "",
+		"componentType": "productRecommed",
+		"titleCss": "1",
+		"quantity": "",
+		"windowShopping": "",
+		"hideSpace": true,
+		"name": "",
+		"subcategoryCode": null,
+		"linkName": "",
+		"displayMode": "V",
+		"props": [
+			{
+				"videoChannelId": null,
+				"recomType": "recommendByUser",
+				"code": "47AEB7903BBA38D0E06359011EAC6C3A",
+				"linkName": null,
+				"displayMode": null,
+				"props": [
+					{
+						"productCode": "u0000000066472"
+					},
+					{
+						"productCode": "u0000000057241"
+					},
+					{
+						"productCode": "u0000000065852"
+					},
+					{
+						"productCode": "u0000000065874"
+					},
+					{
+						"productCode": "u0000000066512"
+					},
+					{
+						"productCode": "u0000000065634"
+					},
+					{
+						"productCode": "u0000000064241"
+					},
+					{
+						"productCode": "u0000000064232"
+					},
+					{
+						"productCode": "u0000000064253"
+					},
+					{
+						"productCode": "u0000000064720"
+					},
+					{
+						"productCode": "u0000000068607"
+					},
+					{
+						"productCode": "u0000000062755"
+					}
+				],
+				"displayProductPrices": "Y",
+				"productGroup": 2418255,
+				"sceneType": null,
+				"displayProductTitles": "Y",
+				"personalizedRecomFlag": "N",
+				"name": "",
+				"sceneId": null,
+				"channelId": null
+			}
+		]
+	},
+	"section20": {
+		"componentType": "banner",
+		"kvAreaFlag": "N",
+		"link": null,
+		"aspectRatio": 7.65306,
+		"media": null,
+		"urlPath": "/cms/4e317faac1afafbb161953cb2d100d0c.png",
+		"linkName": null,
+		"displayMode": null,
+		"url": null,
+		"hideSpace": true,
+		"name": "",
+		"subcategoryCode": null,
+		"posterPath": null
+	},
+	"section21": {
+		"enable_video_streaming": "",
+		"componentType": "productRecommed",
+		"titleCss": "1",
+		"quantity": "",
+		"windowShopping": "",
+		"hideSpace": true,
+		"name": "",
+		"subcategoryCode": null,
+		"linkName": "",
+		"displayMode": "V",
+		"props": [
+			{
+				"videoChannelId": null,
+				"recomType": "recommendByUser",
+				"code": "47AEB7903BBD38D0E06359011EAC6C3A",
+				"linkName": null,
+				"displayMode": null,
+				"props": [
+					{
+						"productCode": "u0000000066192"
+					},
+					{
+						"productCode": "u0000000066812"
+					},
+					{
+						"productCode": "u0000000065851"
+					},
+					{
+						"productCode": "u0000000066372"
+					},
+					{
+						"productCode": "u0000000065844"
+					},
+					{
+						"productCode": "u0000000065872"
+					},
+					{
+						"productCode": "u0000000066252"
+					},
+					{
+						"productCode": "u0000000065556"
+					},
+					{
+						"productCode": "u0000000065953"
+					},
+					{
+						"productCode": "u0000000065280"
+					},
+					{
+						"productCode": "u0000000068292"
+					},
+					{
+						"productCode": "u0000000069799"
+					},
+					{
+						"productCode": "u0000000069876"
+					},
+					{
+						"productCode": "u0000000067255"
+					},
+					{
+						"productCode": "u0000000054099"
+					},
+					{
+						"productCode": "u0000000058195"
+					},
+					{
+						"productCode": "u0000000054781"
+					},
+					{
+						"productCode": "u0000000056811"
+					},
+					{
+						"productCode": "u0000000064523"
+					},
+					{
+						"productCode": "u0000000058354"
+					},
+					{
+						"productCode": "u0000000069607"
+					},
+					{
+						"productCode": "u0000000069605"
+					},
+					{
+						"productCode": "u0000000069608"
+					},
+					{
+						"productCode": "u0000000064437"
+					},
+					{
+						"productCode": "u0000000065459"
+					},
+					{
+						"productCode": "u0000000068973"
+					},
+					{
+						"productCode": "u0000000067293"
+					},
+					{
+						"productCode": "u0000000065085"
+					},
+					{
+						"productCode": "u0000000065082"
+					},
+					{
+						"productCode": "u0000000063354"
+					},
+					{
+						"productCode": "u0000000059214"
+					},
+					{
+						"productCode": "u0000000067015"
+					},
+					{
+						"productCode": "u0000000063791"
+					},
+					{
+						"productCode": "u0000000064586"
+					}
+				],
+				"displayProductPrices": "Y",
+				"productGroup": 2418256,
+				"sceneType": null,
+				"displayProductTitles": "Y",
+				"personalizedRecomFlag": "N",
+				"name": "",
+				"sceneId": null,
+				"channelId": null
+			}
+		]
+	},
+	"section27": {
+		"componentType": "banner",
+		"kvAreaFlag": "N",
+		"link": null,
+		"aspectRatio": 7.65306,
+		"media": null,
+		"urlPath": "/cms/caf1b704a07e7231fca7f1bd8935de7b.png",
+		"linkName": null,
+		"displayMode": null,
+		"url": null,
+		"hideSpace": true,
+		"name": "",
+		"subcategoryCode": null,
+		"posterPath": null
+	},
+	"section28": {
+		"enable_video_streaming": "",
+		"componentType": "productRecommed",
+		"titleCss": "1",
+		"quantity": "",
+		"windowShopping": "",
+		"hideSpace": true,
+		"name": "",
+		"subcategoryCode": null,
+		"linkName": "",
+		"displayMode": "V",
+		"props": [
+			{
+				"videoChannelId": null,
+				"recomType": "recommendByUser",
+				"code": "47AEB7903BC038D0E06359011EAC6C3A",
+				"linkName": null,
+				"displayMode": null,
+				"props": [
+					{
+						"productCode": "u0000000065215"
+					},
+					{
+						"productCode": "u0000000064726"
+					},
+					{
+						"productCode": "u0000000062720"
+					},
+					{
+						"productCode": "u0000000062739"
+					},
+					{
+						"productCode": "u0000000065054"
+					},
+					{
+						"productCode": "u0000000062735"
+					},
+					{
+						"productCode": "u0000000063832"
+					},
+					{
+						"productCode": "u0000000065278"
+					},
+					{
+						"productCode": "u0000000065218"
+					},
+					{
+						"productCode": "u0000000065577"
+					},
+					{
+						"productCode": "u0000000068606"
+					},
+					{
+						"productCode": "u0000000066641"
+					}
+				],
+				"displayProductPrices": "Y",
+				"productGroup": 2418257,
+				"sceneType": null,
+				"displayProductTitles": "Y",
+				"personalizedRecomFlag": "N",
+				"name": "",
+				"sceneId": null,
+				"channelId": null
+			}
+		]
+	},
+	"section31": {
+		"componentType": "banner",
+		"kvAreaFlag": "N",
+		"link": null,
+		"aspectRatio": 7.65306,
+		"media": null,
+		"urlPath": "/cms/4c27bf6ad83cfc3e72d8f3add8eab742.png",
+		"linkName": null,
+		"displayMode": null,
+		"url": null,
+		"hideSpace": true,
+		"name": "",
+		"subcategoryCode": null,
+		"posterPath": null
+	},
+	"section32": {
+		"enable_video_streaming": "",
+		"componentType": "productRecommed",
+		"titleCss": "1",
+		"quantity": "",
+		"windowShopping": "",
+		"hideSpace": true,
+		"name": "",
+		"subcategoryCode": null,
+		"linkName": "",
+		"displayMode": "V",
+		"props": [
+			{
+				"videoChannelId": null,
+				"recomType": "recommendByUser",
+				"code": "47AEB7903BC338D0E06359011EAC6C3A",
+				"linkName": null,
+				"displayMode": null,
+				"props": [
+					{
+						"productCode": "u0000000069134"
+					},
+					{
+						"productCode": "u0000000069175"
+					},
+					{
+						"productCode": "u0000000069779"
+					},
+					{
+						"productCode": "u0000000069800"
+					},
+					{
+						"productCode": "u0000000056757"
+					},
+					{
+						"productCode": "u0000000066072"
+					},
+					{
+						"productCode": "u0000000067655"
+					},
+					{
+						"productCode": "u0000000068459"
+					},
+					{
+						"productCode": "u0000000049462"
+					},
+					{
+						"productCode": "u0000000065253"
+					},
+					{
+						"productCode": "u0000000068472"
+					},
+					{
+						"productCode": "u0000000064833"
+					},
+					{
+						"productCode": "u0000000064836"
+					},
+					{
+						"productCode": "u0000000068604"
+					},
+					{
+						"productCode": "u0000000064818"
+					},
+					{
+						"productCode": "u0000000069780"
+					},
+					{
+						"productCode": "u0000000065229"
+					},
+					{
+						"productCode": "u0000000067913"
+					},
+					{
+						"productCode": "u0000000065246"
+					},
+					{
+						"productCode": "u0000000063356"
+					},
+					{
+						"productCode": "u0000000063357"
+					},
+					{
+						"productCode": "u0000000065616"
+					},
+					{
+						"productCode": "u0000000065578"
+					},
+					{
+						"productCode": "u0000000068173"
+					}
+				],
+				"displayProductPrices": "Y",
+				"productGroup": 2418258,
+				"sceneType": null,
+				"displayProductTitles": "Y",
+				"personalizedRecomFlag": "N",
+				"name": "",
+				"sceneId": null,
+				"channelId": null
+			}
+		]
+	},
+	"section39": {
+		"componentType": "hotZoneLabel",
+		"titleCss": "1",
+		"hideSpace": true,
+		"name": "",
+		"showBtn": "",
+		"showDot": "",
+		"subcategoryCode": "",
+		"frequency": "",
+		"props": [
+			{
+				"name": "",
+				"aspectRatio": 8,
+				"urlPath": "/cms/c2de52681e731862e72bf3995b24f586.jpg",
+				"props": [
+					{
+						"rightBottomSpot": "393,49",
+						"leftTopSpot": "-4,-5",
+						"link": "/home/c_mobile/SALE_W",
+						"linkName": null
+					}
+				]
+			}
+		]
+	},
+	"section40": {
+		"componentType": "anchor",
+		"hideSpace": true,
+		"name": "",
+		"aspectRatio": 4.21348,
+		"urlPath": "/cms/6270f0f367e768c10401066c30a49bde.png",
+		"props": [
+			{
+				"rightBottomSpot": "90,87",
+				"leftTopSpot": "-1,39",
+				"link": "section41",
+				"linkName": null
+			},
+			{
+				"rightBottomSpot": "163,87",
+				"leftTopSpot": "87,39",
+				"link": "section46",
+				"linkName": null
+			},
+			{
+				"rightBottomSpot": "232,94",
+				"leftTopSpot": "160,44",
+				"link": "section50",
+				"linkName": null
+			},
+			{
+				"rightBottomSpot": "312,95",
+				"leftTopSpot": "233,42",
+				"link": "section54",
+				"linkName": null
+			},
+			{
+				"rightBottomSpot": "400,95",
+				"leftTopSpot": "314,42",
+				"link": "section57",
+				"linkName": null
+			}
+		]
+	},
+	"section41": {
+		"componentType": "banner",
+		"kvAreaFlag": "N",
+		"link": null,
+		"aspectRatio": 7.65306,
+		"media": null,
+		"urlPath": "/cms/0c35c8174004c4a872e92961a5a603bd.png",
+		"linkName": null,
+		"displayMode": null,
+		"url": null,
+		"hideSpace": true,
+		"name": "",
+		"subcategoryCode": null,
+		"posterPath": null
+	},
+	"section42": {
+		"enable_video_streaming": "",
+		"componentType": "productRecommed",
+		"titleCss": "1",
+		"quantity": "",
+		"windowShopping": "",
+		"hideSpace": true,
+		"name": "",
+		"subcategoryCode": null,
+		"linkName": "",
+		"displayMode": "V",
+		"props": [
+			{
+				"videoChannelId": null,
+				"recomType": "recommendByUser",
+				"code": "47AEB7903BCF38D0E06359011EAC6C3A",
+				"linkName": null,
+				"displayMode": null,
+				"props": [
+					{
+						"productCode": "u0000000066155"
+					},
+					{
+						"productCode": "u0000000066173"
+					},
+					{
+						"productCode": "u0000000057816"
+					},
+					{
+						"productCode": "u0000000066378"
+					},
+					{
+						"productCode": "u0000000057235"
+					},
+					{
+						"productCode": "u0000000066157"
+					},
+					{
+						"productCode": "u0000000066214"
+					},
+					{
+						"productCode": "u0000000065230"
+					},
+					{
+						"productCode": "u0000000065058"
+					},
+					{
+						"productCode": "u0000000065224"
+					},
+					{
+						"productCode": "u0000000069552"
+					},
+					{
+						"productCode": "u0000000068650"
+					},
+					{
+						"productCode": "u0000000066621"
+					},
+					{
+						"productCode": "u0000000064816"
+					},
+					{
+						"productCode": "u0000000066932"
+					},
+					{
+						"productCode": "u0000000064633"
+					},
+					{
+						"productCode": "u0000000065575"
+					},
+					{
+						"productCode": "u0000000066733"
+					},
+					{
+						"productCode": "u0000000066734"
+					},
+					{
+						"productCode": "u0000000066718"
+					},
+					{
+						"productCode": "u0000000064459"
+					},
+					{
+						"productCode": "u0000000069592"
+					},
+					{
+						"productCode": "u0000000068608"
+					},
+					{
+						"productCode": "u0000000069373"
+					},
+					{
+						"productCode": "u0000000064919"
+					},
+					{
+						"productCode": "u0000000068673"
+					},
+					{
+						"productCode": "u0000000065837"
+					},
+					{
+						"productCode": "u0000000067292"
+					},
+					{
+						"productCode": "u0000000064529"
+					}
+				],
+				"displayProductPrices": "Y",
+				"productGroup": 2418259,
+				"sceneType": null,
+				"displayProductTitles": "Y",
+				"personalizedRecomFlag": "N",
+				"name": "",
+				"sceneId": null,
+				"channelId": null
+			}
+		]
+	},
+	"section46": {
+		"componentType": "banner",
+		"kvAreaFlag": "N",
+		"link": null,
+		"aspectRatio": 7.65306,
+		"media": null,
+		"urlPath": "/cms/342f00296615067fd1f355f4762dbab5.png",
+		"linkName": null,
+		"displayMode": null,
+		"url": null,
+		"hideSpace": true,
+		"name": "",
+		"subcategoryCode": null,
+		"posterPath": null
+	},
+	"section47": {
+		"enable_video_streaming": "",
+		"componentType": "productRecommed",
+		"titleCss": "1",
+		"quantity": "",
+		"windowShopping": "",
+		"hideSpace": true,
+		"name": "",
+		"subcategoryCode": null,
+		"linkName": "",
+		"displayMode": "V",
+		"props": [
+			{
+				"videoChannelId": null,
+				"recomType": "recommendByUser",
+				"code": "47AEB7903BD238D0E06359011EAC6C3A",
+				"linkName": null,
+				"displayMode": null,
+				"props": [
+					{
+						"productCode": "u0000000062533"
+					},
+					{
+						"productCode": "u0000000066954"
+					},
+					{
+						"productCode": "u0000000064515"
+					},
+					{
+						"productCode": "u0000000064561"
+					},
+					{
+						"productCode": "u0000000062299"
+					},
+					{
+						"productCode": "u0000000069916"
+					},
+					{
+						"productCode": "u0000000054037"
+					},
+					{
+						"productCode": "u0000000040479"
+					},
+					{
+						"productCode": "u0000000065232"
+					},
+					{
+						"productCode": "u0000000065213"
+					},
+					{
+						"productCode": "u0000000066613"
+					},
+					{
+						"productCode": "u0000000065752"
+					},
+					{
+						"productCode": "u0000000064692"
+					},
+					{
+						"productCode": "u0000000065060"
+					},
+					{
+						"productCode": "u0000000066632"
+					},
+					{
+						"productCode": "u0000000069374"
+					},
+					{
+						"productCode": "u0000000065074"
+					},
+					{
+						"productCode": "u0000000064615"
+					},
+					{
+						"productCode": "u0000000064632"
+					},
+					{
+						"productCode": "u0000000064712"
+					},
+					{
+						"productCode": "u0000000068644"
+					},
+					{
+						"productCode": "u0000000069601"
+					},
+					{
+						"productCode": "u0000000064443"
+					},
+					{
+						"productCode": "u0000000065558"
+					},
+					{
+						"productCode": "u0000000065212"
+					},
+					{
+						"productCode": "u0000000065231"
+					},
+					{
+						"productCode": "u0000000068434"
+					},
+					{
+						"productCode": "u0000000068436"
+					},
+					{
+						"productCode": "u0000000068454"
+					},
+					{
+						"productCode": "u0000000069173"
+					},
+					{
+						"productCode": "u0000000063174"
+					},
+					{
+						"productCode": "u0000000063195"
+					},
+					{
+						"productCode": "u0000000068174"
+					},
+					{
+						"productCode": "u0000000068155"
+					},
+					{
+						"productCode": "u0000000064560"
+					},
+					{
+						"productCode": "u0000000068675"
+					},
+					{
+						"productCode": "u0000000064702"
+					},
+					{
+						"productCode": "u0000000062753"
+					}
+				],
+				"displayProductPrices": "Y",
+				"productGroup": 2418260,
+				"sceneType": null,
+				"displayProductTitles": "Y",
+				"personalizedRecomFlag": "N",
+				"name": "",
+				"sceneId": null,
+				"channelId": null
+			}
+		]
+	},
+	"section50": {
+		"componentType": "hotZoneLabel",
+		"titleCss": "1",
+		"hideSpace": true,
+		"name": "",
+		"showBtn": "",
+		"showDot": "",
+		"subcategoryCode": "",
+		"frequency": "",
+		"props": [
+			{
+				"name": "",
+				"aspectRatio": 7.65306,
+				"urlPath": "/cms/15adc447c8f096290fe32778b6b83257.png",
+				"props": []
+			}
+		]
+	},
+	"section51": {
+		"enable_video_streaming": "",
+		"componentType": "productRecommed",
+		"titleCss": "1",
+		"quantity": "",
+		"windowShopping": "",
+		"hideSpace": true,
+		"name": "",
+		"subcategoryCode": null,
+		"linkName": "",
+		"displayMode": "V",
+		"props": [
+			{
+				"videoChannelId": null,
+				"recomType": "recommendByUser",
+				"code": "47AEB7903BD638D0E06359011EAC6C3A",
+				"linkName": null,
+				"displayMode": null,
+				"props": [
+					{
+						"productCode": "u0000000069400"
+					},
+					{
+						"productCode": "u0000000067645"
+					},
+					{
+						"productCode": "u0000000064441"
+					},
+					{
+						"productCode": "u0000000068974"
+					},
+					{
+						"productCode": "u0000000069372"
+					},
+					{
+						"productCode": "u0000000069395"
+					},
+					{
+						"productCode": "u0000000067280"
+					},
+					{
+						"productCode": "u0000000065086"
+					}
+				],
+				"displayProductPrices": "Y",
+				"productGroup": 2418261,
+				"sceneType": null,
+				"displayProductTitles": "Y",
+				"personalizedRecomFlag": "N",
+				"name": "",
+				"sceneId": null,
+				"channelId": null
+			}
+		]
+	},
+	"section54": {
+		"componentType": "banner",
+		"kvAreaFlag": "N",
+		"link": null,
+		"aspectRatio": 7.65306,
+		"media": null,
+		"urlPath": "/cms/4e317faac1afafbb161953cb2d100d0c.png",
+		"linkName": null,
+		"displayMode": null,
+		"url": null,
+		"hideSpace": true,
+		"name": "",
+		"subcategoryCode": null,
+		"posterPath": null
+	},
+	"section55": {
+		"enable_video_streaming": "",
+		"componentType": "productRecommed",
+		"titleCss": "1",
+		"quantity": "",
+		"windowShopping": "",
+		"hideSpace": true,
+		"name": "",
+		"subcategoryCode": null,
+		"linkName": "",
+		"displayMode": "V",
+		"props": [
+			{
+				"videoChannelId": null,
+				"recomType": "recommendByUser",
+				"code": "47AEB7903BD938D0E06359011EAC6C3A",
+				"linkName": null,
+				"displayMode": null,
+				"props": [
+					{
+						"productCode": "u0000000065838"
+					},
+					{
+						"productCode": "u0000000066492"
+					},
+					{
+						"productCode": "u0000000065072"
+					},
+					{
+						"productCode": "u0000000066198"
+					},
+					{
+						"productCode": "u0000000064698"
+					},
+					{
+						"productCode": "u0000000066373"
+					},
+					{
+						"productCode": "u0000000065846"
+					},
+					{
+						"productCode": "u0000000066719"
+					},
+					{
+						"productCode": "u0000000064453"
+					},
+					{
+						"productCode": "u0000000064442"
+					},
+					{
+						"productCode": "u0000000058232"
+					},
+					{
+						"productCode": "u0000000063113"
+					},
+					{
+						"productCode": "u0000000068952"
+					},
+					{
+						"productCode": "u0000000067278"
+					},
+					{
+						"productCode": "u0000000067274"
+					},
+					{
+						"productCode": "u0000000067277"
+					},
+					{
+						"productCode": "u0000000069575"
+					},
+					{
+						"productCode": "u0000000068693"
+					},
+					{
+						"productCode": "u0000000067077"
+					},
+					{
+						"productCode": "u0000000063652"
+					},
+					{
+						"productCode": "u0000000067092"
+					},
+					{
+						"productCode": "u0000000058687"
+					},
+					{
+						"productCode": "u0000000068603"
+					},
+					{
+						"productCode": "u0000000069392"
+					},
+					{
+						"productCode": "u0000000067994"
+					},
+					{
+						"productCode": "u0000000069398"
+					},
+					{
+						"productCode": "u0000000068458"
+					},
+					{
+						"productCode": "u0000000068633"
+					},
+					{
+						"productCode": "u0000000068632"
+					},
+					{
+						"productCode": "u0000000069172"
+					},
+					{
+						"productCode": "u0000000069137"
+					}
+				],
+				"displayProductPrices": "Y",
+				"productGroup": 2418262,
+				"sceneType": null,
+				"displayProductTitles": "Y",
+				"personalizedRecomFlag": "N",
+				"name": "",
+				"sceneId": null,
+				"channelId": null
+			}
+		]
+	},
+	"section57": {
+		"componentType": "banner",
+		"kvAreaFlag": "N",
+		"link": null,
+		"aspectRatio": 7.65306,
+		"media": null,
+		"urlPath": "/cms/4c27bf6ad83cfc3e72d8f3add8eab742.png",
+		"linkName": null,
+		"displayMode": null,
+		"url": null,
+		"hideSpace": true,
+		"name": "",
+		"subcategoryCode": null,
+		"posterPath": null
+	},
+	"section58": {
+		"enable_video_streaming": "",
+		"componentType": "productRecommed",
+		"titleCss": "1",
+		"quantity": "",
+		"windowShopping": "",
+		"hideSpace": true,
+		"name": "",
+		"subcategoryCode": null,
+		"linkName": "",
+		"displayMode": "V",
+		"props": [
+			{
+				"videoChannelId": null,
+				"recomType": "recommendByUser",
+				"code": "47AEB7903BDC38D0E06359011EAC6C3A",
+				"linkName": null,
+				"displayMode": null,
+				"props": [
+					{
+						"productCode": "u0000000065938"
+					},
+					{
+						"productCode": "u0000000066944"
+					},
+					{
+						"productCode": "u0000000065574"
+					},
+					{
+						"productCode": "u0000000065535"
+					},
+					{
+						"productCode": "u0000000065587"
+					},
+					{
+						"productCode": "u0000000056547"
+					},
+					{
+						"productCode": "u0000000065586"
+					},
+					{
+						"productCode": "u0000000065562"
+					},
+					{
+						"productCode": "u0000000065612"
+					},
+					{
+						"productCode": "u0000000069932"
+					},
+					{
+						"productCode": "u0000000066615"
+					},
+					{
+						"productCode": "u0000000066616"
+					},
+					{
+						"productCode": "u0000000066617"
+					},
+					{
+						"productCode": "u0000000066614"
+					},
+					{
+						"productCode": "u0000000066634"
+					}
+				],
+				"displayProductPrices": "Y",
+				"productGroup": 2418263,
+				"sceneType": null,
+				"displayProductTitles": "Y",
+				"personalizedRecomFlag": "N",
+				"name": "",
+				"sceneId": null,
+				"channelId": null
+			}
+		]
+	},
+	"section64": {
+		"componentType": "hotZoneLabel",
+		"titleCss": "1",
+		"hideSpace": true,
+		"name": "",
+		"showBtn": "",
+		"showDot": "",
+		"subcategoryCode": "",
+		"frequency": "",
+		"props": [
+			{
+				"name": "",
+				"aspectRatio": 8,
+				"urlPath": "/cms/2e495ec08ac06d50e6f02f5fb0fbdf54.jpg",
+				"props": [
+					{
+						"rightBottomSpot": "397,52",
+						"leftTopSpot": "-3,-5",
+						"link": "/home/c_mobile/SALE_M",
+						"linkName": null
+					}
+				]
+			}
+		]
+	},
+	"section65": {
+		"componentType": "anchor",
+		"hideSpace": true,
+		"name": "",
+		"aspectRatio": 4.21348,
+		"urlPath": "/cms/bad4c8248c1c97c39fcc81aad403ace2.png",
+		"props": [
+			{
+				"rightBottomSpot": "70,91",
+				"leftTopSpot": "0,37",
+				"link": "section66",
+				"linkName": null
+			},
+			{
+				"rightBottomSpot": "153,95",
+				"leftTopSpot": "72,36",
+				"link": "section68",
+				"linkName": null
+			},
+			{
+				"rightBottomSpot": "229,95",
+				"leftTopSpot": "157,37",
+				"link": "section70",
+				"linkName": null
+			},
+			{
+				"rightBottomSpot": "305,95",
+				"leftTopSpot": "227,39.00001525878906",
+				"link": "section75",
+				"linkName": null
+			},
+			{
+				"rightBottomSpot": "400,95",
+				"leftTopSpot": "307,42",
+				"link": "section78",
+				"linkName": null
+			}
+		]
+	},
+	"section66": {
+		"componentType": "banner",
+		"kvAreaFlag": "N",
+		"link": null,
+		"aspectRatio": 7.65306,
+		"media": null,
+		"urlPath": "/cms/0c35c8174004c4a872e92961a5a603bd.png",
+		"linkName": null,
+		"displayMode": null,
+		"url": null,
+		"hideSpace": true,
+		"name": "",
+		"subcategoryCode": null,
+		"posterPath": null
+	},
+	"section67": {
+		"enable_video_streaming": "",
+		"componentType": "productRecommed",
+		"titleCss": "1",
+		"quantity": "",
+		"windowShopping": "",
+		"hideSpace": true,
+		"name": "",
+		"subcategoryCode": null,
+		"linkName": "",
+		"displayMode": "V",
+		"props": [
+			{
+				"videoChannelId": null,
+				"recomType": null,
+				"code": "47AEB7903BE838D0E06359011EAC6C3A",
+				"linkName": null,
+				"displayMode": null,
+				"props": [
+					{
+						"productCode": "u0000000065684"
+					},
+					{
+						"productCode": "u0000000065235"
+					},
+					{
+						"productCode": "u0000000069396"
+					},
+					{
+						"productCode": "u0000000068953"
+					},
+					{
+						"productCode": "u0000000065697"
+					},
+					{
+						"productCode": "u0000000065674"
+					},
+					{
+						"productCode": "u0000000065532"
+					},
+					{
+						"productCode": "u0000000063778"
+					}
+				],
+				"displayProductPrices": "Y",
+				"productGroup": 2418264,
+				"sceneType": null,
+				"displayProductTitles": "Y",
+				"personalizedRecomFlag": "N",
+				"name": "",
+				"sceneId": null,
+				"channelId": null
+			}
+		]
+	},
+	"section68": {
+		"componentType": "hotZoneLabel",
+		"titleCss": "1",
+		"hideSpace": true,
+		"name": "",
+		"showBtn": "",
+		"showDot": "",
+		"subcategoryCode": "",
+		"frequency": "",
+		"props": [
+			{
+				"name": "",
+				"aspectRatio": 7.65306,
+				"urlPath": "/cms/9ec532749c5e7074973653f2d44d7bbd.png",
+				"props": []
+			}
+		]
+	},
+	"section69": {
+		"enable_video_streaming": "",
+		"componentType": "productRecommed",
+		"titleCss": "1",
+		"quantity": "",
+		"windowShopping": "",
+		"hideSpace": true,
+		"name": "",
+		"subcategoryCode": null,
+		"linkName": "",
+		"displayMode": "V",
+		"props": [
+			{
+				"videoChannelId": null,
+				"recomType": "recommendByUser",
+				"code": "47AEB7903BEC38D0E06359011EAC6C3A",
+				"linkName": null,
+				"displayMode": null,
+				"props": [
+					{
+						"productCode": "u0000000069399"
+					},
+					{
+						"productCode": "u0000000063797"
+					},
+					{
+						"productCode": "u0000000064723"
+					},
+					{
+						"productCode": "u0000000065555"
+					},
+					{
+						"productCode": "u0000000065542"
+					},
+					{
+						"productCode": "u0000000065533"
+					},
+					{
+						"productCode": "u0000000065573"
+					},
+					{
+						"productCode": "u0000000065247"
+					},
+					{
+						"productCode": "u0000000069294"
+					},
+					{
+						"productCode": "u0000000069293"
+					},
+					{
+						"productCode": "u0000000065557"
+					},
+					{
+						"productCode": "u0000000065544"
+					}
+				],
+				"displayProductPrices": "Y",
+				"productGroup": 2418265,
+				"sceneType": null,
+				"displayProductTitles": "Y",
+				"personalizedRecomFlag": "N",
+				"name": "",
+				"sceneId": null,
+				"channelId": null
+			}
+		]
+	},
+	"section70": {
+		"componentType": "banner",
+		"kvAreaFlag": "N",
+		"link": null,
+		"aspectRatio": 7.65306,
+		"media": null,
+		"urlPath": "/cms/b8992c8109fe866ed784faa722d17563.png",
+		"linkName": null,
+		"displayMode": null,
+		"url": null,
+		"hideSpace": true,
+		"name": "",
+		"subcategoryCode": null,
+		"posterPath": null
+	},
+	"section71": {
+		"enable_video_streaming": "",
+		"componentType": "productRecommed",
+		"titleCss": "1",
+		"quantity": "",
+		"windowShopping": "",
+		"hideSpace": true,
+		"name": "",
+		"subcategoryCode": null,
+		"linkName": "",
+		"displayMode": "V",
+		"props": [
+			{
+				"videoChannelId": null,
+				"recomType": "recommendByUser",
+				"code": "47AEB7903BEF38D0E06359011EAC6C3A",
+				"linkName": null,
+				"displayMode": null,
+				"props": [
+					{
+						"productCode": "u0000000064256"
+					},
+					{
+						"productCode": "u0000000064255"
+					},
+					{
+						"productCode": "u0000000064254"
+					},
+					{
+						"productCode": "u0000000064524"
+					},
+					{
+						"productCode": "u0000000064519"
+					}
+				],
+				"displayProductPrices": "Y",
+				"productGroup": 2418266,
+				"sceneType": null,
+				"displayProductTitles": "Y",
+				"personalizedRecomFlag": "N",
+				"name": "",
+				"sceneId": null,
+				"channelId": null
+			}
+		]
+	},
+	"section75": {
+		"componentType": "banner",
+		"kvAreaFlag": "N",
+		"link": null,
+		"aspectRatio": 7.65306,
+		"media": null,
+		"urlPath": "/cms/0f8d1ba4668b1186dbb7982c795a22c9.png",
+		"linkName": null,
+		"displayMode": null,
+		"url": null,
+		"hideSpace": true,
+		"name": "",
+		"subcategoryCode": null,
+		"posterPath": null
+	},
+	"section76": {
+		"enable_video_streaming": "",
+		"componentType": "productRecommed",
+		"titleCss": "1",
+		"quantity": "",
+		"windowShopping": "",
+		"hideSpace": true,
+		"name": "",
+		"subcategoryCode": null,
+		"linkName": "",
+		"displayMode": "V",
+		"props": [
+			{
+				"videoChannelId": null,
+				"recomType": "recommendByUser",
+				"code": "47AEB7903BF238D0E06359011EAC6C3A",
+				"linkName": null,
+				"displayMode": null,
+				"props": [
+					{
+						"productCode": "u0000000065694"
+					},
+					{
+						"productCode": "u0000000065239"
+					},
+					{
+						"productCode": "u0000000059331"
+					}
+				],
+				"displayProductPrices": "Y",
+				"productGroup": 2418267,
+				"sceneType": null,
+				"displayProductTitles": "Y",
+				"personalizedRecomFlag": "N",
+				"name": "",
+				"sceneId": null,
+				"channelId": null
+			}
+		]
+	},
+	"section78": {
+		"componentType": "anchor",
+		"hideSpace": true,
+		"name": "",
+		"aspectRatio": 7.65306,
+		"urlPath": "/cms/4c27bf6ad83cfc3e72d8f3add8eab742.png",
+		"props": []
+	},
+	"section79": {
+		"enable_video_streaming": "",
+		"componentType": "productRecommed",
+		"titleCss": "1",
+		"quantity": "",
+		"windowShopping": "",
+		"hideSpace": true,
+		"name": "",
+		"subcategoryCode": null,
+		"linkName": "",
+		"displayMode": "V",
+		"props": [
+			{
+				"videoChannelId": null,
+				"recomType": "recommendByUser",
+				"code": "47AEB7903BF538D0E06359011EAC6C3A",
+				"linkName": null,
+				"displayMode": null,
+				"props": [
+					{
+						"productCode": "u0000000069781"
+					},
+					{
+						"productCode": "u0000000064727"
+					},
+					{
+						"productCode": "u0000000065675"
+					},
+					{
+						"productCode": "u0000000065676"
+					},
+					{
+						"productCode": "u0000000065696"
+					},
+					{
+						"productCode": "u0000000063353"
+					},
+					{
+						"productCode": "u0000000058383"
+					},
+					{
+						"productCode": "u0000000069604"
+					},
+					{
+						"productCode": "u0000000069595"
+					},
+					{
+						"productCode": "u0000000068645"
+					},
+					{
+						"productCode": "u0000000066972"
+					},
+					{
+						"productCode": "u0000000063334"
+					},
+					{
+						"productCode": "u0000000065678"
+					}
+				],
+				"displayProductPrices": "Y",
+				"productGroup": 2418268,
+				"sceneType": null,
+				"displayProductTitles": "Y",
+				"personalizedRecomFlag": "N",
+				"name": "",
+				"sceneId": null,
+				"channelId": null
+			}
+		]
+	},
+	"section82": {
+		"componentType": "hotZoneLabel",
+		"titleCss": "1",
+		"hideSpace": true,
+		"name": "",
+		"showBtn": "",
+		"showDot": "",
+		"subcategoryCode": "",
+		"frequency": "",
+		"props": [
+			{
+				"name": "",
+				"aspectRatio": 8,
+				"urlPath": "/cms/d626d747b8d8e79aa2f2dd60604ed505.jpg",
+				"props": [
+					{
+						"rightBottomSpot": "400,53",
+						"leftTopSpot": "-6,-13",
+						"link": "/home/c_mobile/SALE_K",
+						"linkName": null
+					}
+				]
+			}
+		]
+	},
+	"section83": {
+		"componentType": "anchor",
+		"hideSpace": true,
+		"name": "",
+		"aspectRatio": 4.21348,
+		"urlPath": "/cms/2f1c0c229ad02939ad95e0f6979222ce.png",
+		"props": [
+			{
+				"rightBottomSpot": "83,90",
+				"leftTopSpot": "3,42",
+				"link": "section84",
+				"linkName": null
+			},
+			{
+				"rightBottomSpot": "160,92",
+				"leftTopSpot": "84,43",
+				"link": "section89",
+				"linkName": null
+			}
+		]
+	},
+	"section84": {
+		"componentType": "anchor",
+		"hideSpace": true,
+		"name": "",
+		"aspectRatio": 7.65306,
+		"urlPath": "/cms/9249fb29e5630a62b5f3c3c3cb996ce4.png",
+		"props": []
+	},
+	"section85": {
+		"enable_video_streaming": "",
+		"componentType": "productRecommed",
+		"titleCss": "1",
+		"quantity": "",
+		"windowShopping": "",
+		"hideSpace": true,
+		"name": "",
+		"subcategoryCode": null,
+		"linkName": "",
+		"displayMode": "V",
+		"props": [
+			{
+				"videoChannelId": null,
+				"recomType": "recommendByUser",
+				"code": "47AEB7903BFE38D0E06359011EAC6C3A",
+				"linkName": null,
+				"displayMode": null,
+				"props": [
+					{
+						"productCode": "u0000000065613"
+					},
+					{
+						"productCode": "u0000000065593"
+					},
+					{
+						"productCode": "u0000000065220"
+					},
+					{
+						"productCode": "u0000000065238"
+					},
+					{
+						"productCode": "u0000000065221"
+					},
+					{
+						"productCode": "u0000000065222"
+					},
+					{
+						"productCode": "u0000000064433"
+					},
+					{
+						"productCode": "u0000000069578"
+					},
+					{
+						"productCode": "u0000000064718"
+					},
+					{
+						"productCode": "u0000000064713"
+					},
+					{
+						"productCode": "u0000000064992"
+					},
+					{
+						"productCode": "u0000000064975"
+					},
+					{
+						"productCode": "u0000000064993"
+					},
+					{
+						"productCode": "u0000000064994"
+					},
+					{
+						"productCode": "u0000000064942"
+					},
+					{
+						"productCode": "u0000000063193"
+					},
+					{
+						"productCode": "u0000000063802"
+					}
+				],
+				"displayProductPrices": "Y",
+				"productGroup": 2418269,
+				"sceneType": null,
+				"displayProductTitles": "Y",
+				"personalizedRecomFlag": "N",
+				"name": "",
+				"sceneId": null,
+				"channelId": null
+			}
+		]
+	},
+	"section89": {
+		"componentType": "anchor",
+		"hideSpace": true,
+		"name": "",
+		"aspectRatio": 7.65306,
+		"urlPath": "/cms/23e39972fb5d718eddb18d1f99bff815.png",
+		"props": []
+	},
+	"section90": {
+		"enable_video_streaming": "",
+		"componentType": "productRecommed",
+		"titleCss": "1",
+		"quantity": "",
+		"windowShopping": "",
+		"hideSpace": true,
+		"name": "",
+		"subcategoryCode": null,
+		"linkName": "",
+		"displayMode": "V",
+		"props": [
+			{
+				"videoChannelId": null,
+				"recomType": "recommendByUser",
+				"code": "47AEB7903C0138D0E06359011EAC6C3A",
+				"linkName": null,
+				"displayMode": null,
+				"props": [
+					{
+						"productCode": "u0000000064436"
+					}
+				],
+				"displayProductPrices": "Y",
+				"productGroup": 2418270,
+				"sceneType": null,
+				"displayProductTitles": "Y",
+				"personalizedRecomFlag": "N",
+				"name": "",
+				"sceneId": null,
+				"channelId": null
+			}
+		]
+	},
+	"section91": {
+		"componentType": "hotZoneLabel",
+		"titleCss": "1",
+		"hideSpace": true,
+		"name": "",
+		"showBtn": "",
+		"showDot": "",
+		"subcategoryCode": "",
+		"frequency": "",
+		"props": [
+			{
+				"name": "",
+				"aspectRatio": 8,
+				"urlPath": "/cms/9814ab7050eab62f88d45ca9dfd0b3fa.jpg",
+				"props": [
+					{
+						"rightBottomSpot": "411,53",
+						"leftTopSpot": "0,0",
+						"link": "/home/c_mobile/SALE_B",
+						"linkName": null
+					}
+				]
+			}
+		]
+	}
+}

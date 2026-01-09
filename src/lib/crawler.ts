@@ -21,6 +21,18 @@ const COMMON_HEADERS = {
     'Referer': 'https://www.uniqlo.cn/'
 };
 
+/**
+ * Standardize gender values from Uniqlo API to UI display values
+ */
+function standardizeGender(rawGender: string): string {
+    const gender = (rawGender || '').toLowerCase();
+    if (gender.includes('women') || gender.includes('woman') || gender.includes('女')) return '女装';
+    if (gender.includes('men') || gender.includes('man') || gender.includes('男')) return '男装';
+    if (gender.includes('kids') || gender.includes('child') || gender.includes('kid') || gender.includes('童')) return '童装';
+    if (gender.includes('baby') || gender.includes('infant') || gender.includes('幼')) return '婴幼儿装';
+    return rawGender || '未知';
+}
+
 export interface CrawledItem {
     product_id: string;      // 商品ID (产品代码, 例如 u0000000066997)
     code: string;            // 货号 (6位数字代码)
@@ -198,11 +210,13 @@ async function processProduct(productCode: string, targetGender?: string): Promi
 
         // Extract product information from summary
         const productName = summary.name || rows[0].name || '';
-        const gender = summary.sex || summary.gDeptValue || '未知';
+        const rawGender = summary.sex || summary.gDeptValue || '未知';
+        const gender = standardizeGender(rawGender);
         const itemCode = summary.code || summary.oms_productCode || '';
 
         // Gender filter: only check stock if gender matches target
-        if (targetGender && !gender.includes(targetGender)) {
+        // targetGender is already standardized (e.g., '女装')
+        if (targetGender && gender !== targetGender && !gender.includes(targetGender)) {
             // console.log(`[${productCode}] Skipping: Gender "${gender}" does not match target "${targetGender}"`);
             return results;
         }
