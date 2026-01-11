@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { toLocalISOString } from '@/lib/date-utils';
+import { intervalToCron } from '@/lib/cron-utils';
+import { addOrUpdateJob, removeJob } from '@/lib/cron';
 
 /**
  * GET /api/crawler-schedule
@@ -31,6 +33,7 @@ export async function GET() {
 /**
  * POST /api/crawler-schedule
  * Create or update a crawler schedule
+ * Accepts interval_minutes from UI and converts to cron_expression
  */
 export async function POST(request: Request) {
     try {
@@ -47,40 +50,26 @@ export async function POST(request: Request) {
         if (interval_minutes && interval_minutes < 1) {
             return NextResponse.json({
                 success: false,
-                error: 'Interval must be at least 15 minutes'
+                error: 'Interval must be at least 1 minute'
             }, { status: 400 });
         }
 
-        // Calculate next_run_time if enabling the schedule
-        let next_run_time_str = null;
-        if (is_enabled && interval_minutes) {
-            const now = new Date();
-            const next_run = new Date(now.getTime() + interval_minutes * 60000);
-
-            // Use local ISO string to preserve timezone
-            next_run_time_str = toLocalISOString(next_run);
-
-            console.log(`[CrawlerSchedule] Calculating next run time:
-                Current Time (CN): ${now.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}
-                Interval: ${interval_minutes} minutes
-                Next Run Time (CN): ${next_run.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}
-                
-                Current Time (ISO): ${now.toISOString()}
-                Next Run Time (Local ISO): ${next_run_time_str}
-            `);
+        // Convert interval_minutes to cron expression
+        let cron_expression = '0 * * * *'; // Default: every hour
+        if (interval_minutes) {
+            cron_expression = intervalToCron(interval_minutes);
         }
 
         const updatePayload = {
             gender,
             is_enabled: is_enabled ?? true,
-            interval_minutes: interval_minutes ?? 60,
-            next_run_time: next_run_time_str,
+            cron_expression,
             updated_at: toLocalISOString(new Date())
         };
 
         console.log('[CrawlerSchedule] Update Payload:', JSON.stringify(updatePayload, null, 2));
 
-        // Upsert the schedule
+        // Upsert the schedule in database
         const { data, error } = await supabase
             .from('crawler_schedules')
             .upsert(updatePayload, {
@@ -91,10 +80,22 @@ export async function POST(request: Request) {
 
         if (error) throw error;
 
+        // Dynamically update the cron job
+        if (is_enabled) {
+            const success = addOrUpdateJob(gender, cron_expression);
+            if (!success) {
+                console.error(`[CrawlerSchedule] Failed to add/update cron job for ${gender}`);
+            }
+        } else {
+            // Remove the job if disabled
+            removeJob(gender);
+        }
+
         return NextResponse.json({
             success: true,
             schedule: data,
-            message: `Schedule for ${gender} has been ${is_enabled ? 'enabled' : 'disabled'}`
+            message: `Schedule for ${gender} has been ${is_enabled ? 'enabled' : 'disabled'}`,
+            cron_expression
         });
     } catch (error: any) {
         console.error('POST /api/crawler-schedule error:', error);

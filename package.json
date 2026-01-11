@@ -9,13 +9,16 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.89.0",
+    "cron-parser": "^5.4.0",
     "https-proxy-agent": "^7.0.6",
     "next": "14.0.0",
+    "node-cron": "^4.2.1",
     "react": "18.2.0",
     "react-dom": "18.2.0"
   },
   "devDependencies": {
     "@types/node": "25.0.2",
+    "@types/node-cron": "^3.0.11",
     "@types/react": "19.2.7",
     "autoprefixer": "^10.4.23",
     "postcss": "^8.5.6",

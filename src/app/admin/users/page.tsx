@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '../../components/Header';
+import { intervalToCron, getCronDescription } from '@/lib/cron-utils';
 
 interface User {
     id: number;
@@ -1113,25 +1114,34 @@ export default function AdminUsersPage() {
 
                                 {/* Interval Input */}
                                 <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-2">爬取间隔</label>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">刷新间隔 (分钟)</label>
                                     <div className="flex items-center gap-2">
                                         <input
                                             type="number"
                                             value={scheduleForm.interval_minutes}
                                             onChange={(e) => setScheduleForm({ ...scheduleForm, interval_minutes: parseInt(e.target.value) || 60 })}
                                             className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-bold text-gray-900"
-                                            min="15"
+                                            min="1"
                                             disabled={!scheduleForm.is_enabled}
                                         />
                                         <span className="text-sm text-gray-500 font-medium">分钟</span>
                                     </div>
-                                    <p className="text-xs text-gray-400 mt-2">最小间隔为 15 分钟</p>
+                                    <p className="text-xs text-gray-400 mt-2">建议设置为 15、30、60 或 120 分钟</p>
+
+                                    {/* Cron Expression Display */}
+                                    {scheduleForm.is_enabled && scheduleForm.interval_minutes > 0 && (
+                                        <div className="mt-3 p-3 bg-blue-50 border border-blue-100 rounded-xl">
+                                            <p className="text-xs font-bold text-blue-600 mb-1">Cron 表达式</p>
+                                            <p className="text-xs font-mono text-blue-800 mb-2">{intervalToCron(scheduleForm.interval_minutes)}</p>
+                                            <p className="text-xs text-blue-600">{getCronDescription(intervalToCron(scheduleForm.interval_minutes))}</p>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Schedule Info */}
                                 {crawlerSchedules[selectedScheduleGender] && (
-                                    <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100">
-                                        <h3 className="text-xs font-black text-blue-900 uppercase tracking-wider mb-3">任务状态</h3>
+                                    <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                                        <h3 className="text-xs font-black text-gray-700 uppercase tracking-wider mb-3">任务状态</h3>
                                         <div className="space-y-2 text-sm">
                                             <div className="flex justify-between">
                                                 <span className="text-gray-600">上次运行:</span>
@@ -1139,14 +1149,6 @@ export default function AdminUsersPage() {
                                                     {crawlerSchedules[selectedScheduleGender].last_run_time
                                                         ? new Date(crawlerSchedules[selectedScheduleGender].last_run_time).toLocaleString('zh-CN')
                                                         : '从未运行'}
-                                                </span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span className="text-gray-600">下次运行:</span>
-                                                <span className="font-mono text-gray-900 font-bold">
-                                                    {crawlerSchedules[selectedScheduleGender].next_run_time
-                                                        ? new Date(crawlerSchedules[selectedScheduleGender].next_run_time).toLocaleString('zh-CN')
-                                                        : '未设置'}
                                                 </span>
                                             </div>
                                         </div>

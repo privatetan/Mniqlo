@@ -195,9 +195,8 @@ CREATE TABLE IF NOT EXISTS crawler_schedules (
     id SERIAL PRIMARY KEY,
     gender VARCHAR(50) NOT NULL,
     is_enabled BOOLEAN DEFAULT true,
-    interval_minutes INTEGER NOT NULL DEFAULT 60,
+    cron_expression TEXT NOT NULL DEFAULT '0 * * * *',
     last_run_time TIMESTAMP,
-    next_run_time TIMESTAMP,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
@@ -206,9 +205,8 @@ COMMENT ON TABLE crawler_schedules IS '爬虫调度表：配置各品类的自�
 COMMENT ON COLUMN crawler_schedules.id IS '主键ID';
 COMMENT ON COLUMN crawler_schedules.gender IS '品类名称 (唯一索引)';
 COMMENT ON COLUMN crawler_schedules.is_enabled IS '是否启用自动抓取';
-COMMENT ON COLUMN crawler_schedules.interval_minutes IS '抓取间隔 (分钟)';
+COMMENT ON COLUMN crawler_schedules.cron_expression IS 'Cron 表达式 (标准格式: 分 时 日 月 周，如 "*/30 * * * *" 表示每30分钟)';
 COMMENT ON COLUMN crawler_schedules.last_run_time IS '上次成功执行时间';
-COMMENT ON COLUMN crawler_schedules.next_run_time IS '下次计划执行时间';
 COMMENT ON COLUMN crawler_schedules.created_at IS '配置创建时间';
 COMMENT ON COLUMN crawler_schedules.updated_at IS '配置更新时间';
 
@@ -250,7 +248,7 @@ CREATE INDEX IF NOT EXISTS idx_crawled_products_composite ON crawled_products(co
 
 -- 4.2 Crawler Schedules Indexes
 CREATE UNIQUE INDEX IF NOT EXISTS idx_crawler_schedules_gender ON crawler_schedules(gender);
-CREATE INDEX IF NOT EXISTS idx_crawler_schedules_next_run ON crawler_schedules(next_run_time) WHERE is_enabled = true;
+CREATE INDEX IF NOT EXISTS idx_crawler_schedules_enabled ON crawler_schedules(is_enabled) WHERE is_enabled = true;
 
 -- 4.3 Super Push Subscriptions Indexes
 CREATE INDEX IF NOT EXISTS idx_super_push_subscriptions_user_id ON super_push_subscriptions(user_id);
@@ -261,12 +259,13 @@ CREATE INDEX IF NOT EXISTS idx_super_push_subscriptions_user_id ON super_push_su
 
 -- 5.1 Insert Default Crawler Schedules
 -- Create default schedules for all categories (disabled by default)
-INSERT INTO crawler_schedules (gender, is_enabled, interval_minutes) 
+-- Default cron: '0 * * * *' means every hour at minute 0
+INSERT INTO crawler_schedules (gender, is_enabled, cron_expression) 
 VALUES 
-    ('女装', false, 60),
-    ('男装', false, 60),
-    ('童装', false, 60),
-    ('婴幼儿装', false, 60)
+    ('女装', false, '0 * * * *'),
+    ('男装', false, '0 * * * *'),
+    ('童装', false, '0 * * * *'),
+    ('婴幼儿装', false, '0 * * * *')
 ON CONFLICT (gender) DO NOTHING;
 
 -- ============================================================================
