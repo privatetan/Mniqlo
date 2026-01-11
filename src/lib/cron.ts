@@ -187,10 +187,22 @@ export function getActiveJobs(): string[] {
     return Array.from(jobs.keys());
 }
 
-// Auto-start in development mode
-if (process.env.NODE_ENV === 'development') {
-    // Delay start by 5 seconds to allow server to fully initialize
-    setTimeout(() => {
-        startCron();
-    }, 5000);
-}
+// Auto-start scheduler on module load
+// This ensures that when the server starts/restarts, all enabled schedules are loaded
+const startDelay = process.env.NODE_ENV === 'development' ? 5000 : 3000;
+
+setTimeout(() => {
+    const env = process.env.NODE_ENV || 'development';
+    logger.log(`[Cron] Auto-starting scheduler (${env} mode)...`);
+
+    startCron().then(() => {
+        const activeJobs = getActiveJobs();
+        if (activeJobs.length > 0) {
+            logger.log(`[Cron] ✓ Successfully loaded ${activeJobs.length} enabled schedule(s): ${activeJobs.join(', ')}`);
+        } else {
+            logger.log('[Cron] ℹ No enabled schedules found. Configure schedules in admin panel.');
+        }
+    }).catch(error => {
+        logger.error('[Cron] ✗ Failed to auto-start scheduler:', error);
+    });
+}, startDelay);
