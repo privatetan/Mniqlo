@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { FavoriteItem } from '@/types';
-import { TaskScheduler } from './TaskScheduler';
 import { useScheduledTask } from '@/hooks/useScheduledTask';
 import { parseLocalTime } from '@/lib/date-utils';
 
@@ -16,7 +15,6 @@ interface FavoriteItemRowProps {
 export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle, hideProductInfo = false, originPrice }: FavoriteItemRowProps) {
     const [showScheduler, setShowScheduler] = useState(false);
     const [localStockStatus, setLocalStockStatus] = useState<boolean | null>(stockStatus);
-    const popupRef = useRef<HTMLDivElement>(null);
 
     // Hoisted state for scheduled task
     const [executionCount, setExecutionCount] = useState(0);
@@ -248,20 +246,7 @@ export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle, hi
         handleSaveTask(false);
     };
 
-    // Handle clicking outside to close popup
-    useEffect(() => {
-        function handleClickOutside(event: MouseEvent) {
-            if (popupRef.current && !popupRef.current.contains(event.target as Node)) {
-                setShowScheduler(false);
-            }
-        }
-        if (showScheduler) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, [showScheduler]);
+
 
     // Swipe logic
     const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -336,25 +321,29 @@ export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle, hi
                                     </span>
                                 )}
 
-                                <div className="relative">
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            const userStr = localStorage.getItem('user');
-                                            if (userStr && JSON.parse(userStr).id === -1) {
-                                                alert('游客无法使用监控功能，请注册登录');
-                                                return;
-                                            }
-                                            setShowScheduler(!showScheduler);
-                                        }}
-                                        className={`text-xs px-2 py-1 rounded border transition-colors ${isRunning
-                                            ? 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100'
-                                            : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
-                                            }`}
-                                    >
-                                        {isRunning ? '监控中' : '监控'}
-                                    </button>
-                                </div>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        const userStr = localStorage.getItem('user');
+                                        if (userStr && JSON.parse(userStr).id === -1) {
+                                            alert('游客无法使用监控功能，请注册登录');
+                                            return;
+                                        }
+                                        setShowScheduler(true);
+                                    }}
+                                    className="p-1.5 rounded-lg bg-white/90 hover:bg-white shadow-sm transition-all hover:scale-110"
+                                    title="监控设置"
+                                >
+                                    {isRunning ? (
+                                        <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    ) : (
+                                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    )}
+                                </button>
 
                                 <button
                                     onClick={(e) => onRemove(e, item.key)}
@@ -390,25 +379,29 @@ export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle, hi
                                         </span>
                                     )}
 
-                                    <div className="relative">
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                const userStr = localStorage.getItem('user');
-                                                if (userStr && JSON.parse(userStr).id === -1) {
-                                                    alert('游客无法使用监控功能，请注册登录');
-                                                    return;
-                                                }
-                                                setShowScheduler(!showScheduler);
-                                            }}
-                                            className={`text-xs px-2 py-1 rounded border transition-colors ${isRunning
-                                                ? 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100'
-                                                : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
-                                                }`}
-                                        >
-                                            {isRunning ? '监控中...' : '监控'}
-                                        </button>
-                                    </div>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            const userStr = localStorage.getItem('user');
+                                            if (userStr && JSON.parse(userStr).id === -1) {
+                                                alert('游客无法使用监控功能，请注册登录');
+                                                return;
+                                            }
+                                            setShowScheduler(true);
+                                        }}
+                                        className="p-1.5 rounded-lg bg-white/90 hover:bg-white shadow-sm transition-all hover:scale-110"
+                                        title="监控设置"
+                                    >
+                                        {isRunning ? (
+                                            <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        ) : (
+                                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        )}
+                                    </button>
 
                                     <button
                                         onClick={(e) => onRemove(e, item.key)}
@@ -434,21 +427,152 @@ export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle, hi
                 </div>
             </div>
             {showScheduler && (
-                <div
-                    ref={popupRef}
-                    className="absolute right-4 top-14 z-50 w-72 bg-white rounded-xl shadow-2xl border border-gray-200 p-2"
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    <TaskScheduler
-                        isRunning={isRunning}
-                        onStart={handleStart}
-                        onStop={handleStop}
-                        executionCount={executionCount}
-                        logs={logs}
-                        initialInterval={intervalMs}
-                        initialStartTime={timeWindow?.start}
-                        initialEndTime={timeWindow?.end}
-                    />
+                <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                        {/* Header */}
+                        <div className="p-6 border-b border-gray-100 bg-gradient-to-br from-white to-blue-50/30">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-xl font-black text-gray-900">监控任务设置</h2>
+                                    <p className="text-sm text-gray-500 mt-1 truncate">{item.name}</p>
+                                </div>
+                                <button
+                                    onClick={() => setShowScheduler(false)}
+                                    className="p-2 hover:bg-gray-100 rounded-xl transition-colors text-gray-400 hover:text-gray-600"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Body */}
+                        <div className="p-6 space-y-5">
+                            {/* Enable/Disable Toggle */}
+                            <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                                <label className="flex items-center gap-3 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={isRunning}
+                                        onChange={(e) => {
+                                            if (e.target.checked) {
+                                                handleStart(intervalMs, timeWindow?.start || '00:00', timeWindow?.end || '23:59');
+                                            } else {
+                                                handleStop();
+                                            }
+                                        }}
+                                        className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                                    />
+                                    <div>
+                                        <span className="text-sm font-bold text-gray-900">启用监控</span>
+                                        <p className="text-xs text-gray-500 mt-0.5">自动检查库存状态并推送通知</p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            {/* Interval Input */}
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">检查间隔</label>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="number"
+                                        value={intervalMs / 1000}
+                                        onChange={(e) => setIntervalMs(parseInt(e.target.value) * 1000 || 2000)}
+                                        className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-bold text-gray-900"
+                                        min="2"
+                                        disabled={isRunning}
+                                    />
+                                    <span className="text-sm text-gray-500 font-medium">秒</span>
+                                </div>
+                                <p className="text-xs text-gray-400 mt-2">最小间隔为 2 秒</p>
+                            </div>
+
+                            {/* Time Window */}
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">监控时间段</label>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="time"
+                                        value={timeWindow?.start || '00:00'}
+                                        onChange={(e) => setTimeWindow({ start: e.target.value, end: timeWindow?.end || '23:59' })}
+                                        className="flex-1 px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                                        disabled={isRunning}
+                                    />
+                                    <span className="text-gray-400">-</span>
+                                    <input
+                                        type="time"
+                                        value={timeWindow?.end || '23:59'}
+                                        onChange={(e) => setTimeWindow({ start: timeWindow?.start || '00:00', end: e.target.value })}
+                                        className="flex-1 px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                                        disabled={isRunning}
+                                    />
+                                </div>
+                                <p className="text-xs text-gray-400 mt-2">仅在此时间段内执行监控</p>
+                            </div>
+
+                            {/* Status Info */}
+                            <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100">
+                                <h3 className="text-xs font-black text-blue-900 uppercase tracking-wider mb-3">任务状态</h3>
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-600">执行次数:</span>
+                                        <span className="font-mono text-gray-900 font-bold">{executionCount}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-600">当前状态:</span>
+                                        <span className={`font-bold ${localStockStatus ? 'text-green-600' : 'text-red-600'}`}>
+                                            {localStockStatus === null ? '未检查' : localStockStatus ? '有货' : '售罄'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Execution Logs */}
+                            <details className="bg-gray-50 rounded-2xl overflow-hidden border border-gray-100">
+                                <summary className="p-4 cursor-pointer font-bold text-sm text-gray-700 hover:bg-gray-100 transition-colors">执行日志 ({logs.length})</summary>
+                                <div className="px-4 pb-4 space-y-1 max-h-48 overflow-y-auto">
+                                    {logs.length === 0 ? (
+                                        <p className="text-xs text-gray-400 italic text-center py-2">暂无执行记录</p>
+                                    ) : (
+                                        logs.map((log, i) => (
+                                            <div key={i} className="text-xs font-mono text-gray-600 bg-white px-2 py-1 rounded">
+                                                {log}
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </details>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="p-6 bg-gray-50 border-t border-gray-100 flex gap-3">
+                            <button
+                                onClick={() => setShowScheduler(false)}
+                                className="flex-1 py-3 text-sm font-bold text-gray-600 hover:bg-gray-100 rounded-xl transition-all"
+                            >
+                                取消
+                            </button>
+                            {isRunning ? (
+                                <button
+                                    onClick={() => {
+                                        handleStop();
+                                        setShowScheduler(false);
+                                    }}
+                                    className="flex-1 py-3 bg-red-600 text-white text-sm font-bold rounded-xl hover:bg-red-700 transition-all shadow-lg shadow-red-200"
+                                >
+                                    关闭监控
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => {
+                                        handleStart(intervalMs, timeWindow?.start || '00:00', timeWindow?.end || '23:59');
+                                    }}
+                                    className="flex-1 py-3 bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
+                                >
+                                    开始监控
+                                </button>
+                            )}
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
