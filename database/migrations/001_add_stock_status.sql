@@ -1,5 +1,9 @@
--- Migration script to add stock_status column to existing crawled_products table
--- Run this in your Supabase SQL editor if you have an existing database
+-- ============================================================================
+-- Migration 001: Add stock_status Column
+-- ============================================================================
+-- Date: 2026-01-08
+-- Description: Adds stock_status column to crawled_products table
+-- ============================================================================
 
 -- Add the stock_status column with default value 'new'
 ALTER TABLE crawled_products 
