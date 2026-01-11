@@ -41,3 +41,22 @@ export function parseLocalTime(dateStr: string | number): Date {
     }
     return date;
 }
+
+/**
+ * Generates an ISO string with the local timezone offset (e.g., 2026-01-11T20:55:00.123+08:00)
+ * This ensures the timestamp preserves the correct local time when stored or displayed.
+ */
+export function toLocalISOString(date: Date): string {
+    const tzOffset = -date.getTimezoneOffset(); // in minutes
+    const diff = tzOffset >= 0 ? '+' : '-';
+    const pad = (n: number) => (n < 10 ? '0' : '') + n;
+
+    return date.getFullYear() +
+        '-' + pad(date.getMonth() + 1) +
+        '-' + pad(date.getDate()) +
+        'T' + pad(date.getHours()) +
+        ':' + pad(date.getMinutes()) +
+        ':' + pad(date.getSeconds()) +
+        '.' + (date.getMilliseconds() / 1000).toFixed(3).slice(2, 5) +
+        diff + pad(Math.floor(Math.abs(tzOffset) / 60)) + ':' + pad(Math.abs(tzOffset) % 60);
+}

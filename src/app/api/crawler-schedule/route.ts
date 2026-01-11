@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { toLocalISOString } from '@/lib/date-utils';
 
 /**
  * GET /api/crawler-schedule
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
             }, { status: 400 });
         }
 
-        if (interval_minutes && interval_minutes < 15) {
+        if (interval_minutes && interval_minutes < 1) {
             return NextResponse.json({
                 success: false,
                 error: 'Interval must be at least 15 minutes'
@@ -51,22 +52,38 @@ export async function POST(request: Request) {
         }
 
         // Calculate next_run_time if enabling the schedule
-        let next_run_time = null;
+        let next_run_time_str = null;
         if (is_enabled && interval_minutes) {
             const now = new Date();
-            next_run_time = new Date(now.getTime() + interval_minutes * 60000);
+            const next_run = new Date(now.getTime() + interval_minutes * 60000);
+
+            // Use local ISO string to preserve timezone
+            next_run_time_str = toLocalISOString(next_run);
+
+            console.log(`[CrawlerSchedule] Calculating next run time:
+                Current Time (CN): ${now.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}
+                Interval: ${interval_minutes} minutes
+                Next Run Time (CN): ${next_run.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}
+                
+                Current Time (ISO): ${now.toISOString()}
+                Next Run Time (Local ISO): ${next_run_time_str}
+            `);
         }
+
+        const updatePayload = {
+            gender,
+            is_enabled: is_enabled ?? true,
+            interval_minutes: interval_minutes ?? 60,
+            next_run_time: next_run_time_str,
+            updated_at: toLocalISOString(new Date())
+        };
+
+        console.log('[CrawlerSchedule] Update Payload:', JSON.stringify(updatePayload, null, 2));
 
         // Upsert the schedule
         const { data, error } = await supabase
             .from('crawler_schedules')
-            .upsert({
-                gender,
-                is_enabled: is_enabled ?? true,
-                interval_minutes: interval_minutes ?? 60,
-                next_run_time,
-                updated_at: new Date().toISOString()
-            }, {
+            .upsert(updatePayload, {
                 onConflict: 'gender'
             })
             .select()
