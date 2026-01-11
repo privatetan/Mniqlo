@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { toLocalISOString } from '@/lib/date-utils';
 import { intervalToCron } from '@/lib/cron-utils';
 import { addOrUpdateJob, removeJob } from '@/lib/cron';
+import * as logger from '@/lib/logger';
 
 /**
  * GET /api/crawler-schedule
@@ -22,7 +23,7 @@ export async function GET() {
             schedules: data || []
         });
     } catch (error: any) {
-        console.error('GET /api/crawler-schedule error:', error);
+        logger.error('GET /api/crawler-schedule error:', error);
         return NextResponse.json({
             success: false,
             error: error.message || 'Failed to fetch schedules'
@@ -67,7 +68,7 @@ export async function POST(request: Request) {
             updated_at: toLocalISOString(new Date())
         };
 
-        console.log('[CrawlerSchedule] Update Payload:', JSON.stringify(updatePayload, null, 2));
+        logger.log('[CrawlerSchedule] Update Payload:', JSON.stringify(updatePayload, null, 2));
 
         // Upsert the schedule in database
         const { data, error } = await supabase
@@ -84,7 +85,7 @@ export async function POST(request: Request) {
         if (is_enabled) {
             const success = addOrUpdateJob(gender, cron_expression);
             if (!success) {
-                console.error(`[CrawlerSchedule] Failed to add/update cron job for ${gender}`);
+                logger.error(`[CrawlerSchedule] Failed to add/update cron job for ${gender}`);
             }
         } else {
             // Remove the job if disabled
@@ -98,7 +99,7 @@ export async function POST(request: Request) {
             cron_expression
         });
     } catch (error: any) {
-        console.error('POST /api/crawler-schedule error:', error);
+        logger.error('POST /api/crawler-schedule error:', error);
         return NextResponse.json({
             success: false,
             error: error.message || 'Failed to save schedule'
@@ -134,7 +135,7 @@ export async function DELETE(request: Request) {
             message: `Schedule for ${gender} has been deleted`
         });
     } catch (error: any) {
-        console.error('DELETE /api/crawler-schedule error:', error);
+        logger.error('DELETE /api/crawler-schedule error:', error);
         return NextResponse.json({
             success: false,
             error: error.message || 'Failed to delete schedule'

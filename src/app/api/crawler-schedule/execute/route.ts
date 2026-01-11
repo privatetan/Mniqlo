@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { crawlUniqloProducts } from '@/lib/crawler';
+import * as logger from '@/lib/logger';
 
 /**
  * POST /api/crawler-schedule/execute
@@ -33,7 +34,7 @@ export async function POST(request: Request) {
         // Execute each due schedule
         for (const schedule of dueSchedules) {
             try {
-                console.log(`[Cron] Executing scheduled crawl for ${schedule.gender}`);
+                logger.log(`[Cron] Executing scheduled crawl for ${schedule.gender}`);
 
                 // Run the crawler
                 const { totalFound, newItems, soldOutItems } = await crawlUniqloProducts(schedule.gender);
@@ -52,7 +53,7 @@ export async function POST(request: Request) {
                     .eq('id', schedule.id);
 
                 if (updateError) {
-                    console.error(`[Cron] Failed to update schedule for ${schedule.gender}:`, updateError);
+                    logger.error(`[Cron] Failed to update schedule for ${schedule.gender}:`, updateError);
                 }
 
                 results.push({
@@ -64,9 +65,9 @@ export async function POST(request: Request) {
                     nextRunTime: nextRunTime.toISOString()
                 });
 
-                console.log(`[Cron] Completed crawl for ${schedule.gender}: ${totalFound} items found, ${newItems.length} new, ${soldOutItems.length} sold out`);
+                logger.log(`[Cron] Completed crawl for ${schedule.gender}: ${totalFound} items found, ${newItems.length} new, ${soldOutItems.length} sold out`);
             } catch (crawlError: any) {
-                console.error(`[Cron] Failed to execute crawl for ${schedule.gender}:`, crawlError);
+                logger.error(`[Cron] Failed to execute crawl for ${schedule.gender}:`, crawlError);
                 results.push({
                     gender: schedule.gender,
                     success: false,
@@ -82,7 +83,7 @@ export async function POST(request: Request) {
             results
         });
     } catch (error: any) {
-        console.error('[Cron] Execute scheduled crawls error:', error);
+        logger.error('[Cron] Execute scheduled crawls error:', error);
         return NextResponse.json({
             success: false,
             error: error.message || 'Failed to execute scheduled crawls'

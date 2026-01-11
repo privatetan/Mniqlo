@@ -10,6 +10,7 @@
 import cron from 'node-cron';
 import { supabase } from './supabase';
 import { validateCronExpression } from './cron-utils';
+import * as logger from './logger';
 
 // Store active cron jobs by gender
 const jobs = new Map<string, ReturnType<typeof cron.schedule>>();
@@ -25,13 +26,13 @@ async function loadSchedulesFromDB() {
             .eq('is_enabled', true);
 
         if (error) {
-            console.error('[Cron] Failed to load schedules from database:', error);
+            logger.error('[Cron] Failed to load schedules from database:', error);
             return [];
         }
 
         return data || [];
     } catch (error) {
-        console.error('[Cron] Error loading schedules:', error);
+        logger.error('[Cron] Error loading schedules:', error);
         return [];
     }
 }
@@ -52,7 +53,7 @@ async function executeCrawl(gender: string) {
         const data = await response.json();
 
         if (data.success) {
-            console.log(`[Cron] ✓ ${gender}: ${data.newCount} new, ${data.soldOutCount} sold out`);
+            logger.log(`[Cron] ✓ ${gender}: ${data.newCount} new, ${data.soldOutCount} sold out`);
 
             // Update last_run_time
             await supabase
@@ -60,10 +61,10 @@ async function executeCrawl(gender: string) {
                 .update({ last_run_time: new Date().toISOString() })
                 .eq('gender', gender);
         } else {
-            console.error(`[Cron] ✗ ${gender}: ${data.error || 'Unknown error'}`);
+            logger.error(`[Cron] ✗ ${gender}: ${data.error || 'Unknown error'}`);
         }
     } catch (error) {
-        console.error(`[Cron] Failed to execute crawl for ${gender}:`, error);
+        logger.error(`[Cron] Failed to execute crawl for ${gender}:`, error);
     }
 }
 
@@ -77,7 +78,7 @@ export function addOrUpdateJob(gender: string, cronExpression: string): boolean 
     try {
         // Validate cron expression
         if (!validateCronExpression(cronExpression)) {
-            console.error(`[Cron] Invalid cron expression for ${gender}: ${cronExpression}`);
+            logger.error(`[Cron] Invalid cron expression for ${gender}: ${cronExpression}`);
             return false;
         }
 
@@ -85,23 +86,23 @@ export function addOrUpdateJob(gender: string, cronExpression: string): boolean 
         if (jobs.has(gender)) {
             jobs.get(gender)?.stop();
             jobs.delete(gender);
-            console.log(`[Cron] Stopped existing job for ${gender}`);
+            logger.log(`[Cron] Stopped existing job for ${gender}`);
         }
 
         // Create new job
         const task = cron.schedule(cronExpression, async () => {
-            console.log(`[Cron] Executing scheduled crawl for ${gender}`);
+            logger.log(`[Cron] Executing scheduled crawl for ${gender}`);
             await executeCrawl(gender);
         }, {
             timezone: 'Asia/Shanghai'
         });
 
         jobs.set(gender, task);
-        console.log(`[Cron] ✓ Scheduled job for ${gender}: ${cronExpression}`);
+        logger.log(`[Cron] ✓ Scheduled job for ${gender}: ${cronExpression}`);
 
         return true;
     } catch (error) {
-        console.error(`[Cron] Failed to add/update job for ${gender}:`, error);
+        logger.error(`[Cron] Failed to add/update job for ${gender}:`, error);
         return false;
     }
 }
@@ -116,12 +117,12 @@ export function removeJob(gender: string): boolean {
         if (jobs.has(gender)) {
             jobs.get(gender)?.stop();
             jobs.delete(gender);
-            console.log(`[Cron] Removed job for ${gender}`);
+            logger.log(`[Cron] Removed job for ${gender}`);
             return true;
         }
         return false;
     } catch (error) {
-        console.error(`[Cron] Failed to remove job for ${gender}:`, error);
+        logger.error(`[Cron] Failed to remove job for ${gender}:`, error);
         return false;
     }
 }
@@ -131,29 +132,29 @@ export function removeJob(gender: string): boolean {
  * Loads all enabled schedules from database and starts them
  */
 export async function startCron() {
-    console.log('[Cron] Starting crawler schedule manager...');
+    logger.log('[Cron] Starting crawler schedule manager...');
 
     try {
         const schedules = await loadSchedulesFromDB();
 
         if (schedules.length === 0) {
-            console.log('[Cron] No enabled schedules found');
+            logger.log('[Cron] No enabled schedules found');
             return;
         }
 
-        console.log(`[Cron] Loading ${schedules.length} enabled schedule(s)...`);
+        logger.log(`[Cron] Loading ${schedules.length} enabled schedule(s)...`);
 
         for (const schedule of schedules) {
             if (schedule.cron_expression) {
                 addOrUpdateJob(schedule.gender, schedule.cron_expression);
             } else {
-                console.warn(`[Cron] Schedule for ${schedule.gender} has no cron expression`);
+                logger.warn(`[Cron] Schedule for ${schedule.gender} has no cron expression`);
             }
         }
 
-        console.log(`[Cron] Crawler schedule manager started with ${jobs.size} active job(s)`);
+        logger.log(`[Cron] Crawler schedule manager started with ${jobs.size} active job(s)`);
     } catch (error) {
-        console.error('[Cron] Failed to start cron manager:', error);
+        logger.error('[Cron] Failed to start cron manager:', error);
     }
 }
 
@@ -161,15 +162,15 @@ export async function startCron() {
  * Stop all cron jobs
  */
 export function stopCron() {
-    console.log('[Cron] Stopping all crawler schedules...');
+    logger.log('[Cron] Stopping all crawler schedules...');
 
     jobs.forEach((task, gender) => {
         task.stop();
-        console.log(`[Cron] Stopped job for ${gender}`);
+        logger.log(`[Cron] Stopped job for ${gender}`);
     });
 
     jobs.clear();
-    console.log('[Cron] All crawler schedules stopped');
+    logger.log('[Cron] All crawler schedules stopped');
 }
 
 /**
