@@ -83,6 +83,13 @@ export default function AdminUsersPage() {
     const [savingPushSettings, setSavingPushSettings] = useState(false);
     const [loadingPushSettings, setLoadingPushSettings] = useState(false);
 
+    // Crawler Schedule states
+    const [crawlerSchedules, setCrawlerSchedules] = useState<Record<string, any>>({});
+    const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
+    const [selectedScheduleGender, setSelectedScheduleGender] = useState<string | null>(null);
+    const [scheduleForm, setScheduleForm] = useState({ is_enabled: false, interval_minutes: 60 });
+    const [savingSchedule, setSavingSchedule] = useState(false);
+
     useEffect(() => {
         const userStr = localStorage.getItem('user');
         if (!userStr) {
@@ -97,6 +104,7 @@ export default function AdminUsersPage() {
         }
 
         fetchUsers(user.username);
+        fetchCrawlerSchedules();
     }, [router]);
 
     const fetchUsers = async (username?: string) => {
@@ -239,6 +247,65 @@ export default function AdminUsersPage() {
         }
     };
 
+    const fetchCrawlerSchedules = async () => {
+        try {
+            const response = await fetch('/api/crawler-schedule');
+            const data = await response.json();
+            if (data.success) {
+                const scheduleMap = data.schedules.reduce((acc: Record<string, any>, s: any) => {
+                    acc[s.gender] = s;
+                    return acc;
+                }, {});
+                setCrawlerSchedules(scheduleMap);
+            }
+        } catch (err) {
+            console.error('Failed to fetch crawler schedules:', err);
+        }
+    };
+
+    const openScheduleModal = (gender: string) => {
+        setSelectedScheduleGender(gender);
+        const currentSchedule = crawlerSchedules[gender];
+        if (currentSchedule) {
+            setScheduleForm({
+                is_enabled: currentSchedule.is_enabled,
+                interval_minutes: currentSchedule.interval_minutes
+            });
+        } else {
+            setScheduleForm({ is_enabled: false, interval_minutes: 60 });
+        }
+        setScheduleModalOpen(true);
+    };
+
+    const handleSaveSchedule = async () => {
+        if (!selectedScheduleGender) return;
+
+        try {
+            setSavingSchedule(true);
+            const response = await fetch('/api/crawler-schedule', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    gender: selectedScheduleGender,
+                    ...scheduleForm
+                })
+            });
+            const data = await response.json();
+            if (data.success) {
+                setScheduleModalOpen(false);
+                await fetchCrawlerSchedules();
+                alert(data.message || '定时任务设置已保存');
+            } else {
+                alert(data.error || '保存失败');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('保存设置时发生错误');
+        } finally {
+            setSavingSchedule(false);
+        }
+    };
+
     const handleSyncCrawl = async (gender: string) => {
         if (crawlLoading) return;
 
@@ -335,21 +402,52 @@ export default function AdminUsersPage() {
                                 { name: '男装', color: 'bg-blue-50 text-blue-600 hover:bg-blue-100 border-blue-100' },
                                 { name: '童装', color: 'bg-amber-50 text-amber-600 hover:bg-amber-100 border-amber-100' },
                                 { name: '婴幼儿装', color: 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border-emerald-100' }
-                            ].map((cat) => (
-                                <button
-                                    key={cat.name}
-                                    onClick={() => handleSyncCrawl(cat.name)}
-                                    disabled={crawlLoading !== null}
-                                    className={`flex flex-col items-center justify-center p-4 rounded-2xl border transition-all active:scale-95 ${cat.color} ${crawlLoading === cat.name ? 'ring-2 ring-offset-2 ring-gray-200 opacity-80' : ''} ${crawlLoading && crawlLoading !== cat.name ? 'opacity-40 grayscale pointer-events-none' : ''}`}
-                                >
-                                    {crawlLoading === cat.name ? (
-                                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-current border-t-transparent mb-1"></div>
-                                    ) : (
-                                        <span className="text-xl mb-1">📦</span>
-                                    )}
-                                    <span className="text-xs font-black tracking-tight">{crawlLoading === cat.name ? '正在同步...' : cat.name}</span>
-                                </button>
-                            ))}
+                            ].map((cat) => {
+                                const schedule = crawlerSchedules[cat.name];
+                                return (
+                                    <div key={cat.name} className="relative">
+                                        <button
+                                            onClick={() => handleSyncCrawl(cat.name)}
+                                            disabled={crawlLoading !== null}
+                                            className={`w-full flex flex-col items-center justify-center p-4 rounded-2xl border transition-all active:scale-95 ${cat.color} ${crawlLoading === cat.name ? 'ring-2 ring-offset-2 ring-gray-200 opacity-80' : ''} ${crawlLoading && crawlLoading !== cat.name ? 'opacity-40 grayscale pointer-events-none' : ''}`}
+                                        >
+                                            {crawlLoading === cat.name ? (
+                                                <div className="animate-spin rounded-full h-5 w-5 border-2 border-current border-t-transparent mb-1"></div>
+                                            ) : (
+                                                <span className="text-xl mb-1">📦</span>
+                                            )}
+                                            <span className="text-xs font-black tracking-tight">{crawlLoading === cat.name ? '正在同步...' : cat.name}</span>
+                                        </button>
+
+                                        {/* Schedule Settings Button */}
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                openScheduleModal(cat.name);
+                                            }}
+                                            className="absolute top-2 right-2 p-1.5 rounded-lg bg-white/90 hover:bg-white shadow-sm transition-all hover:scale-110"
+                                            title="定时任务设置"
+                                        >
+                                            {schedule?.is_enabled ? (
+                                                <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                            ) : (
+                                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                            )}
+                                        </button>
+
+                                        {/* Last Run Time */}
+                                        {schedule?.last_run_time && (
+                                            <div className="text-[9px] text-gray-400 mt-1.5 text-center font-mono">
+                                                {new Date(schedule.last_run_time).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
 
@@ -969,6 +1067,107 @@ export default function AdminUsersPage() {
                                     className="flex-[2] py-4 bg-gray-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-gray-200 hover:shadow-emerald-500/20 hover:bg-emerald-500 active:scale-95 transition-all disabled:opacity-50 disabled:grayscale disabled:scale-100"
                                 >
                                     {savingPushSettings ? '正在保存...' : '保存配置'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Schedule Configuration Modal */}
+                {scheduleModalOpen && selectedScheduleGender && (
+                    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+                        <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                            {/* Header */}
+                            <div className="p-6 border-b border-gray-100 bg-gradient-to-br from-white to-blue-50/30">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h2 className="text-xl font-black text-gray-900">定时任务设置</h2>
+                                        <p className="text-sm text-gray-500 mt-1">{selectedScheduleGender} 自动爬取配置</p>
+                                    </div>
+                                    <button
+                                        onClick={() => setScheduleModalOpen(false)}
+                                        className="p-2 hover:bg-gray-100 rounded-xl transition-colors text-gray-400 hover:text-gray-600"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Body */}
+                            <div className="p-6 space-y-5">
+                                {/* Enable/Disable Toggle */}
+                                <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                                    <label className="flex items-center gap-3 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={scheduleForm.is_enabled}
+                                            onChange={(e) => setScheduleForm({ ...scheduleForm, is_enabled: e.target.checked })}
+                                            className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                                        />
+                                        <div>
+                                            <span className="text-sm font-bold text-gray-900">启用定时爬取</span>
+                                            <p className="text-xs text-gray-500 mt-0.5">自动按设定间隔执行爬取任务</p>
+                                        </div>
+                                    </label>
+                                </div>
+
+                                {/* Interval Input */}
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">爬取间隔</label>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="number"
+                                            value={scheduleForm.interval_minutes}
+                                            onChange={(e) => setScheduleForm({ ...scheduleForm, interval_minutes: parseInt(e.target.value) || 60 })}
+                                            className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-bold text-gray-900"
+                                            min="15"
+                                            disabled={!scheduleForm.is_enabled}
+                                        />
+                                        <span className="text-sm text-gray-500 font-medium">分钟</span>
+                                    </div>
+                                    <p className="text-xs text-gray-400 mt-2">最小间隔为 15 分钟</p>
+                                </div>
+
+                                {/* Schedule Info */}
+                                {crawlerSchedules[selectedScheduleGender] && (
+                                    <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100">
+                                        <h3 className="text-xs font-black text-blue-900 uppercase tracking-wider mb-3">任务状态</h3>
+                                        <div className="space-y-2 text-sm">
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">上次运行:</span>
+                                                <span className="font-mono text-gray-900 font-bold">
+                                                    {crawlerSchedules[selectedScheduleGender].last_run_time
+                                                        ? new Date(crawlerSchedules[selectedScheduleGender].last_run_time).toLocaleString('zh-CN')
+                                                        : '从未运行'}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">下次运行:</span>
+                                                <span className="font-mono text-gray-900 font-bold">
+                                                    {crawlerSchedules[selectedScheduleGender].next_run_time
+                                                        ? new Date(crawlerSchedules[selectedScheduleGender].next_run_time).toLocaleString('zh-CN')
+                                                        : '未设置'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Footer */}
+                            <div className="p-6 bg-gray-50 border-t border-gray-100 flex gap-3">
+                                <button
+                                    onClick={() => setScheduleModalOpen(false)}
+                                    className="flex-1 py-3 text-sm font-bold text-gray-600 hover:bg-gray-100 rounded-xl transition-all"
+                                >
+                                    取消
+                                </button>
+                                <button
+                                    onClick={handleSaveSchedule}
+                                    disabled={savingSchedule}
+                                    className="flex-1 py-3 bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-blue-200"
+                                >
+                                    {savingSchedule ? '保存中...' : '保存设置'}
                                 </button>
                             </div>
                         </div>
