@@ -604,34 +604,42 @@ export async function crawlUniqloProducts(targetGender?: string): Promise<{ tota
 
                     console.log(`[Notification] Found ${subscriptions.length} eligible subscribers for category "${targetGender}".`);
 
-                    // for (const sub of subscriptions) {
-                    //     const user = sub.users as any;
-                    //     if (!user?.wx_user_id) {
-                    //         console.log(`[Notification] User ${user?.username || sub.user_id} has no wx_user_id, skipping.`);
-                    //         continue;
-                    //     }
+                    for (const sub of subscriptions) {
+                        const user = sub.users as any;
+                        if (!user?.wx_user_id) {
+                            console.log(`[Notification] User ${user?.username || sub.user_id} has no wx_user_id, skipping.`);
+                            continue;
+                        }
 
-                    //     for (const code in itemsByCode) {
-                    //         const items = itemsByCode[code];
-                    //         const firstItem = items[0];
-                    //         const title = `超值精选新增：${firstItem.name}`;
-                    //         const content = `发现货号 ${code} 有新库存！包含 ${items.length} 个规格。价格: ¥${firstItem.price}${firstItem.origin_price && parseFloat(firstItem.origin_price as any) > parseFloat(firstItem.price as any) ? ` (原价: ¥${firstItem.origin_price})` : ''}。`;
+                        for (const code in itemsByCode) {
+                            const items = itemsByCode[code];
+                            const firstItem = items[0];
+                            const title = `超值精选新增：${firstItem.name}`;
 
-                    //         // Send individual notification
-                    //         const notificationResult = await sendWxNotification( // Renamed 'result' to 'notificationResult' to avoid conflict
-                    //             user.wx_user_id,
-                    //             title,
-                    //             content,
-                    //             `https://www.uniqlo.cn/hmall-sc/jp/zh_CN/goods-detail.html?productCode=${firstItem.product_id}`
-                    //         );
+                            // List all specifications (color and size)
+                            const specsList = items.map(item => `${item.color} ${item.size}`).join('、');
+                            const priceInfo = firstItem.origin_price && parseFloat(firstItem.origin_price as any) > parseFloat(firstItem.price as any)
+                                ? ` (原价: ¥${firstItem.origin_price})`
+                                : '';
+                            const content = `发现货号 ${code} 有新库存！包含 ${items.length} 个规格：${specsList}。价格: ¥${firstItem.price}${priceInfo}。`;
 
-                    //         if (notificationResult.success) {
-                    //             console.log(`[Notification] Sent to ${user.username} for code ${code}`);
-                    //         } else {
-                    //             console.error(`[Notification] Failed to send to ${user.username} for code ${code}:`, notificationResult.error);
-                    //         }
-                    //     }
-                    // }
+                            // Send notification to the same detail page as favorites notifications
+                            const baseUrl = process.env.WECHAT_BASE_URL;
+                            const notificationUrl = `${baseUrl}/notification`;
+                            const notificationResult = await sendWxNotification(
+                                user.wx_user_id,
+                                title,
+                                content,
+                                notificationUrl
+                            );
+
+                            if (notificationResult.success) {
+                                console.log(`[Notification] Sent to ${user.username} for code ${code}`);
+                            } else {
+                                console.error(`[Notification] Failed to send to ${user.username} for code ${code}:`, notificationResult.error);
+                            }
+                        }
+                    }
                 }
             } catch (notifyError) {
                 console.error('[Notification] Error in super selection notification flow:', notifyError);
