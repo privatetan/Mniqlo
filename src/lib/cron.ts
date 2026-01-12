@@ -14,7 +14,7 @@ import * as logger from './logger';
 
 // Store active cron jobs by gender
 // Use global object to maintain persistence across HMR replacements in development
-const globalForCron = global as unknown as { cronJobs: Map<string, any> };
+const globalForCron = global as unknown as { cronJobs: Map<string, any>; cronStarted: boolean };
 const jobs = globalForCron.cronJobs || new Map<string, any>();
 if (process.env.NODE_ENV !== 'production') globalForCron.cronJobs = jobs;
 
@@ -32,6 +32,8 @@ async function loadSchedulesFromDB() {
             logger.error('[Cron] Failed to load schedules from database:', error);
             return [];
         }
+
+
 
         return data || [];
     } catch (error) {
@@ -195,8 +197,14 @@ export function getActiveJobs(): string[] {
 const startDelay = process.env.NODE_ENV === 'development' ? 5000 : 3000;
 
 setTimeout(() => {
+    // Prevent double initialization in the same process
+    if (globalForCron.cronStarted) {
+        return;
+    }
+    globalForCron.cronStarted = true;
+
     const env = process.env.NODE_ENV || 'development';
-    logger.log(`[Cron] Auto-starting scheduler (${env} mode)...`);
+    logger.log(`[Cron] Auto-starting scheduler (${env} mode, PID: ${process.pid})...`);
 
     startCron().then(() => {
         const activeJobs = getActiveJobs();
@@ -207,5 +215,7 @@ setTimeout(() => {
         }
     }).catch(error => {
         logger.error('[Cron] ✗ Failed to auto-start scheduler:', error);
+        // Reset flag on failure to allow retry if needed
+        globalForCron.cronStarted = false;
     });
 }, startDelay);
