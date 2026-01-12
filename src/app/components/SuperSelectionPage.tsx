@@ -343,9 +343,9 @@ export default function SuperSelectionPage() {
                                     <div className="flex justify-between items-start mb-2">
                                         <div className="flex-1 min-w-0 pr-4">
                                             <div className="flex flex-col gap-0.5">
-                                                <div className="flex items-center gap-3 text-[11px] text-gray-500 font-medium">
-                                                    <span>货号：<span className="text-green-600 font-bold font-mono">{product.code}</span></span>
-                                                    <span>品类：{product.gender}</span>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-base text-green-600 font-bold font-mono">{product.code}</span>
+                                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 font-medium">{product.gender}</span>
                                                     {product.items.some(i => i.stock_status === 'new') && (
                                                         <span className="px-1.5 py-0.5 text-[9px] font-bold bg-red-500 text-white rounded uppercase tracking-wide shadow-sm animate-pulse">
                                                             NEW

@@ -627,7 +627,7 @@ export async function crawlUniqloProducts(targetGender?: string): Promise<{ tota
                                 ? ` (原价: ¥${firstItem.origin_price})`
                                 : '';
 
-                            content += `${index}. ${firstItem.name}\n   规格：${specsList}\n   价格：¥${firstItem.price}${priceInfo}\n`;
+                            content += `${index}. ${firstItem.name}\n   货号：${code} | 品类：${targetGender}\n   规格：${specsList}\n   价格：¥${firstItem.price}${priceInfo}\n`;
                             index++;
                         }
 
