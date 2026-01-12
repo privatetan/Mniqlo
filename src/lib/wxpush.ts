@@ -67,8 +67,8 @@ class WeChatPushService {
     /**
      * Get access token with caching
      */
-    async getAccessToken(): Promise<string> {
-        if (this.tokenCache && this.tokenCache.expiresAt > Date.now()) {
+    async getAccessToken(forceRefresh = false): Promise<string> {
+        if (!forceRefresh && this.tokenCache && this.tokenCache.expiresAt > Date.now()) {
             return this.tokenCache.token;
         }
 
@@ -114,10 +114,12 @@ class WeChatPushService {
                 appid: string;
                 pagepath: string;
             };
-        }
+        },
+        retryCount = 0
     ): Promise<WeChatSendResponse> {
         try {
-            const token = await this.getAccessToken();
+            // Force refresh if this is a retry
+            const token = await this.getAccessToken(retryCount > 0);
 
             // Encode template data into URL for the notification detail page if applicable
             let notificationUrl = options?.url || this.baseUrl;
@@ -156,6 +158,13 @@ class WeChatPushService {
             const result: WeChatSendResponse = await response.json();
 
             if (result.errcode !== 0) {
+                // Check for invalid token errors (40001, 40014, 42001)
+                if ((result.errcode === 40001 || result.errcode === 40014 || result.errcode === 42001) && retryCount < 1) {
+                    console.log(`[WeChat] Token invalid (errcode: ${result.errcode}), retrying with fresh token...`);
+                    this.tokenCache = null; // Clear cache
+                    return this.sendTemplateMessage(touser, data, options, retryCount + 1);
+                }
+
                 console.error('[WeChat] Send failed:', result);
                 throw new Error(`WeChat API Error: ${result.errmsg}`);
             }

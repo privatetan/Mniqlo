@@ -604,6 +604,7 @@ export default function AdminUsersPage() {
                                                             <div className="flex items-center gap-1.5">
                                                                 <input
                                                                     type="number"
+                                                                    min="1"
                                                                     value={editForm.notifyFrequency}
                                                                     onChange={(e) => setEditForm(prev => ({ ...prev, notifyFrequency: e.target.value }))}
                                                                     className="w-16 text-xs font-bold text-gray-700 bg-gray-50 border-gray-100 rounded px-1.5 py-0.5 focus:border-[#0b5fff] outline-none"
@@ -998,9 +999,10 @@ export default function AdminUsersPage() {
                                                     <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest">推送频率 (分钟)</p>
                                                     <input
                                                         type="number"
+                                                        min="1"
                                                         value={selectedPushSettings.frequency}
                                                         onChange={(e) => setSelectedPushSettings({ ...selectedPushSettings, frequency: parseInt(e.target.value) || 60 })}
-                                                        className="w-full text-sm font-black text-gray-900 border-none p-0 focus:ring-0 outline-none"
+                                                        className="w-full text-sm font-black text-gray-900 border-none p-0 focus:ring-0 outline-none no-spin"
                                                     />
                                                 </div>
                                             </div>
@@ -1178,6 +1180,16 @@ export default function AdminUsersPage() {
             </main>
 
             <style jsx global>{`
+                /* Hide spin buttons */
+                .no-spin::-webkit-inner-spin-button,
+                .no-spin::-webkit-outer-spin-button {
+                    -webkit-appearance: none;
+                    margin: 0;
+                }
+                .no-spin {
+                    -moz-appearance: textfield;
+                }
+
                 ::-webkit-scrollbar {
                     width: 6px;
                 }
