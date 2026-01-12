@@ -13,7 +13,10 @@ import { validateCronExpression } from './cron-utils';
 import * as logger from './logger';
 
 // Store active cron jobs by gender
-const jobs = new Map<string, ReturnType<typeof cron.schedule>>();
+// Use global object to maintain persistence across HMR replacements in development
+const globalForCron = global as unknown as { cronJobs: Map<string, any> };
+const jobs = globalForCron.cronJobs || new Map<string, any>();
+if (process.env.NODE_ENV !== 'production') globalForCron.cronJobs = jobs;
 
 /**
  * Load all enabled schedules from database
