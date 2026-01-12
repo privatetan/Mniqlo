@@ -611,33 +611,41 @@ export async function crawlUniqloProducts(targetGender?: string): Promise<{ tota
                             continue;
                         }
 
+                        // Aggregate all items into one summary message
+                        const totalCodes = Object.keys(itemsByCode).length;
+                        const title = `超值精选新增 ${totalCodes} 款商品`;
+                        let content = '';
+
+                        let index = 1;
                         for (const code in itemsByCode) {
                             const items = itemsByCode[code];
                             const firstItem = items[0];
-                            const title = `超值精选新增：${firstItem.name}`;
 
                             // List all specifications (color and size)
                             const specsList = items.map(item => `${item.color} ${item.size}`).join('、');
                             const priceInfo = firstItem.origin_price && parseFloat(firstItem.origin_price as any) > parseFloat(firstItem.price as any)
                                 ? ` (原价: ¥${firstItem.origin_price})`
                                 : '';
-                            const content = `发现货号 ${code} 有新库存！包含 ${items.length} 个规格：${specsList}。价格: ¥${firstItem.price}${priceInfo}。`;
 
-                            // Send notification to the same detail page as favorites notifications
-                            const baseUrl = process.env.WECHAT_BASE_URL;
-                            const notificationUrl = `${baseUrl}/notification`;
-                            const notificationResult = await sendWxNotification(
-                                user.wx_user_id,
-                                title,
-                                content,
-                                notificationUrl
-                            );
+                            content += `${index}. ${firstItem.name}\n   规格：${specsList}\n   价格：¥${firstItem.price}${priceInfo}\n`;
+                            index++;
+                        }
 
-                            if (notificationResult.success) {
-                                console.log(`[Notification] Sent to ${user.username} for code ${code}`);
-                            } else {
-                                console.error(`[Notification] Failed to send to ${user.username} for code ${code}:`, notificationResult.error);
-                            }
+                        // Send single summary notification
+                        const baseUrl = process.env.WECHAT_BASE_URL;
+                        const notificationUrl = `${baseUrl}/notification`;
+
+                        const notificationResult = await sendWxNotification(
+                            user.wx_user_id,
+                            title,
+                            content.trim(),
+                            notificationUrl
+                        );
+
+                        if (notificationResult.success) {
+                            console.log(`[Notification] Sent summary to ${user.username} for ${totalCodes} products`);
+                        } else {
+                            console.error(`[Notification] Failed to send summary to ${user.username}:`, notificationResult.error);
                         }
                     }
                 }
