@@ -96,6 +96,12 @@ export function addOrUpdateJob(gender: string, cronExpression: string): boolean 
 
         // Create new job
         const task = cron.schedule(cronExpression, async () => {
+            // Add jitter to prevent thundering herd (0-10 seconds)
+            // This prevents multiple jobs from starting at the exact same millisecond
+            // and blocking the event loop found in the single-threaded dev server.
+            const jitterMs = Math.floor(Math.random() * 10000);
+            await new Promise(resolve => setTimeout(resolve, jitterMs));
+
             logger.log(`[Cron] Executing scheduled crawl for ${gender}`);
             await executeCrawl(gender);
         }, {
