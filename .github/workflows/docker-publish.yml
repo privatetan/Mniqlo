@@ -14,10 +14,10 @@ on:
     branches: [ "main" ]
 
 env:
-  # Use docker.io for Docker Hub if empty
-  REGISTRY: ghcr.io
-  # github.repository as <account>/<repo>
-  IMAGE_NAME: ${{ github.repository }}
+  # 使用阿里云容器镜像服务 (国内服务器可访问)
+  REGISTRY: registry.cn-hangzhou.aliyuncs.com
+  # 修改为你的阿里云命名空间/仓库名
+  IMAGE_NAME: mniqlo/app
 
 
 jobs:
@@ -35,28 +35,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Install the cosign tool except on PR
-      # https://github.com/sigstore/cosign-installer
-      - name: Install cosign
-        if: github.event_name != 'pull_request'
-        uses: sigstore/cosign-installer@v3.5.0
-        with:
-          cosign-release: 'v2.2.4'
-
-
       # Set up Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Login against a Docker registry except on PR
-      # https://github.com/docker/login-action
-      - name: Log into registry ${{ env.REGISTRY }}
+      # Login to Aliyun Container Registry
+      # 使用阿里云容器镜像服务
+      - name: Log into Aliyun Registry
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.ALIYUN_REGISTRY_USER }}
+          password: ${{ secrets.ALIYUN_REGISTRY_PASSWORD }}
 
       # Extract metadata (tags, labels) for Docker
       # https://github.com/docker/metadata-action
@@ -82,18 +73,6 @@ jobs:
             NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
             NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
-      # Sign the resulting Docker image digest except on PRs.
-      # This will only write to the public Rekor transparency log when the Docker
-      # repository is public to avoid leaking data.  If you would like to publish
-      # transparency data even for private images, pass --force to cosign below.
-      # https://github.com/sigstore/cosign
-      - name: Sign the published Docker image
-        if: ${{ github.event_name != 'pull_request' }}
-        env:
-          TAGS: ${{ steps.meta.outputs.tags }}
-          DIGEST: ${{ steps.build-and-push.outputs.digest }}
-        run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
-
   deploy:
     needs: build
     if: github.event_name != 'pull_request'
@@ -106,14 +85,13 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            # Convert repository name to lowercase for Docker image name
-            REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-            IMAGE_TAG="ghcr.io/$REPO_NAME:main"
+            # 使用阿里云镜像
+            IMAGE_TAG="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
             
             echo "Deploying $IMAGE_TAG..."
             
-            # Login to GHCR using the workflow token (passed via env expansion)
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            # Login to Aliyun Container Registry
+            echo "${{ secrets.ALIYUN_REGISTRY_PASSWORD }}" | docker login ${{ env.REGISTRY }} -u ${{ secrets.ALIYUN_REGISTRY_USER }} --password-stdin
             
             # Pull the latest image
             docker pull $IMAGE_TAG
