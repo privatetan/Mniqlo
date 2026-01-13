@@ -6,17 +6,21 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - DATABASE_URL=file:/app/data/dev.db
-      - WX_PUSH_URL=${WX_PUSH_URL}
-      - WX_PUSH_TEMPLATE_ID=${WX_PUSH_TEMPLATE_ID}
-      - WX_PUSH_BASE_URL=${WX_PUSH_BASE_URL}
-      - WX_PUSH_TOKEN=${WX_PUSH_TOKEN}
+      # Supabase Configuration
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      
+      # WeChat Official Account Configuration
+      - WECHAT_APPID=${WECHAT_APPID}
+      - WECHAT_APPSECRET=${WECHAT_APPSECRET}
+      - WECHAT_TEMPLATE_ID=${WECHAT_TEMPLATE_ID}
+      - WECHAT_BASE_URL=${WECHAT_BASE_URL}
     volumes:
-      # 持久化数据库文件
+      # Persistent database storage (for local SQLite if needed)
       - db-data:/app/data
     restart: unless-stopped
 
 volumes:
-  # 创建命名卷来持久化数据
+  # Named volume for persistent data
   db-data:
     driver: local

@@ -26,8 +26,10 @@ Before deploying the app, you must initialize the database structure in Supabase
     ```bash
     NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
     NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-    WX_PUSH_URL=your_wx_push_url
-    WX_PUSH_TOKEN=your_wx_push_token
+    WECHAT_APPID=your_wechat_appid
+    WECHAT_APPSECRET=your_wechat_appsecret
+    WECHAT_TEMPLATE_ID=your_template_id
+    WECHAT_BASE_URL=http://your-server-ip:3000
     # ... other variables from .env.example
     ```
 
@@ -48,8 +50,10 @@ docker run -d \
   -p 3000:3000 \
   -e NEXT_PUBLIC_SUPABASE_URL="yours" \
   -e NEXT_PUBLIC_SUPABASE_ANON_KEY="yours" \
-  -e WX_PUSH_URL="yours" \
-  -e WX_PUSH_TOKEN="yours" \
+  -e WECHAT_APPID="yours" \
+  -e WECHAT_APPSECRET="yours" \
+  -e WECHAT_TEMPLATE_ID="yours" \
+  -e WECHAT_BASE_URL="http://your-server-ip:3000" \
   mniqlo-app
 ```
 

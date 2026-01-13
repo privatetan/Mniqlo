@@ -83,11 +83,11 @@ Create a `.env` file in the project root with the following variables:
 NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
 NEXT_PUBLIC_SUPABASE_ANON_KEY="your-anon-key"
 
-# WeChat Push Notifications
-WX_PUSH_URL="https://your-wxpush-worker.workers.dev/wxsend"
-WX_PUSH_TEMPLATE_ID="your_template_id_here"
-WX_PUSH_BASE_URL="http://your-domain.com:3000"
-WX_PUSH_TOKEN="your_token_here"
+# WeChat Official Account Configuration
+WECHAT_APPID="your_wechat_appid"
+WECHAT_APPSECRET="your_wechat_appsecret"
+WECHAT_TEMPLATE_ID="your_template_id_here"
+WECHAT_BASE_URL="http://your-server-ip:3000"
 ```
 
 ## 📁 Project Structure
