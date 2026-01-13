@@ -15,7 +15,7 @@ on:
 
 env:
   # 使用阿里云容器镜像服务 (国内服务器可访问)
-  REGISTRY: registry.cn-hangzhou.aliyuncs.com
+  REGISTRY: crpi-ygn43u05xqysddhm.cn-shanghai.personal.cr.aliyuncs.com
   # 修改为你的阿里云命名空间/仓库名
   IMAGE_NAME: mniqlo/app
 
