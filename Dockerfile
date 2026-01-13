@@ -36,7 +36,6 @@ ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-RUN npx prisma generate
 RUN npm run build
 
 # Production image, copy all the files and run next
@@ -53,8 +52,6 @@ ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-RUN npm install -g prisma@5.8.0
-
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
@@ -69,22 +66,10 @@ RUN chown nextjs:nodejs .next
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copy Prisma files for migrations
-COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
-
-# Create data directory for database
-RUN mkdir -p /app/data && chown nextjs:nodejs /app/data
-
-# Copy and set up entrypoint script
-COPY --chown=nextjs:nodejs docker-entrypoint.sh ./
-RUN chmod +x docker-entrypoint.sh
-
 USER nextjs
 
 EXPOSE 3000
 
 ENV PORT 3000
 
-CMD ["./docker-entrypoint.sh"]
+CMD ["node", "server.js"]

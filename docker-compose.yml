@@ -15,12 +15,4 @@ services:
       - WECHAT_APPSECRET=${WECHAT_APPSECRET}
       - WECHAT_TEMPLATE_ID=${WECHAT_TEMPLATE_ID}
       - WECHAT_BASE_URL=${WECHAT_BASE_URL}
-    volumes:
-      # Persistent database storage (for local SQLite if needed)
-      - db-data:/app/data
     restart: unless-stopped
-
-volumes:
-  # Named volume for persistent data
-  db-data:
-    driver: local
