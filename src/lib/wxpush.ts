@@ -108,6 +108,7 @@ class WeChatPushService {
     async sendTemplateMessage(
         touser: string,
         data: WeChatTemplateData,
+        templateId?: string,
         options?: {
             url?: string;
             miniprogram?: {
@@ -135,7 +136,7 @@ class WeChatPushService {
 
             const sendData: WeChatTemplateSendData = {
                 touser,
-                template_id: this.templateId,
+                template_id: templateId || this.templateId,
                 data,
                 url: notificationUrl,
                 ...options,
@@ -162,7 +163,7 @@ class WeChatPushService {
                 if ((result.errcode === 40001 || result.errcode === 40014 || result.errcode === 42001) && retryCount < 1) {
                     console.log(`[WeChat] Token invalid (errcode: ${result.errcode}), retrying with fresh token...`);
                     this.tokenCache = null; // Clear cache
-                    return this.sendTemplateMessage(touser, data, options, retryCount + 1);
+                    return this.sendTemplateMessage(touser, data, templateId, options, retryCount + 1);
                 }
 
                 console.error('[WeChat] Send failed:', result);
@@ -188,7 +189,8 @@ export async function sendWxNotification(
     openId: string,
     title: string,
     content: string,
-    url?: string
+    url?: string,
+    templateId?: string
 ): Promise<{ success: boolean; msgid?: number; error?: string }> {
     try {
         const templateData: WeChatTemplateData = {
@@ -207,7 +209,7 @@ export async function sendWxNotification(
             notificationUrl = urlObj.toString();
         }
 
-        const result = await wxPushService.sendTemplateMessage(openId, templateData, { url: notificationUrl });
+        const result = await wxPushService.sendTemplateMessage(openId, templateData, templateId, { url: notificationUrl });
 
         return {
             success: true,

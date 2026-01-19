@@ -639,7 +639,8 @@ export async function crawlUniqloProducts(targetGender?: string): Promise<{ tota
                             user.wx_user_id,
                             title,
                             content.trim(),
-                            notificationUrl
+                            notificationUrl,
+                            process.env.WECHAT_TEMPLATE_ID_SUPER
                         );
 
                         if (notificationResult.success) {
