@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { FavoriteItemRow } from './FavoriteItemRow';
 import { FavoriteItem } from '@/types';
 import { parseLocalTime } from '@/lib/date-utils';
 
 export default function FavoritePage() {
+    const router = useRouter();
     const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
     const [stockStatus, setStockStatus] = useState<Record<string, boolean | null>>({});
     const [productDetails, setProductDetails] = useState<Record<string, { originPrice: number }>>({});
@@ -233,6 +235,11 @@ export default function FavoritePage() {
                         // This implies the list item itself (whether expanded or not) should be simple.
                         // Let's make the "Header" simple.
 
+                        const handleCodeClick = (e: React.MouseEvent) => {
+                            e.stopPropagation();
+                            router.push(`/?code=${representative.code}`);
+                        };
+
                         return (
                             <div key={pid} className="flex flex-col bg-white rounded-xl border border-gray-100 shadow-sm transition-all duration-300">
                                 {/* Simplified Group Header */}
@@ -242,7 +249,12 @@ export default function FavoritePage() {
                                 >
                                     <div className="flex flex-col gap-1">
                                         <div className="flex items-center gap-2">
-                                            <span className="font-mono text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded">{representative.code}</span>
+                                            <span
+                                                className="font-mono text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded cursor-pointer hover:underline"
+                                                onClick={handleCodeClick}
+                                            >
+                                                {representative.code}
+                                            </span>
                                             <span className="text-xs text-gray-300">ID: {pid}</span>
                                         </div>
                                         <div className="flex items-baseline gap-2">

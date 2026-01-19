@@ -15,7 +15,7 @@ type GroupedData = {
     }[];
 };
 
-export default function SearchPage() {
+export default function SearchPage({ initialQuery }: { initialQuery?: string | null }) {
     const [query, setQuery] = useState('');
     const [loading, setLoading] = useState(false);
     const [results, setResults] = useState<any[] | null>(null);
@@ -24,6 +24,13 @@ export default function SearchPage() {
     const [history, setHistory] = useState<string[]>([]);
 
     const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
+
+    useEffect(() => {
+        if (initialQuery) {
+            setQuery(initialQuery);
+            handleSearch(initialQuery);
+        }
+    }, [initialQuery]);
 
     useEffect(() => {
         const fetchFavorites = async () => {

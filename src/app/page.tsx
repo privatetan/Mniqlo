@@ -1,15 +1,19 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Header from './components/Header';
 import SearchPage from './components/SearchPage';
 import BottomNav from './components/BottomNav';
 import FavoritePage from './components/FavoritePage';
 import SuperSelectionPage from './components/SuperSelectionPage';
 
-export default function Home() {
+function HomeContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialCode = searchParams.get('code');
+
   const [activeTab, setActiveTab] = useState<'search' | 'favorites' | 'super-selection'>('search');
+  const [searchQuery, setSearchQuery] = useState<string | null>(null);
   const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
@@ -20,6 +24,15 @@ export default function Home() {
       setIsAuthorized(true);
     }
   }, [router]);
+
+  useEffect(() => {
+    if (initialCode) {
+      setActiveTab('search');
+      setSearchQuery(initialCode);
+      // Clean up the URL to prevent re-triggering and for cleaner UX
+      router.replace('/');
+    }
+  }, [initialCode, router]);
 
   if (!isAuthorized) {
     return null; // Or a loading spinner
@@ -39,7 +52,7 @@ export default function Home() {
       <Header title={getHeaderTitle()} />
       <main className="flex-1 overflow-hidden bg-gray-50 flex flex-col">
         <div className={activeTab === 'search' ? 'h-full' : 'hidden h-full'}>
-          <SearchPage />
+          <SearchPage initialQuery={searchQuery} />
         </div>
         <div className={activeTab === 'favorites' ? 'h-full' : 'hidden h-full'}>
           <FavoritePage />
@@ -51,5 +64,13 @@ export default function Home() {
 
       <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="h-screen flex items-center justify-center">Loading...</div>}>
+      <HomeContent />
+    </Suspense>
   );
 }

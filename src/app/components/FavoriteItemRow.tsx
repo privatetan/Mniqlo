@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { FavoriteItem } from '@/types';
 import { useScheduledTask } from '@/hooks/useScheduledTask';
 import { parseLocalTime } from '@/lib/date-utils';
@@ -13,6 +14,7 @@ interface FavoriteItemRowProps {
 }
 
 export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle, hideProductInfo = false, originPrice }: FavoriteItemRowProps) {
+    const router = useRouter();
     const [showScheduler, setShowScheduler] = useState(false);
     const [localStockStatus, setLocalStockStatus] = useState<boolean | null>(stockStatus);
 
@@ -246,6 +248,11 @@ export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle, hi
         handleSaveTask(false);
     };
 
+    const handleCodeClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        router.push(`/?code=${item.code}`);
+    };
+
 
 
     // Swipe logic
@@ -362,7 +369,14 @@ export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle, hi
                             <div className="flex justify-between items-start mb-1">
                                 <div className="flex-1 mr-2 flex items-baseline gap-2 truncate">
                                     <h3 className="font-medium text-sm text-gray-900 truncate">
-                                        {item.code && <span className="font-mono text-green-500 mr-2">{item.code}</span>}
+                                        {item.code && (
+                                            <span
+                                                className="font-mono text-green-500 mr-2 cursor-pointer hover:underline"
+                                                onClick={handleCodeClick}
+                                            >
+                                                {item.code}
+                                            </span>
+                                        )}
                                         {item.name}
                                     </h3>
                                     {originPrice && (
