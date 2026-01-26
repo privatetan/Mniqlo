@@ -57,7 +57,7 @@ export default function LoginForm() {
             <div className="absolute top-6 right-6">
                 <button
                     onClick={toggleLanguage}
-                    className="text-[10px] font-bold text-gray-400 hover:text-gray-900 transition-all uppercase tracking-tighter border border-gray-100 rounded px-1.5 py-0.5"
+                    className="text-xs font-bold text-gray-400 hover:text-gray-900 transition-colors uppercase tracking-tight"
                 >
                     {language === 'zh' ? 'EN' : 'ZH'}
                 </button>

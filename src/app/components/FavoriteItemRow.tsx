@@ -67,7 +67,7 @@ export const FavoriteItemRow = memo(function FavoriteItemRow({ item, stockStatus
         <div className="relative select-none touch-pan-y" onClick={handleClick}>
             {/* Delete Background */}
             <div
-                className="absolute inset-0 bg-red-500 rounded-2xl flex items-center justify-end px-6 cursor-pointer"
+                className="absolute inset-0 bg-red-500 rounded-xl flex items-center justify-end px-6 cursor-pointer"
                 onClick={(e) => onRemove(e, item.key)}
             >
                 <span className="text-white font-semibold text-sm">{t('fav.delete')}</span>
@@ -75,7 +75,7 @@ export const FavoriteItemRow = memo(function FavoriteItemRow({ item, stockStatus
 
             {/* Foreground Content */}
             <div
-                className={`flex gap-3 p-4 bg-white border border-gray-100 rounded-2xl shadow-sm relative z-10 transition-transform duration-200 ease-out overflow-visible group ${isSwiped ? '-translate-x-20' : 'translate-x-0'}`}
+                className={`flex gap-3 py-2 px-3 bg-white border border-gray-100 rounded-xl shadow-sm relative z-10 transition-transform duration-200 ease-out overflow-visible group ${isSwiped ? '-translate-x-20' : 'translate-x-0'}`}
                 onTouchStart={onTouchStart}
                 onTouchMove={onTouchMove}
                 onTouchEnd={onTouchEnd}
@@ -83,7 +83,7 @@ export const FavoriteItemRow = memo(function FavoriteItemRow({ item, stockStatus
                 <div className="flex-1 min-w-0">
                     {hideProductInfo ? (
                         // Single line layout
-                        <div className="flex items-center justify-between h-full">
+                        <div className="flex flex-wrap items-center justify-between h-full gap-y-2">
                             <div className="flex items-center gap-3">
                                 <div className="flex items-center gap-2">
                                     <span className="text-gray-900 text-[11px] font-semibold bg-gray-100 px-2.5 py-1 rounded-full">{item.color}</span>
@@ -112,6 +112,8 @@ export const FavoriteItemRow = memo(function FavoriteItemRow({ item, stockStatus
                                         }
                                         setShowScheduler(true);
                                     }}
+                                    onTouchStart={(e) => e.stopPropagation()}
+                                    onTouchEnd={(e) => e.stopPropagation()}
                                     className="p-1.5 rounded-lg bg-gray-50 text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-all"
                                     title={t('fav.monitor')}
                                 >
@@ -122,6 +124,8 @@ export const FavoriteItemRow = memo(function FavoriteItemRow({ item, stockStatus
 
                                 <button
                                     onClick={(e) => onRemove(e, item.key)}
+                                    onTouchStart={(e) => e.stopPropagation()}
+                                    onTouchEnd={(e) => e.stopPropagation()}
                                     className="text-gray-300 hover:text-red-500 p-1 transition-colors"
                                     title={t('fav.delete')}
                                 >
@@ -171,6 +175,8 @@ export const FavoriteItemRow = memo(function FavoriteItemRow({ item, stockStatus
                                             }
                                             setShowScheduler(true);
                                         }}
+                                        onTouchStart={(e) => e.stopPropagation()}
+                                        onTouchEnd={(e) => e.stopPropagation()}
                                         className="p-1.5 rounded-lg bg-white/90 hover:bg-white shadow-sm transition-all hover:scale-110"
                                         title={t('fav.monitor')}
                                     >
@@ -181,6 +187,8 @@ export const FavoriteItemRow = memo(function FavoriteItemRow({ item, stockStatus
 
                                     <button
                                         onClick={(e) => onRemove(e, item.key)}
+                                        onTouchStart={(e) => e.stopPropagation()}
+                                        onTouchEnd={(e) => e.stopPropagation()}
                                         className="text-gray-400 hover:text-red-500 p-1 -mr-2 bg-transparent"
                                         title={t('fav.delete')}
                                     >

@@ -186,7 +186,7 @@ export default function FavoritePage() {
     }, [favorites]);
 
     return (
-        <div className="h-full flex flex-col bg-gray-50/30 overflow-hidden">
+        <div className="flex flex-col bg-gray-50/30 overflow-hidden max-h-full">
             <div className="bg-white flex items-center justify-between px-6 py-4 border-b border-gray-100 shadow-sm relative z-10">
                 <div className="flex items-center gap-2">
                     <span className="text-xs text-gray-400 font-medium">
@@ -243,13 +243,14 @@ export default function FavoritePage() {
                         };
 
                         return (
-                            <div key={pid} className="card p-0 flex flex-col overflow-hidden transition-all duration-300">
+                            <div key={pid} className="card p-0 flex flex-col transition-all duration-300">
                                 {/* Simplified Group Header */}
                                 <div
+                                    role="button"
                                     onClick={() => setSelectedProductId(isExpanded ? null : pid)}
-                                    className={`p-5 cursor-pointer bg-white transition-colors hover:bg-gray-50/50 flex items-center justify-between relative group ${isExpanded ? 'border-b border-gray-50' : ''}`}
+                                    className={`p-4 cursor-pointer bg-white transition-colors hover:bg-gray-50/50 flex items-center justify-between relative group select-none ${isExpanded ? 'border-b border-gray-50' : ''}`}
                                 >
-                                    <div className="flex flex-col gap-1">
+                                    <div className="flex flex-col gap-1 flex-1 min-w-0 pr-2">
                                         <div className="flex items-center gap-2">
                                             <span
                                                 className="font-mono text-sm text-green-600 font-bold tracking-tight cursor-pointer hover:underline"
@@ -260,9 +261,9 @@ export default function FavoritePage() {
                                             <span className="text-[11px] text-gray-300 font-medium">#{pid}</span>
                                         </div>
                                         <div className="flex items-baseline gap-2">
-                                            <h3 className="font-semibold text-sm text-gray-900 tracking-tight">{representative.name}</h3>
+                                            <h3 className="font-semibold text-sm text-gray-900 tracking-tight truncate">{representative.name}</h3>
                                             {details?.originPrice && (
-                                                <span className="text-[11px] text-gray-400 line-through">¥{details.originPrice}</span>
+                                                <span className="text-[11px] text-gray-400 line-through shrink-0">¥{details.originPrice}</span>
                                             )}
                                         </div>
                                     </div>
@@ -273,15 +274,17 @@ export default function FavoritePage() {
                                                 {t('fav.variants', { n: groupItems.length })}
                                             </span>
                                         )}
-                                        <svg className={`w-4 h-4 text-gray-300 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                                            <path d="M19 9l-7 7-7-7" />
-                                        </svg>
+                                        <div className="p-2 -m-2 rounded-full hover:bg-gray-100 transition-colors">
+                                            <svg className={`w-4 h-4 text-gray-300 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                                <path d="M19 9l-7 7-7-7" />
+                                            </svg>
+                                        </div>
                                     </div>
                                 </div>
 
                                 {/* Expanded List - Show ALL items when expanded */}
                                 {isExpanded && (
-                                    <div className="bg-gray-50/50 p-2 pl-4 pr-4 pb-4 space-y-2 animate-in fade-in slide-in-from-top-1">
+                                    <div className="bg-gray-50/50 p-2 space-y-2 animate-in fade-in slide-in-from-top-1">
                                         {groupItems.map((item: FavoriteItem) => (
                                             <FavoriteItemRow
                                                 key={item.key}
