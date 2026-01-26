@@ -1,5 +1,6 @@
 'use client';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useLanguage } from '@/context/LanguageContext';
 import { CrawledItem, FavoriteItem } from '@/types';
 import { parseLocalTime } from '@/lib/date-utils';
 
@@ -58,10 +59,11 @@ export default function SuperSelectionPage() {
     const [viewMode, setViewMode] = useState<'color' | 'size'>('color');
     const [expandedState, setExpandedState] = useState<{ code: string; key: string } | null>(null);
     const [sortBy, setSortBy] = useState<'default' | 'price-asc' | 'price-desc' | 'discount'>('default');
+    const { t, language } = useLanguage();
 
     const categories = ['全部', '女装', '男装', '童装', '婴幼儿装'];
 
-    const fetchItems = async (gender: string) => {
+    const fetchItems = useCallback(async (gender: string) => {
         setLoading(true);
         try {
             const queryGender = gender === '全部' ? 'null' : gender;
@@ -75,9 +77,9 @@ export default function SuperSelectionPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
-    const fetchFavorites = async () => {
+    const fetchFavorites = useCallback(async () => {
         const userStr = localStorage.getItem('user');
         if (userStr) {
             const user = JSON.parse(userStr);
@@ -86,7 +88,6 @@ export default function SuperSelectionPage() {
                 const res = await fetch(`/api/favorites?userId=${user.id}`);
                 const data = await res.json();
                 if (data.success) {
-                    // Map favorites to ensure consistent structure
                     const mapped = data.favorites.map((f: any) => ({
                         id: f.id,
                         key: f.id ? f.id.toString() : `${f.style}-${f.size}`,
@@ -104,21 +105,21 @@ export default function SuperSelectionPage() {
                 console.error(e);
             }
         }
-    };
+    }, []);
 
     useEffect(() => {
-        fetchItems(activeGender); // Call fetchItems with activeGender
+        fetchItems(activeGender);
         fetchFavorites();
 
         const handleFavoritesUpdated = () => fetchFavorites();
         window.addEventListener('favorites-updated', handleFavoritesUpdated);
         return () => window.removeEventListener('favorites-updated', handleFavoritesUpdated);
-    }, [activeGender]); // Add activeGender to dependency array
+    }, [activeGender, fetchItems, fetchFavorites]);
 
-    const toggleFavorite = async (item: CrawledItem, overrideStyle?: string, overrideSize?: string) => {
+    const toggleFavorite = useCallback(async (item: CrawledItem, overrideStyle?: string, overrideSize?: string) => {
         const userStr = localStorage.getItem('user');
         if (!userStr) {
-            alert('请先登录');
+            alert(language === 'zh' ? '请先登录' : 'Please login first');
             return;
         }
         const user = JSON.parse(userStr);
@@ -154,7 +155,7 @@ export default function SuperSelectionPage() {
         } catch (error) {
             console.error('Failed to toggle favorite', error);
         }
-    };
+    }, [favorites]);
 
     const filteredAndGroupedProducts = useMemo(() => {
         let filtered = items;
@@ -270,31 +271,37 @@ export default function SuperSelectionPage() {
     }, [filteredAndGroupedProducts, sortBy]);
 
     return (
-        <div className="h-full flex flex-col bg-gray-50 overflow-hidden">
+        <div className="h-full flex flex-col bg-gray-50/30 overflow-hidden">
             {/* Header: Tabs & Search */}
-            <div className="bg-white border-b border-gray-100 shrink-0">
-                <div className="px-4 pt-4 pb-3">
-                    <div className="flex gap-2 mb-4">
+            <div className="bg-white border-b border-gray-100 shrink-0 shadow-sm relative z-10">
+                <div className="px-6 py-4">
+                    <div className="flex gap-2 mb-4 overflow-x-auto no-scrollbar">
                         {categories.map(cat => (
                             <button
                                 key={cat}
                                 onClick={() => setActiveGender(cat)}
-                                className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${activeGender === cat ? 'bg-black text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                className={`px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${activeGender === cat
+                                    ? 'bg-gray-900 text-white shadow-sm'
+                                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                                     }`}
                             >
-                                {cat}
+                                {cat === '全部' ? (language === 'zh' ? '全部' : 'All') :
+                                    cat === '女装' ? (language === 'zh' ? '女装' : 'Women') :
+                                        cat === '男装' ? (language === 'zh' ? '男装' : 'Men') :
+                                            cat === '童装' ? (language === 'zh' ? '童装' : 'Kids') :
+                                                cat === '婴幼儿装' ? (language === 'zh' ? '婴幼儿装' : 'Baby') : cat}
                             </button>
                         ))}
                     </div>
                     <div className="relative">
                         <input
                             type="text"
-                            placeholder="搜索名称或货号..."
-                            className="w-full h-10 pl-10 pr-4 bg-gray-50 border-none rounded-xl text-sm outline-none focus:ring-1 focus:ring-gray-200"
+                            placeholder={t('sel.search_placeholder')}
+                            className="w-full h-10 pl-10 pr-4 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-gray-900/5 focus:border-gray-400 transition-all"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
-                        <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <circle cx="11" cy="11" r="8" />
                             <path d="m21 21-4.3-4.3" />
                         </svg>
@@ -305,74 +312,73 @@ export default function SuperSelectionPage() {
                         <select
                             value={sortBy}
                             onChange={(e) => setSortBy(e.target.value as any)}
-                            className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-700 outline-none focus:border-gray-400 cursor-pointer"
+                            className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-600 outline-none focus:border-gray-400 cursor-pointer transition-all"
                         >
-                            <option value="default">默认排序</option>
-                            <option value="price-asc">价格从低到高</option>
-                            <option value="price-desc">价格从高到低</option>
-                            <option value="discount">折扣最大</option>
+                            <option value="default">{t('sel.sort_default')}</option>
+                            <option value="price-asc">{t('sel.sort_price_asc')}</option>
+                            <option value="price-desc">{t('sel.sort_price_desc')}</option>
+                            <option value="discount">{t('sel.sort_discount')}</option>
                         </select>
                         {!loading && (
-                            <div className="text-[10px] text-gray-400">
-                                共找到 {items.length} 条数据
+                            <div className="text-[11px] text-gray-400 font-medium">
+                                {t('sel.found', { n: items.length })}
                             </div>
                         )}
                     </div>
                 </div>
             </div>
 
-            {/* List */}
-            <div className="flex-1 overflow-y-auto px-4 py-4">
+            <div className="flex-1 overflow-y-auto px-6 py-6 scroll-smooth">
                 {loading ? (
-                    <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-                        <div className="w-8 h-8 border-2 border-gray-200 border-t-black rounded-full animate-spin mb-4" />
-                        <p className="text-sm">加载商品中...</p>
+                    <div className="flex flex-col items-center justify-center py-24 text-gray-400">
+                        <div className="w-8 h-8 border-2 border-gray-100 border-t-gray-900 rounded-full animate-spin mb-4" />
+                        <p className="text-sm font-medium tracking-tight">{t('sel.loading')}</p>
                     </div>
                 ) : sortedProducts.length === 0 ? (
-                    <div className="text-center py-20 text-gray-400">
-                        <p className="text-sm">暂无商品</p>
+                    <div className="text-center py-24 text-gray-400">
+                        <p className="text-sm font-medium tracking-tight">{t('sel.none')}</p>
                     </div>
                 ) : (
-                    <div className="space-y-3">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                         {sortedProducts.map(product => (
-                            <div key={product.code} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div key={product.code} className="card p-0 overflow-hidden">
                                 <div
-                                    className="p-4 cursor-pointer active:bg-gray-50 transition-colors"
+                                    className="p-5 cursor-pointer hover:bg-gray-50/50 transition-colors"
                                     onClick={() => setExpandedCode(expandedCode === product.code ? null : product.code)}
                                 >
-                                    <div className="flex justify-between items-start mb-2">
+                                    <div className="flex justify-between items-start mb-4">
                                         <div className="flex-1 min-w-0 pr-4">
-                                            <div className="flex flex-col gap-0.5">
+                                            <div className="flex flex-col gap-1.5">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-base text-green-600 font-bold font-mono">{product.code}</span>
-                                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 font-medium">{product.gender}</span>
+                                                    <span className="text-base text-green-600 font-bold font-mono tracking-tight">{product.code}</span>
+                                                    <span className="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-500 font-semibold rounded-full uppercase tracking-tight">{product.gender}</span>
                                                     {product.items.some(i => i.stock_status === 'new') && (
-                                                        <span className="px-1.5 py-0.5 text-[9px] font-bold bg-red-500 text-white rounded uppercase tracking-wide shadow-sm animate-pulse">
-                                                            NEW
+                                                        <span className="px-2 py-0.5 text-[10px] font-bold bg-red-500 text-white rounded-full uppercase tracking-tight">
+                                                            {t('sel.new')}
                                                         </span>
                                                     )}
                                                 </div>
-                                                <h3 className="text-xs text-gray-500 truncate">{product.name}</h3>
+                                                <h3 className="text-sm text-gray-900 font-medium truncate">{product.name}</h3>
                                             </div>
                                         </div>
                                         <div className="text-right shrink-0">
-                                            <div className="flex items-baseline gap-1 justify-end">
-                                                <div className="text-red-600 font-bold">¥{product.minPrice}</div>
+                                            <div className="flex flex-col items-end">
+                                                <div className="text-red-600 font-bold text-lg leading-none">¥{product.minPrice}</div>
                                                 {product.originPrice > product.minPrice && (
-                                                    <>
-                                                        <div className="text-[10px] text-gray-400 line-through">¥{product.originPrice}</div>
-                                                        <div className="text-[10px] text-red-500 font-medium">
-                                                            {(Math.floor((product.minPrice / product.originPrice) * 100) / 10).toFixed(1)}折
+                                                    <div className="flex items-center gap-1.5 mt-1">
+                                                        <div className="text-[11px] text-gray-400 line-through">¥{product.originPrice}</div>
+                                                        <div className="text-[11px] text-red-500 font-semibold">
+                                                            {t('sel.off', { n: ((1 - product.minPrice / product.originPrice) * 10).toFixed(1) })}
                                                         </div>
-                                                    </>
+                                                    </div>
                                                 )}
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="flex items-center justify-between mt-3 text-[11px] text-gray-500">
-                                        <span>全部规格：{product.items.length} 个</span>
+                                    <div className="flex items-center justify-between text-[11px] font-medium text-gray-400 border-t border-gray-50 pt-3">
+                                        <span>{t('fav.variants', { n: product.items.length })}</span>
                                         <svg
-                                            className={`transition-transform duration-200 ${expandedCode === product.code ? 'rotate-180' : ''}`}
+                                            className={`transition-transform duration-300 ${expandedCode === product.code ? 'rotate-180' : ''}`}
                                             width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
                                         >
                                             <path d="m6 9 6 6 6-6" />
@@ -395,11 +401,11 @@ export default function SuperSelectionPage() {
                                             }}
                                         >
                                             <span className={viewMode === 'color' ? 'text-green-500' : 'text-gray-400'}>
-                                                颜色
+                                                {t('search.color')}
                                             </span>
                                             <span className="text-gray-300 font-normal">|</span>
                                             <span className={viewMode === 'size' ? 'text-green-500' : 'text-gray-400'}>
-                                                尺寸
+                                                {t('search.size')}
                                             </span>
                                         </div>
 
@@ -424,7 +430,7 @@ export default function SuperSelectionPage() {
                                                     >
                                                         <span>{group.key}</span>
                                                         <span className={`text-[10px] ${isExpanded ? 'text-gray-300' : 'text-gray-500'}`}>
-                                                            库存: {group.totalStock}
+                                                            {t('search.stock')}: {group.totalStock}
                                                         </span>
                                                     </button>
                                                 );
@@ -435,7 +441,7 @@ export default function SuperSelectionPage() {
                                         {expandedState?.code === product.code && (
                                             <div className="bg-gray-50 rounded-xl border border-gray-100 p-3 animate-in fade-in slide-in-from-top-2 duration-200">
                                                 <h4 className="text-xs font-medium text-gray-500 mb-2">
-                                                    <span className="text-black">{expandedState?.key}</span> 库存详情:
+                                                    <span className="text-black">{expandedState?.key}</span> {language === 'zh' ? '库存详情:' : 'Stock Details:'}
                                                 </h4>
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                                                     {product.groupedData
@@ -458,13 +464,13 @@ export default function SuperSelectionPage() {
                                                                         <span className="font-medium text-xs text-gray-700">{sub.key}</span>
                                                                         {isNewStock && (
                                                                             <span className="px-1.5 py-0.5 text-[9px] font-bold bg-gradient-to-r from-orange-500 to-red-500 text-white rounded uppercase tracking-wide shadow-sm">
-                                                                                NEW
+                                                                                {t('sel.new')}
                                                                             </span>
                                                                         )}
                                                                     </div>
                                                                     <div className="flex items-center gap-2">
                                                                         <div className={`text-xs font-bold ${sub.stock > 0 ? 'text-green-600' : 'text-red-500'}`}>
-                                                                            {sub.stock > 0 ? sub.stock : '售罄'}
+                                                                            {sub.stock > 0 ? sub.stock : (language === 'zh' ? '售罄' : 'Sold Out')}
                                                                         </div>
                                                                         <button
                                                                             onClick={(e) => {
@@ -475,7 +481,7 @@ export default function SuperSelectionPage() {
                                                                                 ? 'bg-red-50 border-red-200 text-red-500'
                                                                                 : 'bg-white border-gray-200 text-gray-300 hover:text-red-400 hover:border-red-200'
                                                                                 }`}
-                                                                            title={isFav ? "取消收藏" : "收藏"}
+                                                                            title={isFav ? (language === 'zh' ? "取消收藏" : "Remove from Favorites") : (language === 'zh' ? "收藏" : "Add to Favorites")}
                                                                         >
                                                                             <svg
                                                                                 width="12"

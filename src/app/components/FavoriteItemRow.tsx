@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { useRouter } from 'next/navigation';
 import { FavoriteItem } from '@/types';
 import { parseLocalTime } from '@/lib/date-utils';
 import { MonitorSchedulerModal } from './MonitorSchedulerModal';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface FavoriteItemRowProps {
     item: FavoriteItem;
@@ -13,10 +14,11 @@ interface FavoriteItemRowProps {
     originPrice?: number;
 }
 
-export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle, hideProductInfo = false, originPrice }: FavoriteItemRowProps) {
+export const FavoriteItemRow = memo(function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle, hideProductInfo = false, originPrice }: FavoriteItemRowProps) {
     const router = useRouter();
     const [showScheduler, setShowScheduler] = useState(false);
     const [localStockStatus, setLocalStockStatus] = useState<boolean | null>(stockStatus);
+    const { t, language } = useLanguage();
 
     const handleCodeClick = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -26,8 +28,6 @@ export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle, hi
     const handleStockStatusChange = (status: boolean) => {
         setLocalStockStatus(status);
     };
-
-
 
     // Swipe logic
     const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -67,15 +67,15 @@ export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle, hi
         <div className="relative select-none touch-pan-y" onClick={handleClick}>
             {/* Delete Background */}
             <div
-                className="absolute inset-0 bg-red-500 rounded-xl flex items-center justify-end px-6 cursor-pointer"
+                className="absolute inset-0 bg-red-500 rounded-2xl flex items-center justify-end px-6 cursor-pointer"
                 onClick={(e) => onRemove(e, item.key)}
             >
-                <span className="text-white font-medium text-sm">删除</span>
+                <span className="text-white font-semibold text-sm">{t('fav.delete')}</span>
             </div>
 
             {/* Foreground Content */}
             <div
-                className={`flex gap-3 p-3 bg-white border border-gray-100 rounded-xl shadow-sm relative z-10 transition-transform duration-200 ease-out overflow-visible group ${isSwiped ? '-translate-x-20' : 'translate-x-0'}`}
+                className={`flex gap-3 p-4 bg-white border border-gray-100 rounded-2xl shadow-sm relative z-10 transition-transform duration-200 ease-out overflow-visible group ${isSwiped ? '-translate-x-20' : 'translate-x-0'}`}
                 onTouchStart={onTouchStart}
                 onTouchMove={onTouchMove}
                 onTouchEnd={onTouchEnd}
@@ -86,19 +86,19 @@ export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle, hi
                         <div className="flex items-center justify-between h-full">
                             <div className="flex items-center gap-3">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-gray-900 text-sm px-2 py-0.5 bg-gray-100 rounded-full font-medium">{item.color}</span>
-                                    <span className="text-gray-900 text-sm px-2 py-0.5 bg-gray-100 rounded-full font-medium">{item.size}</span>
+                                    <span className="text-gray-900 text-[11px] font-semibold bg-gray-100 px-2.5 py-1 rounded-full">{item.color}</span>
+                                    <span className="text-gray-900 text-[11px] font-semibold bg-gray-100 px-2.5 py-1 rounded-full">{item.size}</span>
                                 </div>
-                                <span className="font-bold text-red-600">¥{item.price}</span>
+                                <span className="font-bold text-red-600 text-sm">¥{item.price}</span>
                             </div>
 
                             <div className="flex items-center gap-2">
                                 {localStockStatus !== undefined && localStockStatus !== null && (
-                                    <span className={`text-[10px] px-1.5 py-0.5 rounded border ${localStockStatus
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${localStockStatus
                                         ? 'bg-green-50 text-green-600 border-green-100'
                                         : 'bg-red-50 text-red-500 border-red-100'
                                         }`}>
-                                        {localStockStatus ? '有货' : '售罄'}
+                                        {localStockStatus ? (language === 'zh' ? '有货' : 'In Stock') : (language === 'zh' ? '售罄' : 'Sold Out')}
                                     </span>
                                 )}
 
@@ -107,26 +107,26 @@ export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle, hi
                                         e.stopPropagation();
                                         const userStr = localStorage.getItem('user');
                                         if (userStr && JSON.parse(userStr).id === -1) {
-                                            alert('游客无法使用监控功能，请注册登录');
+                                            alert(language === 'zh' ? '请登录以使用监控功能' : 'Sign in to use the Monitor feature');
                                             return;
                                         }
                                         setShowScheduler(true);
                                     }}
-                                    className="p-1.5 rounded-lg bg-white/90 hover:bg-white shadow-sm transition-all hover:scale-110"
-                                    title="监控设置"
+                                    className="p-1.5 rounded-lg bg-gray-50 text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-all"
+                                    title={t('fav.monitor')}
                                 >
-                                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                 </button>
 
                                 <button
                                     onClick={(e) => onRemove(e, item.key)}
-                                    className="text-gray-400 hover:text-red-500 p-1 bg-transparent"
-                                    title="删除收藏"
+                                    className="text-gray-300 hover:text-red-500 p-1 transition-colors"
+                                    title={t('fav.delete')}
                                 >
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                        <path d="M18 6L6 18M6 6L18 18" />
                                     </svg>
                                 </button>
                             </div>
@@ -157,7 +157,7 @@ export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle, hi
                                             ? 'bg-green-50 text-green-600 border-green-100'
                                             : 'bg-red-50 text-red-500 border-red-100'
                                             }`}>
-                                            {localStockStatus ? '有货' : '售罄'}
+                                            {localStockStatus ? (language === 'zh' ? '有货' : 'In Stock') : (language === 'zh' ? '售罄' : 'Sold Out')}
                                         </span>
                                     )}
 
@@ -166,13 +166,13 @@ export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle, hi
                                             e.stopPropagation();
                                             const userStr = localStorage.getItem('user');
                                             if (userStr && JSON.parse(userStr).id === -1) {
-                                                alert('游客无法使用监控功能，请注册登录');
+                                                alert(language === 'zh' ? '游客无法使用监控功能，请注册登录' : 'Guests cannot use monitors, please sign in');
                                                 return;
                                             }
                                             setShowScheduler(true);
                                         }}
                                         className="p-1.5 rounded-lg bg-white/90 hover:bg-white shadow-sm transition-all hover:scale-110"
-                                        title="监控设置"
+                                        title={t('fav.monitor')}
                                     >
                                         <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -182,7 +182,7 @@ export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle, hi
                                     <button
                                         onClick={(e) => onRemove(e, item.key)}
                                         className="text-gray-400 hover:text-red-500 p-1 -mr-2 bg-transparent"
-                                        title="删除收藏"
+                                        title={t('fav.delete')}
                                     >
                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                             <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -213,4 +213,4 @@ export function FavoriteItemRow({ item, stockStatus, onRemove, onCheckSingle, hi
             )}
         </div>
     );
-}
+});

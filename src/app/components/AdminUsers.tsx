@@ -1,8 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Header from '../../components/Header';
 import { intervalToCron, getCronDescription } from '@/lib/cron-utils';
 
 interface User {
@@ -52,8 +50,7 @@ interface PushSettings {
     genders: string[];
 }
 
-export default function AdminUsersPage() {
-    const router = useRouter();
+export default function AdminUsers() {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -94,19 +91,17 @@ export default function AdminUsersPage() {
     useEffect(() => {
         const userStr = localStorage.getItem('user');
         if (!userStr) {
-            router.push('/login');
             return;
         }
 
         const user = JSON.parse(userStr);
         if (user.role !== 'ADMIN') {
-            router.push('/');
             return;
         }
 
         fetchUsers(user.username);
         fetchCrawlerSchedules();
-    }, [router]);
+    }, []);
 
     const fetchUsers = async (username?: string) => {
         try {
@@ -360,14 +355,13 @@ export default function AdminUsersPage() {
     const totalTasks = users.reduce((acc, user) => acc + user._count.tasks, 0);
 
     return (
-        <div className="h-[100dvh] flex flex-col bg-[#f7f7fb] w-full max-w-[1000px] mx-auto overflow-hidden">
-            <Header title="用户管理" />
+        <div className="h-full flex flex-col bg-gray-50/30 w-full overflow-hidden">
 
-            <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8">
-                <div className="max-w-4xl mx-auto space-y-6">
+            <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 scroll-smooth">
+                <div className="w-full space-y-6">
                     {/* Summary Stats */}
                     {!loading && !error && (
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center">
                                 <span className="text-2xl font-black text-[#0b5fff]">{totalUsers}</span>
                                 <span className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mt-1">总用户</span>
@@ -456,13 +450,6 @@ export default function AdminUsersPage() {
                     <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
                         <div className="flex items-center gap-2 w-full sm:w-auto">
                             <button
-                                onClick={() => router.push('/')}
-                                className="flex items-center justify-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition-all rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-gray-50 font-medium"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
-                                <span>返回</span>
-                            </button>
-                            <button
                                 onClick={() => fetchUsers()}
                                 className="flex items-center justify-center p-2.5 text-gray-400 hover:text-[#0b5fff] transition-all rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-blue-50"
                                 title="刷新"
@@ -518,7 +505,7 @@ export default function AdminUsersPage() {
                                     <p className="text-sm">试试搜索其他关键词</p>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
                                     {filteredUsers.map((user) => (
                                         <div key={user.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:border-[#0b5fff]/50 hover:shadow-xl transition-all group relative overflow-hidden">
                                             {/* Accent blob */}
@@ -845,7 +832,7 @@ export default function AdminUsersPage() {
                                                                 {representative.origin_price && parseFloat(representative.origin_price as any) > parseFloat(representative.price as any) && (
                                                                     <span className="text-[10px] text-gray-400 line-through">¥{representative.origin_price}</span>
                                                                 )}
-                                                                <span className={`text-base font-black ${activeResultTab === 'new' ? 'text-rose-500' : 'text-gray-400 line-through'}`}>
+                                                                <span className={`text-base font-black ${activeResultTab === 'new' ? 'text-red-600' : 'text-gray-400 line-through'}`}>
                                                                     ¥{representative.price}
                                                                 </span>
                                                             </div>
@@ -889,7 +876,7 @@ export default function AdminUsersPage() {
                                                                             {item.origin_price && parseFloat(item.origin_price as any) > parseFloat(item.price as any) && (
                                                                                 <span className="text-[10px] text-gray-400 line-through">¥{item.origin_price}</span>
                                                                             )}
-                                                                            <span className={`text-sm font-black ${activeResultTab === 'new' ? 'text-rose-500' : 'text-gray-400 line-through'}`}>¥{item.price}</span>
+                                                                            <span className={`text-sm font-black ${activeResultTab === 'new' ? 'text-red-600' : 'text-gray-400 line-through'}`}>¥{item.price}</span>
                                                                         </div>
                                                                     </div>
                                                                     <div className="flex flex-col items-end w-12">

@@ -22,13 +22,17 @@ export const viewport = {
   userScalable: false,
 }
 
+import { LanguageProvider } from '@/context/LanguageContext'
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body className="overflow-x-hidden">
-        <main>
-          {children}
-        </main>
+        <LanguageProvider>
+          <main>
+            {children}
+          </main>
+        </LanguageProvider>
       </body>
     </html>
   )

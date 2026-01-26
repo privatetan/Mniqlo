@@ -5,45 +5,41 @@ interface HeaderProps {
     title: string;
 }
 
+import { useLanguage } from '@/context/LanguageContext';
+
 export default function Header({ title }: HeaderProps) {
     const router = useRouter();
-    const pathname = usePathname();
-    const [isAdmin, setIsAdmin] = useState(false);
-
-    useEffect(() => {
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
-            const user = JSON.parse(userStr);
-            setIsAdmin(user.role === 'ADMIN');
-        }
-    }, []);
+    const { language, setLanguage, t } = useLanguage();
 
     const handleLogout = () => {
-        if (confirm('确定要退出登录吗？')) {
+        if (confirm(language === 'zh' ? '确定要退出登录吗？' : 'Are you sure you want to logout?')) {
             localStorage.removeItem('user');
             router.push('/login');
         }
     };
 
+    const toggleLanguage = () => {
+        setLanguage(language === 'zh' ? 'en' : 'zh');
+    };
+
     return (
-        <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md px-4 py-3 flex justify-between items-center border-b border-gray-100 shadow-sm">
-            <h1 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">{title}</h1>
-            <div className="flex items-center gap-4">
-                {pathname !== '/admin/users' && isAdmin && (
-                    <span
-                        onClick={() => router.push('/admin/users')}
-                        className="text-sm font-medium text-[#0b5fff] hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
-                        管理
-                    </span>
-                )}
-                <span
-                    onClick={handleLogout}
-                    className="text-sm text-gray-400 hover:text-red-500 hover:bg-red-50 px-2 py-1.5 rounded-lg transition-all cursor-pointer"
+        <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md px-6 py-4 flex justify-between items-center border-b border-gray-100 shadow-sm">
+            <div className="w-10">
+                <button
+                    onClick={toggleLanguage}
+                    className="text-[10px] font-bold text-gray-400 hover:text-gray-900 transition-all uppercase tracking-tighter border border-gray-100 rounded px-1.5 py-0.5"
                 >
-                    退出
-                </span>
+                    {language === 'zh' ? 'EN' : 'ZH'}
+                </button>
+            </div>
+            <h1 className="text-base font-semibold text-gray-900 tracking-tight flex-1 text-center">{title}</h1>
+            <div className="flex items-center gap-3">
+                <button
+                    onClick={handleLogout}
+                    className="text-xs font-medium text-gray-400 hover:text-red-500 px-3 py-1.5 rounded-full transition-all"
+                >
+                    {t('header.logout')}
+                </button>
             </div>
         </header>
     );

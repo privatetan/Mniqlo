@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useLanguage } from '@/context/LanguageContext';
 
 import { FavoriteItem, StockItem } from '@/types';
 import { parseLocalTime } from '@/lib/date-utils';
@@ -38,7 +39,6 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
             if (userStr) {
                 const user = JSON.parse(userStr);
 
-                // Guest handling
                 if (user.id === -1) {
                     const savedFavs = localStorage.getItem('favorites');
                     if (savedFavs) {
@@ -87,61 +87,59 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
         };
     }, []);
 
-    useEffect(() => {
-        const fetchHistory = async () => {
-            const userStr = localStorage.getItem('user');
-            if (userStr) {
-                try {
-                    const user = JSON.parse(userStr);
-                    if (user.id !== -1) {
-                        const res = await fetch(`/api/search/history?userId=${user.id}`);
-                        const data = await res.json();
-                        if (data.success) {
-                            const serverKeywords = data.history.map((h: any) => h.keyword);
-                            const localHistory = JSON.parse(localStorage.getItem('searchHistory') || '[]');
-                            const combined = Array.from(new Set([...serverKeywords, ...localHistory])).slice(0, 10);
-                            setHistory(combined);
-                            localStorage.setItem('searchHistory', JSON.stringify(combined));
-                        }
-                    } else {
-                        const saved = localStorage.getItem('searchHistory');
-                        if (saved) setHistory(JSON.parse(saved));
+    const fetchHistory = useCallback(async () => {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+            try {
+                const user = JSON.parse(userStr);
+                if (user.id !== -1) {
+                    const res = await fetch(`/api/search/history?userId=${user.id}`);
+                    const data = await res.json();
+                    if (data.success) {
+                        const serverKeywords = data.history.map((h: any) => h.keyword);
+                        const localHistory = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+                        const combined = Array.from(new Set([...serverKeywords, ...localHistory])).slice(0, 10);
+                        setHistory(combined);
+                        localStorage.setItem('searchHistory', JSON.stringify(combined));
                     }
-                } catch (e) {
-                    console.error('Failed to load history', e);
+                } else {
                     const saved = localStorage.getItem('searchHistory');
                     if (saved) setHistory(JSON.parse(saved));
                 }
-            } else {
+            } catch (e) {
+                console.error('Failed to load history', e);
                 const saved = localStorage.getItem('searchHistory');
                 if (saved) setHistory(JSON.parse(saved));
             }
-        };
-
-        fetchHistory();
+        } else {
+            const saved = localStorage.getItem('searchHistory');
+            if (saved) setHistory(JSON.parse(saved));
+        }
     }, []);
 
-    const toggleFavorite = async (product: any, style: string, size: string) => {
+    useEffect(() => {
+        fetchHistory();
+    }, [fetchHistory]);
+
+    const toggleFavorite = useCallback(async (product: any, style: string, size: string) => {
         if (!product) return;
 
-        const key = `${style}-${size}`;
         const isFav = favorites.some(f => f.productId === product.productId && f.color === style && f.size === size);
 
         const userStr = localStorage.getItem('user');
         if (!userStr) {
-            alert('Please login to use favorites');
+            alert(language === 'zh' ? '请登录以使用收藏功能' : 'Please login to use favorites');
             return;
         }
         const user = JSON.parse(userStr);
 
-        // Guest handling
         if (user.id === -1) {
             let newFavs;
             if (isFav) {
                 newFavs = favorites.filter(f => !(f.productId === product.productId && f.color === style && f.size === size));
             } else {
                 const newItem: FavoriteItem = {
-                    key: `${product.productId}-${style}-${size}`, // Temp key for guest
+                    key: `${product.productId}-${style}-${size}`,
                     productId: product.productId,
                     code: product.code,
                     name: product.productName,
@@ -206,7 +204,7 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
         } catch (error) {
             console.error('Failed to toggle favorite', error);
         }
-    };
+    }, [favorites]);
 
     const updateHistory = (newQuery: string) => {
         let newHistory = [newQuery, ...history.filter(h => h !== newQuery)].slice(0, 3);
@@ -221,7 +219,7 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
         localStorage.setItem('searchHistory', JSON.stringify(newHistory));
     };
 
-    const handleSearch = async (overrideQuery?: string) => {
+    const handleSearch = useCallback(async (overrideQuery?: string) => {
         const searchText = overrideQuery || query;
         if (!searchText.trim()) return;
 
@@ -263,7 +261,7 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
         } finally {
             setLoading(false);
         }
-    };
+    }, [query, history, updateHistory]);
 
     const processedResults = useMemo(() => {
         if (!results) return [];
@@ -316,21 +314,20 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
         });
     }, [results, viewMode]);
 
+    const { t, language } = useLanguage();
+
     return (
-        <div className="h-full flex flex-col text-[#0f172a] font-sans w-full overflow-hidden">
+        <div className="h-full flex flex-col bg-gray-50/30 overflow-hidden">
             {/* Header Section */}
-            <header className="bg-white border-b border-gray-100 shrink-0">
-                <div className="px-4 py-3">
-
+            <header className="bg-white border-b border-gray-100 shrink-0 shadow-sm relative z-10">
+                <div className="px-6 py-4">
                     <div className="flex items-center gap-4">
-                        <div className="p-1 w-8 h-8"></div>
-
                         {/* Search Input */}
                         <div className="flex-1 relative">
                             <input
                                 type="text"
-                                placeholder="请输入6位商品编号"
-                                className="w-full h-10 pl-4 pr-10 bg-white border border-gray-200 rounded-full text-sm outline-none focus:border-gray-400 placeholder:text-gray-400"
+                                placeholder={t('search.placeholder')}
+                                className="w-full h-11 pl-11 pr-12 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-gray-900/5 focus:border-gray-400 transition-all font-medium"
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -338,41 +335,43 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
                             <button
                                 onClick={() => handleSearch()}
                                 disabled={loading}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 bg-transparent p-0 disabled:opacity-50"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-900 transition-colors p-1"
                             >
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M21 21L16.65 16.65M19 11C19 15.4183 15.4183 19 11 19C6.58172 19 3 15.4183 3 11C3 6.58172 6.58172 3 11 3C15.4183 3 19 6.58172 19 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                    <circle cx="11" cy="11" r="8" />
+                                    <path d="m21 21-4.3-4.3" />
                                 </svg>
                             </button>
+                            <svg className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <circle cx="11" cy="11" r="8" />
+                                <path d="m21 21-4.3-4.3" />
+                            </svg>
                         </div>
-
-                        <div className="p-1 w-8 h-8"></div>
                     </div>
 
                     {/* Secondary Nav */}
-                    <div className="flex items-center gap-3 mt-4 pb-1 text-xs text-gray-600 min-h-[24px]">
+                    <div className="flex items-center gap-3 mt-4 text-xs font-medium text-gray-400 min-h-[24px]">
                         {history.length > 0 && (
                             <>
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-gray-400 shrink-0">
-                                    <path d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                    <path d="M12 6V12L16 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-300 shrink-0">
+                                    <path d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2Z" />
+                                    <path d="M12 6V12L16 14" />
                                 </svg>
-                                <div className="flex items-center gap-4 overflow-x-auto no-scrollbar">
+                                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
                                     {history.map((item, index) => (
-                                        <div key={index} className="flex items-center gap-1 group whitespace-nowrap">
+                                        <div key={index} className="flex items-center gap-1.5 px-3 py-1 bg-gray-100/50 rounded-full group whitespace-nowrap transition-colors hover:bg-gray-100">
                                             <span
                                                 onClick={() => handleSearch(item)}
-                                                className="hover:text-black transition-colors color-red "
+                                                className="hover:text-gray-900 transition-colors cursor-pointer"
                                             >
                                                 {item}
                                             </span>
                                             <span
                                                 onClick={(e) => removeFromHistory(e, item)}
-                                                className="text-gray-300 hover:text-red-500 p-0.5"
-                                                title="Remove from history"
+                                                className="text-gray-300 hover:text-red-500 transition-colors cursor-pointer"
                                             >
-                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                                    <path d="M18 6L6 18M6 6L18 18" />
                                                 </svg>
                                             </span>
                                         </div>
@@ -384,27 +383,32 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
                 </div>
             </header>
 
-            <main className="px-4 py-8 flex-1 overflow-y-auto">
+            <main className="px-6 py-8 flex-1 overflow-y-auto scroll-smooth">
                 {/* Search Results / Loading */}
                 {(loading || results) && (
-                    <section className="mb-10 space-y-8">
-                        {loading && <div className="text-center py-4 text-gray-500">搜索中...</div>}
+                    <section className="mb-10 grid grid-cols-1 xl:grid-cols-2 gap-6">
+                        {loading && (
+                            <div className="text-center py-24 text-gray-400 italic">
+                                <div className="w-8 h-8 border-2 border-gray-100 border-t-gray-900 rounded-full animate-spin mx-auto mb-4" />
+                                {t('search.searching')}
+                            </div>
+                        )}
 
                         {processedResults.map((product: any, idx) => (
-                            <div key={product.productId || idx} className="bg-gray-50 p-6 rounded-lg shadow-sm">
+                            <div key={product.productId || idx} className="card p-6">
                                 {product.error ? (
-                                    <p className="text-red-500">{product.error}</p>
+                                    <p className="text-red-500 font-medium tracking-tight">{product.error}</p>
                                 ) : (
                                     <div>
-                                        <div className="flex justify-between items-start mb-6">
+                                        <div className="flex justify-between items-start border-b border-gray-50 pb-5 mb-6">
                                             <div>
-                                                <h3 className="font-semibold text-lg">{product.productName}</h3>
-                                                <div className="flex items-center gap-3">
-                                                    <p className="text-sm text-gray-600">Product ID: {product.productId}</p>
+                                                <h3 className="font-bold text-base text-gray-900 tracking-tight mb-1">{product.productName}</h3>
+                                                <div className="flex items-center gap-4">
+                                                    <p className="text-xs text-gray-400 font-medium">ID: {product.productId}</p>
                                                     <div className="flex items-baseline gap-2">
-                                                        <p className="text-lg font-bold text-red-600">¥{product.minPrice}</p>
+                                                        <p className="text-xl font-bold text-red-600">¥{product.minPrice}</p>
                                                         {product.originPrice > product.minPrice && (
-                                                            <p className="text-xs text-gray-400 line-through">¥{product.originPrice}</p>
+                                                            <p className="text-[11px] text-gray-400 line-through">¥{product.originPrice}</p>
                                                         )}
                                                     </div>
                                                 </div>
@@ -412,23 +416,23 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
                                         </div>
 
                                         <div
-                                            className="mb-4 flex items-center gap-1 text-sm font-bold border border-gray-200 rounded px-3 py-1 inline-flex cursor-pointer hover:bg-gray-50 transition-colors"
+                                            className="mb-6 flex items-center gap-2 text-xs font-semibold bg-gray-50 border border-gray-100 px-4 py-2 rounded-full inline-flex cursor-pointer transition-all hover:bg-gray-100 tracking-tight"
                                             onClick={() => {
                                                 setViewMode(viewMode === 'color' ? 'size' : 'color');
                                                 setExpandedState(null);
                                             }}
                                         >
-                                            <span className={viewMode === 'color' ? 'text-green-500' : 'text-gray-400'}>
-                                                颜色
+                                            <span className={viewMode === 'color' ? 'text-gray-900' : 'text-gray-400'}>
+                                                {t('search.color')}
                                             </span>
-                                            <span className="text-gray-300 font-normal">|</span>
-                                            <span className={viewMode === 'size' ? 'text-green-500' : 'text-gray-400'}>
-                                                尺寸
+                                            <span className="text-gray-200">|</span>
+                                            <span className={viewMode === 'size' ? 'text-gray-900' : 'text-gray-400'}>
+                                                {t('search.size')}
                                             </span>
                                         </div>
 
                                         {/* Group Buttons */}
-                                        <div className="flex flex-wrap gap-3 mb-6">
+                                        <div className="flex flex-wrap gap-2.5 mb-8">
                                             {product.groupedData.map((group: GroupedData) => {
                                                 const isExpanded = expandedState?.pid === product.productId && expandedState?.key === group.key;
                                                 return (
@@ -436,16 +440,16 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
                                                         key={group.key}
                                                         onClick={() => setExpandedState(isExpanded ? null : { pid: product.productId, key: group.key })}
                                                         className={`
-                                                            px-4 py-2 rounded-lg border text-sm font-medium transition flex flex-col items-center gap-1 min-w-[80px]
+                                                            px-5 py-2.5 rounded-xl border text-sm font-semibold transition-all flex flex-col items-center gap-0.5 min-w-[90px]
                                                             ${isExpanded
-                                                                ? 'border-black bg-transparent text-black'
-                                                                : 'border-gray-200 bg-transparent text-gray-700 hover:border-gray-300'
+                                                                ? 'border-gray-900 bg-gray-900 text-white shadow-lg shadow-gray-900/10'
+                                                                : 'border-gray-100 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50'
                                                             }
                                                         `}
                                                     >
                                                         <span>{group.key}</span>
-                                                        <span className={`text-xs ${isExpanded ? 'text-gray-300' : 'text-gray-500'}`}>
-                                                            库存: {group.totalStock}
+                                                        <span className={`text-[10px] font-medium ${isExpanded ? 'text-gray-400' : 'text-gray-400'}`}>
+                                                            {t('search.stock')}: {group.totalStock}
                                                         </span>
                                                     </button>
                                                 );
@@ -456,7 +460,7 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
                                         {expandedState?.pid === product.productId && (
                                             <div className="bg-white rounded-lg border border-gray-100 p-4 animate-in fade-in slide-in-from-top-2 duration-200">
                                                 <h4 className="text-sm font-medium text-gray-500 mb-3">
-                                                    <span className="text-black">{expandedState?.key}</span> 库存详情:
+                                                    <span className="text-black">{expandedState?.key}</span> {language === 'zh' ? '库存详情:' : 'Stock Details:'}
                                                 </h4>
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                                     {product.groupedData
@@ -477,7 +481,7 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
                                                                     <div className="text-right">
                                                                         <div className={`flex items-center justify-end gap-1 text-sm font-bold ${sub.stock > 0 ? 'text-green-600' : 'text-red-500'}`}>
                                                                             <div className="flex items-center gap-2">
-                                                                                <span>{sub.stock > 0 ? sub.stock : '售罄'}</span>
+                                                                                <span>{sub.stock > 0 ? sub.stock : (language === 'zh' ? '售罄' : 'Sold Out')}</span>
                                                                                 <button
                                                                                     onClick={(e) => {
                                                                                         e.stopPropagation();
@@ -487,7 +491,7 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
                                                                                         ? 'bg-red-50 border-red-200 text-red-500'
                                                                                         : 'bg-white border-gray-200 text-gray-300 hover:text-red-400 hover:border-red-200'
                                                                                         }`}
-                                                                                    title={isFav ? "取消收藏" : "收藏"}
+                                                                                    title={isFav ? (language === 'zh' ? "取消收藏" : "Remove from Favorites") : (language === 'zh' ? "收藏" : "Add to Favorites")}
                                                                                 >
                                                                                     <svg
                                                                                         width="14"
