@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
 import { CrawledItem, FavoriteItem } from '@/types';
 import { parseLocalTime } from '@/lib/date-utils';
@@ -60,6 +60,40 @@ export default function SuperSelectionPage() {
     const [expandedState, setExpandedState] = useState<{ code: string; key: string } | null>(null);
     const [sortBy, setSortBy] = useState<'default' | 'price-asc' | 'price-desc' | 'discount'>('default');
     const { t, language } = useLanguage();
+
+    // Scroll handling for header visibility
+    const [showHeader, setShowHeader] = useState(true);
+    const lastScrollY = useRef(0);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const ticking = useRef(false);
+
+    const handleScroll = () => {
+        if (!scrollContainerRef.current) return;
+
+        if (!ticking.current) {
+            window.requestAnimationFrame(() => {
+                if (!scrollContainerRef.current) {
+                    ticking.current = false;
+                    return;
+                }
+
+                const currentScrollY = scrollContainerRef.current.scrollTop;
+                // Thresholds
+                const diff = currentScrollY - lastScrollY.current;
+                const minScroll = 50;
+                const threshold = 10;
+
+                if (diff > threshold && currentScrollY > minScroll && showHeader) {
+                    setShowHeader(false);
+                } else if (diff < -threshold && !showHeader) {
+                    setShowHeader(true);
+                }
+                lastScrollY.current = currentScrollY;
+                ticking.current = false;
+            });
+            ticking.current = true;
+        }
+    };
 
     const categories = ['全部', '女装', '男装', '童装', '婴幼儿装'];
 
@@ -274,7 +308,11 @@ export default function SuperSelectionPage() {
     return (
         <div className="h-full flex flex-col bg-gray-50/30 overflow-hidden">
             {/* Header: Tabs & Search */}
-            <div className="bg-white border-b border-gray-100 shrink-0 shadow-sm relative z-10">
+            {/* Header: Tabs & Search */}
+            <div
+                className={`absolute top-0 left-0 right-0 bg-white z-10 transition-transform duration-300 ease-in-out shadow-sm border-b border-gray-100 ${showHeader ? 'translate-y-0' : '-translate-y-full'
+                    }`}
+            >
                 <div className="px-6 py-4">
                     <div className="flex gap-2 mb-4 overflow-x-auto no-scrollbar">
                         {categories.map(cat => (
@@ -329,7 +367,11 @@ export default function SuperSelectionPage() {
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-6 py-6 scroll-smooth">
+            <div
+                ref={scrollContainerRef}
+                onScroll={handleScroll}
+                className="flex-1 overflow-y-auto px-6 pb-6 pt-44 scroll-smooth"
+            >
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-24 text-gray-400">
                         <div className="w-8 h-8 border-2 border-gray-100 border-t-gray-900 rounded-full animate-spin mb-4" />

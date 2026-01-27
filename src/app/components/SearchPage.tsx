@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
 
 import { FavoriteItem, StockItem } from '@/types';
@@ -25,6 +25,39 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
     const [history, setHistory] = useState<string[]>([]);
 
     const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
+
+    // Scroll handling
+    const [showHeader, setShowHeader] = useState(true);
+    const lastScrollY = useRef(0);
+    const scrollContainerRef = useRef<HTMLElement>(null);
+    const ticking = useRef(false);
+
+    const handleScroll = () => {
+        if (!scrollContainerRef.current) return;
+
+        if (!ticking.current) {
+            window.requestAnimationFrame(() => {
+                if (!scrollContainerRef.current) {
+                    ticking.current = false;
+                    return;
+                }
+
+                const currentScrollY = scrollContainerRef.current.scrollTop;
+                const diff = currentScrollY - lastScrollY.current;
+                const minScroll = 50;
+                const threshold = 10;
+
+                if (diff > threshold && currentScrollY > minScroll && showHeader) {
+                    setShowHeader(false);
+                } else if (diff < -threshold && !showHeader) {
+                    setShowHeader(true);
+                }
+                lastScrollY.current = currentScrollY;
+                ticking.current = false;
+            });
+            ticking.current = true;
+        }
+    };
 
     useEffect(() => {
         if (initialQuery) {
@@ -321,7 +354,11 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
     return (
         <div className="h-full flex flex-col bg-gray-50/30 overflow-hidden">
             {/* Header Section */}
-            <header className="bg-white border-b border-gray-100 shrink-0 shadow-sm relative z-10">
+            {/* Header Section */}
+            <header
+                className={`absolute top-0 left-0 right-0 bg-white z-10 transition-transform duration-300 ease-in-out shadow-sm border-b border-gray-100 ${showHeader ? 'translate-y-0' : '-translate-y-full'
+                    }`}
+            >
                 <div className="px-6 py-4">
                     <div className="flex items-center gap-4">
                         {/* Search Input */}
@@ -385,7 +422,11 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
                 </div>
             </header>
 
-            <main className="px-6 py-8 flex-1 overflow-y-auto scroll-smooth">
+            <main
+                ref={scrollContainerRef}
+                onScroll={handleScroll}
+                className="px-6 pb-8 pt-32 flex-1 overflow-y-auto scroll-smooth"
+            >
                 {/* Search Results / Loading */}
                 {(loading || results) && (
                     <section className="mb-10 grid grid-cols-1 xl:grid-cols-2 gap-6">
