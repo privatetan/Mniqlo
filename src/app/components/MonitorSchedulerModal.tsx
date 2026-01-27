@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { FavoriteItem } from '@/types';
 import { useScheduledTask } from '@/hooks/useScheduledTask';
 import { parseLocalTime } from '@/lib/date-utils';
@@ -25,9 +26,16 @@ export function MonitorSchedulerModal({
     const [timeWindow, setTimeWindow] = useState<{ start: string; end: string } | null>(null);
     const [taskId, setTaskId] = useState<number | null>(null);
     const [localStockStatus, setLocalStockStatus] = useState<boolean | null>(null);
+    const [mounted, setMounted] = useState(false);
 
     // Use a ref for next allowed notification time to avoid re-renders and closure staleness issues
     const nextNotifyTime = useRef<number>(0);
+
+    // Client-side mount check
+    useEffect(() => {
+        setMounted(true);
+        return () => setMounted(false);
+    }, []);
 
     // Load task configuration
     useEffect(() => {
@@ -238,9 +246,9 @@ export function MonitorSchedulerModal({
         handleSaveTask(false);
     };
 
-    if (!isOpen) return null;
+    if (!isOpen || !mounted) return null;
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[120] flex items-end sm:items-center justify-center sm:p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-md sm:max-w-lg shadow-2xl overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-200 max-h-[90vh] sm:max-h-[85vh] flex flex-col">
                 {/* Header */}
@@ -387,6 +395,7 @@ export function MonitorSchedulerModal({
                     )}
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

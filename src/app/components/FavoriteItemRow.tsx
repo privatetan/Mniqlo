@@ -66,8 +66,9 @@ export const FavoriteItemRow = memo(function FavoriteItemRow({ item, stockStatus
     return (
         <div className="relative select-none touch-pan-y" onClick={handleClick}>
             {/* Delete Background */}
+            {/* Delete Background - Only visible when swiped to prevent bleed-through */}
             <div
-                className="absolute inset-0 bg-red-400/90 rounded-xl flex items-center justify-end px-6 cursor-pointer"
+                className={`absolute top-0 bottom-0 right-0 w-20 bg-red-400/90 rounded-r-xl flex items-center justify-center cursor-pointer transition-opacity duration-200 ${isSwiped ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
                 onClick={(e) => onRemove(e, item.key)}
             >
                 <span className="text-white font-semibold text-sm">{t('fav.delete')}</span>
