@@ -46,7 +46,7 @@ export default function FavoritePage() {
                     size: f.size || '',
                     price: f.price,
                     timestamp: parseLocalTime(f.created_at || f.createdAt || f.timestamp).getTime(),
-                    imageUrl: f.image_url || f.imageUrl
+                    mainPic: f.main_pic || f.mainPic || f.image_url || f.imageUrl
                 }));
                 // Sort by timestamp desc to show newest first
                 mapped.sort((a: FavoriteItem, b: FavoriteItem) => {
@@ -250,6 +250,25 @@ export default function FavoritePage() {
                                     onClick={() => setSelectedProductId(isExpanded ? null : pid)}
                                     className={`p-4 cursor-pointer bg-white/50 transition-colors hover:bg-white flex items-center justify-between relative group select-none ${isExpanded ? 'border-b border-slate-100' : ''}`}
                                 >
+                                    <div className="w-16 h-16 mr-4 shrink-0 bg-white rounded-lg overflow-hidden border border-slate-100/50 shadow-sm relative">
+                                        {representative.mainPic ? (
+                                            <img
+                                                src={`https://www.uniqlo.cn${representative.mainPic}`}
+                                                alt={representative.name}
+                                                className="w-full h-full object-cover"
+                                                loading="lazy"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                                    <polyline points="21 15 16 10 5 21"></polyline>
+                                                </svg>
+                                            </div>
+                                        )}
+                                    </div>
+
                                     <div className="flex flex-col gap-1 flex-1 min-w-0 pr-2">
                                         <div className="flex items-center gap-2">
                                             <span

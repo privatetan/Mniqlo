@@ -8,6 +8,7 @@ export type FavoriteItem = {
     size: string;
     price: number;
     timestamp: string | number;
+    mainPic?: string; // Main product image URL suffix (e.g., /goods/12/34/56.jpg)
 };
 
 export type StockItem = {
@@ -30,4 +31,5 @@ export interface CrawledItem {
     stock_status?: string;
     gender: string;
     sku_id: string;
+    main_pic?: string;
 }

@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS favorites (
     color TEXT,
     size TEXT,
     price DOUBLE PRECISION,
+    main_pic TEXT,
     timestamp TEXT NOT NULL
 );
 
@@ -170,6 +171,7 @@ CREATE TABLE IF NOT EXISTS crawled_products (
     stock_status TEXT DEFAULT 'new',     -- Stock status ('new': new stock, 'old': existing stock)
     gender TEXT,                         -- Gender category (女装/男装/童装/婴幼儿装)
     sku_id TEXT,                         -- SKU ID (unique SKU identifier)
+    main_pic TEXT,                       -- Main product image URL suffix
     created_at TIMESTAMPTZ DEFAULT NOW() -- Creation timestamp
 );
 

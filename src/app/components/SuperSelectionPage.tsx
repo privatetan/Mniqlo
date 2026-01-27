@@ -147,7 +147,8 @@ export default function SuperSelectionPage() {
                         name: item.name,
                         price: parseFloat(item.price),
                         style: style,
-                        size: size
+                        size: size,
+                        mainPic: item.main_pic
                     })
                 });
             }
@@ -346,32 +347,56 @@ export default function SuperSelectionPage() {
                                     className="p-5 cursor-pointer hover:bg-gray-50/50 transition-colors"
                                     onClick={() => setExpandedCode(expandedCode === product.code ? null : product.code)}
                                 >
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div className="flex-1 min-w-0 pr-4">
-                                            <div className="flex flex-col gap-1.5">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-base text-green-600 font-bold font-mono tracking-tight">{product.code}</span>
-                                                    <span className="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-500 font-semibold rounded-full uppercase tracking-tight">{product.gender}</span>
-                                                    {product.items.some(i => i.stock_status === 'new') && (
-                                                        <span className="px-2 py-0.5 text-[10px] font-bold bg-red-500 text-white rounded-full uppercase tracking-tight">
-                                                            {t('sel.new')}
-                                                        </span>
-                                                    )}
+                                    <div className="flex gap-4 mb-4">
+                                        {/* Image */}
+                                        <div className="w-24 h-24 shrink-0 bg-gray-100 rounded-lg overflow-hidden relative border border-gray-200">
+                                            {product.items[0]?.main_pic ? (
+                                                <img
+                                                    src={`https://www.uniqlo.cn${product.items[0].main_pic}`}
+                                                    alt={product.name}
+                                                    className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+                                                    loading="lazy"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-gray-300">
+                                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                                        <polyline points="21 15 16 10 5 21"></polyline>
+                                                    </svg>
                                                 </div>
-                                                <h3 className="text-sm text-gray-900 font-medium truncate">{product.name}</h3>
-                                            </div>
+                                            )}
                                         </div>
-                                        <div className="text-right shrink-0">
-                                            <div className="flex flex-col items-end">
-                                                <div className="text-red-600 font-bold text-lg leading-none">¥{product.minPrice}</div>
-                                                {product.originPrice > product.minPrice && (
-                                                    <div className="flex items-center gap-1.5 mt-1">
-                                                        <div className="text-[11px] text-gray-400 line-through">¥{product.originPrice}</div>
-                                                        <div className="text-[11px] text-red-500 font-semibold">
-                                                            {t('sel.off', { n: ((1 - product.minPrice / product.originPrice) * 10).toFixed(1) })}
+
+                                        <div className="flex-1 min-w-0 flex flex-col">
+                                            <div className="flex justify-between items-start h-full">
+                                                <div className="flex-1 min-w-0 pr-2">
+                                                    <div className="flex flex-col gap-1.5 h-full">
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <span className="text-base text-green-600 font-bold font-mono tracking-tight">{product.code}</span>
+                                                            <span className="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-500 font-semibold rounded-full uppercase tracking-tight">{product.gender}</span>
+                                                            {product.items.some(i => i.stock_status === 'new') && (
+                                                                <span className="px-2 py-0.5 text-[10px] font-bold bg-red-500 text-white rounded-full uppercase tracking-tight">
+                                                                    {t('sel.new')}
+                                                                </span>
+                                                            )}
                                                         </div>
+                                                        <h3 className="text-sm text-gray-900 font-medium line-clamp-2 leading-relaxed">{product.name}</h3>
                                                     </div>
-                                                )}
+                                                </div>
+                                                <div className="text-right shrink-0">
+                                                    <div className="flex flex-col items-end">
+                                                        <div className="text-red-600 font-bold text-lg leading-none">¥{product.minPrice}</div>
+                                                        {product.originPrice > product.minPrice && (
+                                                            <div className="flex items-center gap-1.5 mt-1">
+                                                                <div className="text-[11px] text-gray-400 line-through">¥{product.originPrice}</div>
+                                                                <div className="text-[11px] text-red-500 font-semibold">
+                                                                    {t('sel.off', { n: ((1 - product.minPrice / product.originPrice) * 10).toFixed(1) })}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

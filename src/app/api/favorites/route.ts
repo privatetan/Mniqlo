@@ -49,7 +49,8 @@ export async function POST(req: Request) {
                     price: parseFloat(price),
                     color: style || '',
                     size: size || '',
-                    timestamp: formatToLocalTime()
+                    timestamp: formatToLocalTime(),
+                    main_pic: body.mainPic || '' // Receive mainPic from body
                 }
             ])
             .select()

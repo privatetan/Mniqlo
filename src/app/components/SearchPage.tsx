@@ -146,7 +146,8 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
                     color: style,
                     size: size,
                     price: product.minPrice,
-                    timestamp: Date.now()
+                    timestamp: Date.now(),
+                    mainPic: product.mainPic
                 };
                 newFavs = [...favorites, newItem];
             }
@@ -177,7 +178,7 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
                     price: product.minPrice,
                     style,
                     size,
-                    imageUrl: null
+                    mainPic: product.mainPic
                 };
 
                 const res = await fetch('/api/favorites', {
@@ -195,7 +196,8 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
                         color: style,
                         size: size,
                         price: product.minPrice,
-                        timestamp: Date.now()
+                        timestamp: Date.now(),
+                        mainPic: product.mainPic
                     };
                     setFavorites([...favorites, addedFav]);
                 }
@@ -401,7 +403,17 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
                                 ) : (
                                     <div>
                                         <div className="flex justify-between items-start border-b border-gray-50 pb-5 mb-6">
-                                            <div>
+                                            {/* Product Image */}
+                                            {product.mainPic && (
+                                                <div className="mr-4 shrink-0">
+                                                    <img
+                                                        src={`https://www.uniqlo.cn${product.mainPic}`}
+                                                        alt={product.productName}
+                                                        className="w-24 h-24 object-cover rounded-lg border border-gray-100"
+                                                    />
+                                                </div>
+                                            )}
+                                            <div className="flex-1">
                                                 <h3 className="font-bold text-base text-gray-900 tracking-tight mb-1">{product.productName}</h3>
                                                 <div className="flex items-center gap-4">
                                                     <p className="text-xs text-gray-400 font-medium">ID: {product.productId}</p>

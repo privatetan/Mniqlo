@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { sendWxNotification } from './wxpush';
+import { getProductIdByCode } from './uniqlo';
 
 const CONFIG_URL = 'https://www.uniqlo.cn/data/config_1/zh_CN/super-u_951462.json';
 const PRODUCT_DETAIL_URL = 'https://www.uniqlo.cn/data/products/spu/zh_CN';
@@ -58,6 +59,7 @@ export interface CrawledItem {
     stock_status?: string;   // 库存状态 ('new': 新增库存, 'old': 现有库存)
     gender: string;          // 性别
     sku_id: string;          // SKU ID (唯一SKU标识，例如 u0000000066997001)
+    main_pic?: string;       // 商品主图URL后缀
 }
 
 /**
@@ -226,6 +228,23 @@ async function processProduct(productCode: string, targetGender?: string): Promi
         const rawGender = summary.sex || summary.gDeptValue || '未知';
         const gender = standardizeGender(rawGender);
         const itemCode = summary.code || summary.oms_productCode || '';
+        let mainPic = summary.mainPic || '';
+
+        // If mainPic is missing, try to get it from Search API (as per user request)
+        if (!mainPic && itemCode) {
+            try {
+                // We use itemCode (6 digits) to search
+                const productInfo = await getProductIdByCode(itemCode);
+                if (productInfo && productInfo.length > 0) {
+                    // Try to match exact product if multiple returned, or take first
+                    // The search result usually contains variations.
+                    // We can just take the first one's mainPic as they usually share the same model image structure
+                    mainPic = productInfo[0].mainPic || '';
+                }
+            } catch (e) {
+                console.error(`[${itemCode}] Failed to fetch mainPic from Search API`, e);
+            }
+        }
 
 
 
@@ -267,8 +286,10 @@ async function processProduct(productCode: string, targetGender?: string): Promi
                     min_price: minPrice,
                     origin_price: originPrice,
                     stock: stockCount,
+                    stock_status: stockMap[skuId] ? 'old' : 'new', // Logic checks stock>0 generally, status logic is separate usually but kept simple here
                     gender: cleanString(gender),
-                    sku_id: cleanString(skuId)
+                    sku_id: cleanString(skuId),
+                    main_pic: cleanString(mainPic)
                 });
             }
         }
@@ -418,7 +439,8 @@ async function saveCrawledItems(items: CrawledItem[], targetGender?: string): Pr
                     stock: item.stock,
                     stock_status: 'old',
                     gender: cleanString(item.gender),
-                    sku_id: cleanString(item.sku_id)
+                    sku_id: cleanString(item.sku_id),
+                    main_pic: cleanString(item.main_pic)
                 };
             }).filter(item => item.id); // Only include items with valid IDs
 
@@ -457,7 +479,8 @@ async function saveCrawledItems(items: CrawledItem[], targetGender?: string): Pr
                 stock: item.stock,
                 stock_status: 'new',
                 gender: cleanString(item.gender),
-                sku_id: cleanString(item.sku_id)
+                sku_id: cleanString(item.sku_id),
+                main_pic: cleanString(item.main_pic)
             }));
 
             const { error } = await supabase.from('crawled_products').insert(dbBatch);

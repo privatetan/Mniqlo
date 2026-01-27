@@ -7,7 +7,7 @@ const STOCK_URL = 'https://d.uniqlo.cn/p/stock/stock/query/zh_CN';
 /**
  * Get Product ID by 6-digit code
  */
-export async function getProductIdByCode(code: string): Promise<Array<{ id: string; code: string; minPrice: number; originPrice: number }> | null> {
+export async function getProductIdByCode(code: string): Promise<Array<{ id: string; code: string; minPrice: number; originPrice: number; mainPic: string }> | null> {
 
     const body = {
         belongTo: 'pc',
@@ -39,7 +39,8 @@ export async function getProductIdByCode(code: string): Promise<Array<{ id: stri
             id: product.productCode,
             code: product.code,
             minPrice: parseFloat(product.minPrice),
-            originPrice: parseFloat(product.originPrice)
+            originPrice: parseFloat(product.originPrice),
+            mainPic: product.mainPic || ''
         }));
     } catch (error) {
         console.error('getProductIdByCode error:', error);
@@ -160,6 +161,7 @@ export async function getProductInfoByCode(code: string) {
             price: details[0]?.varyPrice || 0,
             minPrice: productData.minPrice,
             originPrice: productData.originPrice,
+            mainPic: productData.mainPic,
             items: items,
             rawStock: stockMap
         });
