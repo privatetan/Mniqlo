@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Ensure we are in the project directory
-PROJECT_DIR="/Users/galio/Documents/Developer/AI/Mniqlo"
+PROJECT_DIR="/home/node/Mniqlo"
 cd "$PROJECT_DIR" || exit
 
 echo "Starting deployment restart script..."
