@@ -67,7 +67,7 @@ export const FavoriteItemRow = memo(function FavoriteItemRow({ item, stockStatus
         <div className="relative select-none touch-pan-y" onClick={handleClick}>
             {/* Delete Background */}
             <div
-                className="absolute inset-0 bg-red-500 rounded-xl flex items-center justify-end px-6 cursor-pointer"
+                className="absolute inset-0 bg-red-400/90 rounded-xl flex items-center justify-end px-6 cursor-pointer"
                 onClick={(e) => onRemove(e, item.key)}
             >
                 <span className="text-white font-semibold text-sm">{t('fav.delete')}</span>
@@ -75,7 +75,7 @@ export const FavoriteItemRow = memo(function FavoriteItemRow({ item, stockStatus
 
             {/* Foreground Content */}
             <div
-                className={`flex gap-3 py-2 px-3 bg-white border border-gray-100 rounded-xl shadow-sm relative z-10 transition-transform duration-200 ease-out overflow-visible group ${isSwiped ? '-translate-x-20' : 'translate-x-0'}`}
+                className={`flex gap-3 py-3 px-4 bg-white/70 backdrop-blur-sm border border-white/50 rounded-xl shadow-sm relative z-10 transition-transform duration-200 ease-out overflow-visible group ${isSwiped ? '-translate-x-20' : 'translate-x-0'} hover:shadow-md hover:bg-white/90`}
                 onTouchStart={onTouchStart}
                 onTouchMove={onTouchMove}
                 onTouchEnd={onTouchEnd}
@@ -86,16 +86,16 @@ export const FavoriteItemRow = memo(function FavoriteItemRow({ item, stockStatus
                         <div className="flex flex-wrap items-center justify-between h-full gap-y-2">
                             <div className="flex items-center gap-3">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-gray-900 text-[11px] font-semibold bg-gray-100 px-2.5 py-1 rounded-full">{item.color}</span>
-                                    <span className="text-gray-900 text-[11px] font-semibold bg-gray-100 px-2.5 py-1 rounded-full">{item.size}</span>
+                                    <span className="text-slate-700 text-[11px] font-semibold bg-slate-100 px-2.5 py-1 rounded-full">{item.color}</span>
+                                    <span className="text-slate-700 text-[11px] font-semibold bg-slate-100 px-2.5 py-1 rounded-full">{item.size}</span>
                                 </div>
-                                <span className="font-bold text-red-600 text-sm">¥{item.price}</span>
+                                <span className="font-bold text-red-500 text-sm">¥{item.price}</span>
                             </div>
 
                             <div className="flex items-center gap-2">
                                 {localStockStatus !== undefined && localStockStatus !== null && (
                                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${localStockStatus
-                                        ? 'bg-green-50 text-green-600 border-green-100'
+                                        ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
                                         : 'bg-red-50 text-red-500 border-red-100'
                                         }`}>
                                         {localStockStatus ? (language === 'zh' ? '有货' : 'In Stock') : (language === 'zh' ? '售罄' : 'Sold Out')}
@@ -114,7 +114,7 @@ export const FavoriteItemRow = memo(function FavoriteItemRow({ item, stockStatus
                                     }}
                                     onTouchStart={(e) => e.stopPropagation()}
                                     onTouchEnd={(e) => e.stopPropagation()}
-                                    className="p-1.5 rounded-lg bg-gray-50 text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-all"
+                                    className="p-1.5 rounded-lg bg-sky-50 text-sky-400 hover:text-sky-600 hover:bg-sky-100 transition-all"
                                     title={t('fav.monitor')}
                                 >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -126,7 +126,7 @@ export const FavoriteItemRow = memo(function FavoriteItemRow({ item, stockStatus
                                     onClick={(e) => onRemove(e, item.key)}
                                     onTouchStart={(e) => e.stopPropagation()}
                                     onTouchEnd={(e) => e.stopPropagation()}
-                                    className="text-gray-300 hover:text-red-500 p-1 transition-colors"
+                                    className="text-slate-300 hover:text-red-400 p-1 transition-colors"
                                     title={t('fav.delete')}
                                 >
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -140,10 +140,10 @@ export const FavoriteItemRow = memo(function FavoriteItemRow({ item, stockStatus
                         <>
                             <div className="flex justify-between items-start mb-1">
                                 <div className="flex-1 mr-2 flex items-baseline gap-2 truncate">
-                                    <h3 className="font-medium text-sm text-gray-900 truncate">
+                                    <h3 className="font-medium text-sm text-slate-800 truncate">
                                         {item.code && (
                                             <span
-                                                className="font-mono text-green-500 mr-2 cursor-pointer hover:underline"
+                                                className="font-mono text-emerald-500 mr-2 cursor-pointer hover:underline"
                                                 onClick={handleCodeClick}
                                             >
                                                 {item.code}
@@ -152,13 +152,13 @@ export const FavoriteItemRow = memo(function FavoriteItemRow({ item, stockStatus
                                         {item.name}
                                     </h3>
                                     {originPrice && (
-                                        <span className="text-xs text-gray-400 line-through shrink-0">¥{originPrice}</span>
+                                        <span className="text-xs text-slate-400 line-through shrink-0">¥{originPrice}</span>
                                     )}
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0">
                                     {localStockStatus !== undefined && localStockStatus !== null && (
                                         <span className={`text-[10px] px-1.5 py-0.5 rounded border ${localStockStatus
-                                            ? 'bg-green-50 text-green-600 border-green-100'
+                                            ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
                                             : 'bg-red-50 text-red-500 border-red-100'
                                             }`}>
                                             {localStockStatus ? (language === 'zh' ? '有货' : 'In Stock') : (language === 'zh' ? '售罄' : 'Sold Out')}
@@ -177,10 +177,10 @@ export const FavoriteItemRow = memo(function FavoriteItemRow({ item, stockStatus
                                         }}
                                         onTouchStart={(e) => e.stopPropagation()}
                                         onTouchEnd={(e) => e.stopPropagation()}
-                                        className="p-1.5 rounded-lg bg-white/90 hover:bg-white shadow-sm transition-all hover:scale-110"
+                                        className="p-1.5 rounded-lg bg-sky-50/50 hover:bg-sky-100 shadow-sm transition-all hover:scale-110"
                                         title={t('fav.monitor')}
                                     >
-                                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
                                     </button>
@@ -189,7 +189,7 @@ export const FavoriteItemRow = memo(function FavoriteItemRow({ item, stockStatus
                                         onClick={(e) => onRemove(e, item.key)}
                                         onTouchStart={(e) => e.stopPropagation()}
                                         onTouchEnd={(e) => e.stopPropagation()}
-                                        className="text-gray-400 hover:text-red-500 p-1 -mr-2 bg-transparent"
+                                        className="text-slate-300 hover:text-red-400 p-1 -mr-2 bg-transparent"
                                         title={t('fav.delete')}
                                     >
                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -199,12 +199,12 @@ export const FavoriteItemRow = memo(function FavoriteItemRow({ item, stockStatus
                                 </div>
                             </div>
                             <div className="flex items-center gap-2 mb-2">
-                                <span className="text-gray-900 text-sm px-2 py-0.5 bg-gray-100 rounded-full font-medium">{item.color}</span>
-                                <span className="text-gray-900 text-sm px-2 py-0.5 bg-gray-100 rounded-full font-medium">{item.size}</span>
+                                <span className="text-slate-700 text-sm px-2 py-0.5 bg-slate-100 rounded-full font-medium">{item.color}</span>
+                                <span className="text-slate-700 text-sm px-2 py-0.5 bg-slate-100 rounded-full font-medium">{item.size}</span>
                             </div>
                             <div className="flex items-baseline justify-between">
-                                <span className="font-bold text-red-600">¥{item.price}</span>
-                                <span className="text-xs text-gray-400">{parseLocalTime(item.timestamp).toLocaleDateString()}</span>
+                                <span className="font-bold text-red-500">¥{item.price}</span>
+                                <span className="text-xs text-slate-400">{parseLocalTime(item.timestamp).toLocaleDateString()}</span>
                             </div>
                         </>
                     )}

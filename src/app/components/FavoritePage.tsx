@@ -186,10 +186,10 @@ export default function FavoritePage() {
     }, [favorites]);
 
     return (
-        <div className="flex flex-col bg-gray-50/30 overflow-hidden max-h-full">
-            <div className="bg-white flex items-center justify-between px-6 py-4 border-b border-gray-100 shadow-sm relative z-10">
+        <div className="flex flex-col bg-sky-50/20 overflow-hidden max-h-full">
+            <div className="bg-white/80 backdrop-blur-sm flex items-center justify-between px-6 py-4 border-b border-slate-100 shadow-sm relative z-10">
                 <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-400 font-medium">
+                    <span className="text-xs text-slate-500 font-medium font-outfit">
                         {t('fav.collection', { p: uniqueProductIds.length, v: favorites.length })}
                     </span>
                 </div>
@@ -198,7 +198,7 @@ export default function FavoritePage() {
                     <button
                         onClick={checkStock}
                         disabled={checking}
-                        className="text-xs px-4 py-2 bg-gray-900 text-white font-semibold rounded-lg disabled:opacity-50 flex items-center gap-2 hover:bg-black transition-all shadow-sm"
+                        className="text-xs px-4 py-2 bg-slate-800 text-white font-semibold rounded-lg disabled:opacity-50 flex items-center gap-2 hover:bg-slate-900 transition-all shadow-sm"
                     >
                         {checking ? (
                             <>
@@ -221,14 +221,14 @@ export default function FavoritePage() {
             </div>
 
             {favorites.length === 0 ? (
-                <div className="flex flex-col items-center justify-center flex-1 py-32 text-gray-300 overflow-y-auto">
-                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mb-6 opacity-50">
+                <div className="flex flex-col items-center justify-center flex-1 py-32 text-slate-300 overflow-y-auto">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mb-6 opacity-30 text-sky-200">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                     </svg>
-                    <p className="text-sm font-medium tracking-tight text-gray-400">{t('fav.empty')}</p>
+                    <p className="text-sm font-medium tracking-tight text-slate-400">{t('fav.empty')}</p>
                 </div>
             ) : (
-                <div className="p-6 grid grid-cols-1 xl:grid-cols-2 gap-4 flex-1 overflow-y-auto scroll-smooth">
+                <div className="p-6 grid grid-cols-1 xl:grid-cols-2 gap-4 flex-1 overflow-y-auto scroll-smooth custom-scrollbar">
                     {uniqueProductIds.map((pid: string) => {
                         const groupItems = groupedFavorites[pid];
                         if (!groupItems || groupItems.length === 0) return null;
@@ -243,39 +243,39 @@ export default function FavoritePage() {
                         };
 
                         return (
-                            <div key={pid} className="card p-0 flex flex-col transition-all duration-300">
+                            <div key={pid} className="card p-0 flex flex-col transition-all duration-300 border border-slate-100 shadow-sm hover:shadow-md bg-white/60 backdrop-blur-sm">
                                 {/* Simplified Group Header */}
                                 <div
                                     role="button"
                                     onClick={() => setSelectedProductId(isExpanded ? null : pid)}
-                                    className={`p-4 cursor-pointer bg-white transition-colors hover:bg-gray-50/50 flex items-center justify-between relative group select-none ${isExpanded ? 'border-b border-gray-50' : ''}`}
+                                    className={`p-4 cursor-pointer bg-white/50 transition-colors hover:bg-white flex items-center justify-between relative group select-none ${isExpanded ? 'border-b border-slate-100' : ''}`}
                                 >
                                     <div className="flex flex-col gap-1 flex-1 min-w-0 pr-2">
                                         <div className="flex items-center gap-2">
                                             <span
-                                                className="font-mono text-sm text-green-600 font-bold tracking-tight cursor-pointer hover:underline"
+                                                className="font-mono text-sm text-emerald-600 font-bold tracking-tight cursor-pointer hover:underline"
                                                 onClick={handleCodeClick}
                                             >
                                                 {representative.code}
                                             </span>
-                                            <span className="text-[11px] text-gray-300 font-medium">#{pid}</span>
+                                            <span className="text-[11px] text-slate-400 font-medium">#{pid}</span>
                                         </div>
                                         <div className="flex items-baseline gap-2">
-                                            <h3 className="font-semibold text-sm text-gray-900 tracking-tight truncate">{representative.name}</h3>
+                                            <h3 className="font-semibold text-sm text-slate-700 tracking-tight truncate">{representative.name}</h3>
                                             {details?.originPrice && (
-                                                <span className="text-[11px] text-gray-400 line-through shrink-0">¥{details.originPrice}</span>
+                                                <span className="text-[11px] text-slate-400 line-through shrink-0">¥{details.originPrice}</span>
                                             )}
                                         </div>
                                     </div>
 
                                     <div className="flex items-center gap-3">
                                         {groupItems.length > 0 && (
-                                            <span className="text-[11px] font-semibold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">
+                                            <span className="text-[11px] font-semibold text-sky-600 bg-sky-50 px-2.5 py-1 rounded-full">
                                                 {t('fav.variants', { n: groupItems.length })}
                                             </span>
                                         )}
-                                        <div className="p-2 -m-2 rounded-full hover:bg-gray-100 transition-colors">
-                                            <svg className={`w-4 h-4 text-gray-300 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                        <div className="p-2 -m-2 rounded-full hover:bg-slate-50 transition-colors">
+                                            <svg className={`w-4 h-4 text-slate-300 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                                 <path d="M19 9l-7 7-7-7" />
                                             </svg>
                                         </div>

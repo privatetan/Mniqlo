@@ -67,27 +67,27 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
     }
 
     return (
-        <aside className="hidden md:flex flex-col w-64 bg-white border-r border-gray-100 h-full shrink-0 z-20">
+        <aside className="hidden md:flex flex-col w-64 bg-transparent h-full shrink-0 z-20">
             <div className="p-8">
-                <h2 className="text-xl font-bold text-gray-900 tracking-tight">Mniqlo</h2>
+                <h2 className="text-2xl font-bold text-sky-900 tracking-tight font-outfit">Mniqlo</h2>
             </div>
-            <nav className="flex-1 px-4 space-y-1">
+            <nav className="flex-1 px-4 space-y-2">
                 {navItems.map((item) => (
                     <button
                         key={item.id}
                         onClick={() => setActiveTab(item.id as any)}
-                        className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-all ${activeTab === item.id
-                            ? 'bg-gray-900 text-white shadow-md'
-                            : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                        className={`flex items-center gap-3 w-full px-4 py-3.5 rounded-2xl transition-all duration-300 group ${activeTab === item.id
+                            ? 'bg-sky-100 text-sky-600 shadow-sm shadow-sky-100'
+                            : 'text-slate-500 hover:bg-white/60 hover:text-slate-700'
                             }`}
                     >
-                        <span className="shrink-0">{item.icon}</span>
-                        <span className="font-medium text-sm">{item.label}</span>
+                        <span className={`shrink-0 transition-transform duration-300 ${activeTab === item.id ? 'scale-110' : 'group-hover:scale-110'}`}>{item.icon}</span>
+                        <span className="font-semibold text-sm">{item.label}</span>
                     </button>
                 ))}
             </nav>
             <div className="p-6">
-                <div className="text-[11px] text-gray-400 font-medium">{t('nav.est')}</div>
+                <div className="text-[11px] text-sky-900/40 font-semibold tracking-wide">{t('nav.est')}</div>
             </div>
         </aside>
     );

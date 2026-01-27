@@ -23,20 +23,24 @@ export default function Header({ title }: HeaderProps) {
     };
 
     return (
-        <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md px-6 py-4 flex justify-between items-center border-b border-gray-100 shadow-sm">
+        <header className="sticky top-0 z-40 bg-white/70 backdrop-blur-xl px-6 py-4 flex justify-between items-center border-b border-slate-200/50">
             <div className="w-10">
                 <button
                     onClick={toggleLanguage}
-                    className="text-xs font-bold text-gray-400 hover:text-gray-900 transition-colors uppercase tracking-tight"
+                    className="text-xs font-bold text-slate-400 hover:text-sky-600 transition-colors uppercase tracking-wider"
+                    style={{ background: 'transparent', padding: 0 }}
                 >
                     {language === 'zh' ? 'EN' : 'ZH'}
                 </button>
             </div>
-            <h1 className="text-base font-semibold text-gray-900 tracking-tight flex-1 text-center">{title}</h1>
+            <h1 className="text-lg font-bold text-slate-800 tracking-tight flex-1 text-center font-outfit">
+                {title}
+            </h1>
             <div className="flex items-center gap-3">
                 <button
                     onClick={handleLogout}
-                    className="text-xs font-medium text-gray-400 hover:text-red-500 px-3 py-1.5 rounded-full transition-all"
+                    className="text-xs font-medium text-slate-400 hover:text-red-500 hover:bg-red-50 px-3 py-1.5 rounded-full transition-all"
+                    style={{ background: 'transparent' }}
                 >
                     {t('header.logout')}
                 </button>

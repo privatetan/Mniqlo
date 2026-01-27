@@ -97,14 +97,14 @@ function HomeContent() {
   };
 
   return (
-    <div className="h-[100dvh] flex bg-gray-50/50 overflow-hidden">
+    <div className="h-[100dvh] flex bg-transparent overflow-hidden">
       {/* Sidebar for Desktop */}
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      <div className="flex-1 flex flex-col min-w-0 bg-white md:m-5 lg:m-6 shadow-xl shadow-gray-200/50 overflow-hidden md:rounded-3xl border border-gray-100">
+      <div className="flex-1 flex flex-col min-w-0 bg-white/80 backdrop-blur-md md:my-4 md:mr-4 shadow-xl shadow-sky-100/50 overflow-hidden md:rounded-[32px] border border-white/50 relative z-10">
         <Header title={getHeaderTitle()} />
 
-        <main className="flex-1 overflow-hidden bg-transparent flex flex-col">
+        <main className="flex-1 overflow-hidden bg-transparent flex flex-col relative">
           <div className={activeTab === 'search' ? 'h-full' : 'hidden'}>
             <SearchPage initialQuery={searchQuery} />
           </div>
@@ -130,7 +130,7 @@ function HomeContent() {
 
 export default function Home() {
   return (
-    <Suspense fallback={<div className="h-screen flex items-center justify-center">Loading...</div>}>
+    <Suspense fallback={<div className="h-screen flex items-center justify-center text-sky-500">Loading...</div>}>
       <HomeContent />
     </Suspense>
   );
