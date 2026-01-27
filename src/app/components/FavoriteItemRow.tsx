@@ -76,31 +76,11 @@ export const FavoriteItemRow = memo(function FavoriteItemRow({ item, stockStatus
 
             {/* Foreground Content */}
             <div
-                className={`flex gap-3 py-3 px-4 bg-white/70 backdrop-blur-sm border border-white/50 rounded-xl shadow-sm relative z-10 transition-transform duration-200 ease-out overflow-visible group ${isSwiped ? '-translate-x-20' : 'translate-x-0'} hover:shadow-md hover:bg-white/90`}
+                className={`flex gap-2 py-2 px-3 bg-white/70 backdrop-blur-sm border border-white/50 rounded-xl shadow-sm relative z-10 transition-transform duration-200 ease-out overflow-visible group ${isSwiped ? '-translate-x-20' : 'translate-x-0'} hover:shadow-md hover:bg-white/90`}
                 onTouchStart={onTouchStart}
                 onTouchMove={onTouchMove}
                 onTouchEnd={onTouchEnd}
             >
-                {/* Image */}
-                <div className="w-16 h-16 shrink-0 bg-gray-100 rounded-lg overflow-hidden border border-gray-100 relative">
-                    {item.mainPic ? (
-                        <img
-                            src={`https://www.uniqlo.cn${item.mainPic}`}
-                            alt={item.name}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                        />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-300">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                                <polyline points="21 15 16 10 5 21"></polyline>
-                            </svg>
-                        </div>
-                    )}
-                </div>
-
                 <div className="flex-1 min-w-0">
                     {hideProductInfo ? (
                         // Single line layout
@@ -144,7 +124,12 @@ export const FavoriteItemRow = memo(function FavoriteItemRow({ item, stockStatus
                                 </button>
 
                                 <button
-                                    onClick={(e) => onRemove(e, item.key)}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (window.confirm(language === 'zh' ? '确定要删除吗？' : 'Are you sure you want to delete?')) {
+                                            onRemove(e, item.key);
+                                        }
+                                    }}
                                     onTouchStart={(e) => e.stopPropagation()}
                                     onTouchEnd={(e) => e.stopPropagation()}
                                     className="text-slate-300 hover:text-red-400 p-1 transition-colors"
@@ -207,7 +192,12 @@ export const FavoriteItemRow = memo(function FavoriteItemRow({ item, stockStatus
                                     </button>
 
                                     <button
-                                        onClick={(e) => onRemove(e, item.key)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (window.confirm(language === 'zh' ? '确定要删除吗？' : 'Are you sure you want to delete?')) {
+                                                onRemove(e, item.key);
+                                            }
+                                        }}
                                         onTouchStart={(e) => e.stopPropagation()}
                                         onTouchEnd={(e) => e.stopPropagation()}
                                         className="text-slate-300 hover:text-red-400 p-1 -mr-2 bg-transparent"
@@ -219,13 +209,13 @@ export const FavoriteItemRow = memo(function FavoriteItemRow({ item, stockStatus
                                     </button>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2 mb-2">
-                                <span className="text-slate-700 text-sm px-2 py-0.5 bg-slate-100 rounded-full font-medium">{item.color}</span>
-                                <span className="text-slate-700 text-sm px-2 py-0.5 bg-slate-100 rounded-full font-medium">{item.size}</span>
+                            <div className="flex items-center gap-1.5 mb-1.5">
+                                <span className="text-slate-700 text-xs px-1.5 py-0.5 bg-slate-100 rounded font-medium">{item.color}</span>
+                                <span className="text-slate-700 text-xs px-1.5 py-0.5 bg-slate-100 rounded font-medium">{item.size}</span>
                             </div>
                             <div className="flex items-baseline justify-between">
-                                <span className="font-bold text-red-500">¥{item.price}</span>
-                                <span className="text-xs text-slate-400">{parseLocalTime(item.timestamp).toLocaleDateString()}</span>
+                                <span className="font-bold text-red-500 text-sm">¥{item.price}</span>
+                                <span className="text-[10px] text-slate-400">{parseLocalTime(item.timestamp).toLocaleDateString()}</span>
                             </div>
                         </>
                     )}

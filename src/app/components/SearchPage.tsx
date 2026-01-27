@@ -425,11 +425,11 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
             <main
                 ref={scrollContainerRef}
                 onScroll={handleScroll}
-                className="px-6 pb-8 pt-32 flex-1 overflow-y-auto scroll-smooth"
+                className="px-4 pb-4 pt-32 flex-1 overflow-y-auto scroll-smooth"
             >
                 {/* Search Results / Loading */}
                 {(loading || results) && (
-                    <section className="mb-10 grid grid-cols-1 xl:grid-cols-2 gap-6">
+                    <section className="mb-8 grid grid-cols-1 xl:grid-cols-2 gap-3">
                         {loading && (
                             <div className="text-center py-24 text-gray-400 italic">
                                 <div className="w-8 h-8 border-2 border-gray-100 border-t-gray-900 rounded-full animate-spin mx-auto mb-4" />
@@ -438,30 +438,30 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
                         )}
 
                         {processedResults.map((product: any, idx) => (
-                            <div key={product.productId || idx} className="card p-6">
+                            <div key={product.productId || idx} className="card p-3">
                                 {product.error ? (
                                     <p className="text-red-500 font-medium tracking-tight">{product.error}</p>
                                 ) : (
                                     <div>
-                                        <div className="flex justify-between items-start border-b border-gray-50 pb-5 mb-6">
+                                        <div className="flex justify-between items-start border-b border-gray-50 pb-3 mb-3">
                                             {/* Product Image */}
                                             {product.mainPic && (
-                                                <div className="mr-4 shrink-0">
+                                                <div className="mr-3 shrink-0">
                                                     <img
                                                         src={`https://www.uniqlo.cn${product.mainPic}`}
                                                         alt={product.productName}
-                                                        className="w-24 h-24 object-cover rounded-lg border border-gray-100"
+                                                        className="w-20 h-20 object-cover rounded-lg border border-gray-100"
                                                     />
                                                 </div>
                                             )}
                                             <div className="flex-1">
-                                                <h3 className="font-bold text-base text-gray-900 tracking-tight mb-1">{product.productName}</h3>
-                                                <div className="flex items-center gap-4">
-                                                    <p className="text-xs text-gray-400 font-medium">ID: {product.productId}</p>
-                                                    <div className="flex items-baseline gap-2">
-                                                        <p className="text-xl font-bold text-red-600">¥{product.minPrice}</p>
+                                                <h3 className="font-bold text-sm text-gray-900 tracking-tight mb-1">{product.productName}</h3>
+                                                <div className="flex items-center gap-3">
+                                                    <p className="text-[10px] text-gray-400 font-medium">ID: {product.productId}</p>
+                                                    <div className="flex items-baseline gap-1.5">
+                                                        <p className="text-base font-bold text-red-600">¥{product.minPrice}</p>
                                                         {product.originPrice > product.minPrice && (
-                                                            <p className="text-[11px] text-gray-400 line-through">¥{product.originPrice}</p>
+                                                            <p className="text-[10px] text-gray-400 line-through">¥{product.originPrice}</p>
                                                         )}
                                                     </div>
                                                 </div>
@@ -485,7 +485,7 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
                                         </div>
 
                                         {/* Group Buttons */}
-                                        <div className="flex flex-wrap gap-2.5 mb-8">
+                                        <div className="flex flex-wrap gap-2 mb-4">
                                             {product.groupedData.map((group: GroupedData) => {
                                                 const isExpanded = expandedState?.pid === product.productId && expandedState?.key === group.key;
                                                 return (
@@ -493,7 +493,7 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
                                                         key={group.key}
                                                         onClick={() => setExpandedState(isExpanded ? null : { pid: product.productId, key: group.key })}
                                                         className={`
-                                                            px-5 py-2.5 rounded-xl border text-sm font-semibold transition-all flex flex-col items-center gap-0.5 min-w-[90px]
+                                                            px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all flex flex-col items-center gap-0.5 min-w-[70px]
                                                             ${isExpanded
                                                                 ? 'border-gray-900 bg-gray-900 text-white shadow-lg shadow-gray-900/10'
                                                                 : 'border-gray-100 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50'
@@ -501,7 +501,7 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
                                                         `}
                                                     >
                                                         <span>{group.key}</span>
-                                                        <span className={`text-[10px] font-medium ${isExpanded ? 'text-gray-400' : 'text-gray-400'}`}>
+                                                        <span className={`text-[9px] font-medium ${isExpanded ? 'text-gray-400' : 'text-gray-400'}`}>
                                                             {t('search.stock')}: {group.totalStock}
                                                         </span>
                                                     </button>
