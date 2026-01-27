@@ -8,6 +8,8 @@ type SidebarProps = {
 import { useState, useEffect } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
 
+import Image from 'next/image';
+
 export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
     const { t } = useLanguage();
     const [isAdmin, setIsAdmin] = useState(false);
@@ -68,7 +70,16 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
 
     return (
         <aside className="hidden md:flex flex-col w-64 bg-transparent h-full shrink-0 z-20">
-            <div className="p-8">
+            <div className="p-8 flex items-center gap-3">
+                <div className="relative w-10 h-10 shrink-0">
+                    <Image
+                        src="/logo.jpg"
+                        alt="Mniqlo"
+                        fill
+                        className="object-contain rounded-full"
+                        priority
+                    />
+                </div>
                 <h2 className="text-2xl font-bold text-sky-900 tracking-tight font-outfit">Mniqlo</h2>
             </div>
             <nav className="flex-1 px-4 space-y-2">

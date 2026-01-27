@@ -60,7 +60,7 @@ function HomeContent() {
   const initialCode = searchParams.get('code');
   const { t } = useLanguage();
 
-  const [activeTab, setActiveTab] = useState<'search' | 'favorites' | 'super-selection' | 'admin'>('search');
+  const [activeTab, setActiveTab] = useState<'search' | 'favorites' | 'super-selection' | 'admin'>('super-selection');
   const [searchQuery, setSearchQuery] = useState<string | null>(null);
   const [isAuthorized, setIsAuthorized] = useState(false);
 

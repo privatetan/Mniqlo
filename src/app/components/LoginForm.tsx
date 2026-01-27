@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useLanguage } from '@/context/LanguageContext';
 
 export default function LoginForm() {
@@ -63,11 +64,22 @@ export default function LoginForm() {
                 </button>
             </div>
 
-            <div className="space-y-2 text-center">
-                <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
-                    {isRegistering ? t('reg.title') : t('login.title')}
-                </h2>
-                <p className="text-sm text-gray-400 font-medium">Mniqlo Inventory Management</p>
+            <div className="space-y-4 text-center flex flex-col items-center">
+                <div className="relative w-20 h-20 mb-2 shadow-lg shadow-sky-100 rounded-full overflow-hidden border-4 border-white">
+                    <Image
+                        src="/logo.jpg"
+                        alt="Mniqlo"
+                        fill
+                        className="object-cover"
+                        priority
+                    />
+                </div>
+                <div>
+                    <h2 className="text-2xl font-bold text-gray-900 tracking-tight font-outfit">
+                        {isRegistering ? t('reg.title') : t('login.title')}
+                    </h2>
+                    <p className="text-sm text-gray-400 font-medium mt-1">Inventory Management</p>
+                </div>
             </div>
 
             {error && (
