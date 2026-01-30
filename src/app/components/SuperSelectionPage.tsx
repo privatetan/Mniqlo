@@ -67,33 +67,56 @@ export default function SuperSelectionPage() {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const ticking = useRef(false);
 
-    const handleScroll = () => {
-        if (!scrollContainerRef.current) return;
+    const handleScroll = useCallback(() => {
+        // Desktop: Scroll container ref
+        if (scrollContainerRef.current && window.innerWidth >= 768) {
+            const scrollTop = scrollContainerRef.current.scrollTop;
 
-        if (!ticking.current) {
-            window.requestAnimationFrame(() => {
-                if (!scrollContainerRef.current) {
+            if (!ticking.current) {
+                window.requestAnimationFrame(() => {
+                    if (scrollTop > lastScrollY.current && scrollTop > 50) {
+                        setShowHeader(false);
+                    } else if (scrollTop < lastScrollY.current) {
+                        setShowHeader(true);
+                    }
+                    lastScrollY.current = scrollTop;
                     ticking.current = false;
-                    return;
-                }
-
-                const currentScrollY = scrollContainerRef.current.scrollTop;
-                // Thresholds
-                const diff = currentScrollY - lastScrollY.current;
-                const minScroll = 50;
-                const threshold = 10;
-
-                if (diff > threshold && currentScrollY > minScroll && showHeader) {
-                    setShowHeader(false);
-                } else if (diff < -threshold && !showHeader) {
-                    setShowHeader(true);
-                }
-                lastScrollY.current = currentScrollY;
-                ticking.current = false;
-            });
-            ticking.current = true;
+                });
+                ticking.current = true;
+            }
         }
-    };
+    }, []);
+
+    // Mobile: Window scroll listener
+    useEffect(() => {
+        const handleWindowScroll = () => {
+            if (window.innerWidth < 768) {
+                const scrollTop = window.scrollY;
+                if (!ticking.current) {
+                    window.requestAnimationFrame(() => {
+                        // Add buffer to prevent jitter at top
+                        if (scrollTop > lastScrollY.current && scrollTop > 50) {
+                            setShowHeader(false);
+                        } else if (scrollTop < lastScrollY.current) {
+                            setShowHeader(true);
+                        }
+
+                        // Always show if at top
+                        if (scrollTop < 10) {
+                            setShowHeader(true);
+                        }
+
+                        lastScrollY.current = scrollTop;
+                        ticking.current = false;
+                    });
+                    ticking.current = true;
+                }
+            }
+        };
+
+        window.addEventListener('scroll', handleWindowScroll);
+        return () => window.removeEventListener('scroll', handleWindowScroll);
+    }, []);
 
     const categories = ['全部', '女装', '男装', '童装', '婴幼儿装'];
 
@@ -310,7 +333,7 @@ export default function SuperSelectionPage() {
             {/* Header: Tabs & Search */}
             {/* Header: Tabs & Search */}
             <div
-                className={`absolute top-0 left-0 right-0 bg-white z-10 transition-transform duration-300 ease-in-out shadow-sm border-b border-gray-100 ${showHeader ? 'translate-y-0' : '-translate-y-full'
+                className={`fixed md:absolute top-0 left-0 right-0 bg-white z-40 transition-transform duration-300 ease-in-out shadow-sm border-b border-gray-100 ${showHeader ? 'translate-y-0' : '-translate-y-full'
                     }`}
             >
                 <div className="px-6 py-4">
@@ -370,7 +393,7 @@ export default function SuperSelectionPage() {
             <div
                 ref={scrollContainerRef}
                 onScroll={handleScroll}
-                className="flex-1 overflow-y-auto px-4 pb-4 pt-44 scroll-smooth"
+                className="flex-1 md:overflow-y-auto overflow-visible px-4 pb-20 pt-44 md:pb-4 scroll-smooth"
             >
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-24 text-gray-400">

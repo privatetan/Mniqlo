@@ -32,32 +32,60 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
     const scrollContainerRef = useRef<HTMLElement>(null);
     const ticking = useRef(false);
 
-    const handleScroll = () => {
-        if (!scrollContainerRef.current) return;
+    const handleScroll = useCallback(() => {
+        // Desktop: Scroll container ref
+        if (scrollContainerRef.current && window.innerWidth >= 768) {
+            const scrollTop = scrollContainerRef.current.scrollTop;
 
-        if (!ticking.current) {
-            window.requestAnimationFrame(() => {
-                if (!scrollContainerRef.current) {
+            if (!ticking.current) {
+                window.requestAnimationFrame(() => {
+                    const diff = scrollTop - lastScrollY.current;
+                    const minScroll = 50;
+                    const threshold = 10;
+
+                    if (diff > threshold && scrollTop > minScroll && showHeader) {
+                        setShowHeader(false);
+                    } else if (diff < -threshold && !showHeader) {
+                        setShowHeader(true);
+                    }
+                    lastScrollY.current = scrollTop;
                     ticking.current = false;
-                    return;
-                }
-
-                const currentScrollY = scrollContainerRef.current.scrollTop;
-                const diff = currentScrollY - lastScrollY.current;
-                const minScroll = 50;
-                const threshold = 10;
-
-                if (diff > threshold && currentScrollY > minScroll && showHeader) {
-                    setShowHeader(false);
-                } else if (diff < -threshold && !showHeader) {
-                    setShowHeader(true);
-                }
-                lastScrollY.current = currentScrollY;
-                ticking.current = false;
-            });
-            ticking.current = true;
+                });
+                ticking.current = true;
+            }
         }
-    };
+    }, [showHeader]);
+
+    // Mobile: Window scroll listener
+    useEffect(() => {
+        const handleWindowScroll = () => {
+            if (window.innerWidth < 768) {
+                const scrollTop = window.scrollY;
+                if (!ticking.current) {
+                    window.requestAnimationFrame(() => {
+                        const diff = scrollTop - lastScrollY.current;
+                        const minScroll = 50;
+                        const threshold = 10;
+
+                        if (diff > threshold && scrollTop > minScroll && showHeader) {
+                            setShowHeader(false);
+                        } else if (diff < -threshold && !showHeader) {
+                            setShowHeader(true);
+                        } else if (scrollTop < 10 && !showHeader) {
+                            setShowHeader(true);
+                        }
+
+                        lastScrollY.current = scrollTop;
+                        ticking.current = false;
+                    });
+                    ticking.current = true;
+                }
+            }
+        };
+
+        window.addEventListener('scroll', handleWindowScroll);
+        return () => window.removeEventListener('scroll', handleWindowScroll);
+    }, [showHeader]);
 
     useEffect(() => {
         if (initialQuery) {
@@ -356,7 +384,7 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
             {/* Header Section */}
             {/* Header Section */}
             <header
-                className={`absolute top-0 left-0 right-0 bg-white z-10 transition-transform duration-300 ease-in-out shadow-sm border-b border-gray-100 ${showHeader ? 'translate-y-0' : '-translate-y-full'
+                className={`fixed md:absolute top-0 left-0 right-0 bg-white z-40 transition-transform duration-300 ease-in-out shadow-sm border-b border-gray-100 ${showHeader ? 'translate-y-0' : '-translate-y-full'
                     }`}
             >
                 <div className="px-6 py-4">
@@ -425,7 +453,7 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
             <main
                 ref={scrollContainerRef}
                 onScroll={handleScroll}
-                className="px-4 pb-4 pt-32 flex-1 overflow-y-auto scroll-smooth"
+                className="px-4 pb-24 md:pb-4 pt-32 flex-1 md:overflow-y-auto overflow-visible scroll-smooth"
             >
                 {/* Search Results / Loading */}
                 {(loading || results) && (

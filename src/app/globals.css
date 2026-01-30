@@ -36,11 +36,7 @@
     --hover-shadow: 0 10px 25px -5px rgba(14, 165, 233, 0.15), 0 8px 10px -6px rgba(14, 165, 233, 0.1);
 }
 
-html,
-body,
-#root {
-    height: 100%;
-}
+
 
 body {
     margin: 0;
@@ -50,7 +46,7 @@ body {
         radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.10) 0px, transparent 50%),
         radial-gradient(at 100% 0%, rgba(45, 212, 191, 0.10) 0px, transparent 50%);
     color: var(--text-main);
-    overscroll-behavior-y: none;
+    /* overscroll-behavior-y: none; Removed to allow native bounce/refresh if needed and toolbar hiding */
     -webkit-font-smoothing: antialiased;
 }
 

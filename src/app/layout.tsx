@@ -27,7 +27,7 @@ import { LanguageProvider } from '@/context/LanguageContext'
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="overflow-x-hidden">
+      <body>
         <LanguageProvider>
           <main>
             {children}

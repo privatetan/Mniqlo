@@ -186,7 +186,7 @@ export default function FavoritePage() {
     }, [favorites]);
 
     return (
-        <div className="flex flex-col bg-sky-50/20 overflow-hidden max-h-full">
+        <div className="flex flex-col bg-sky-50/20 md:overflow-hidden md:max-h-full min-h-full">
             <div className="bg-white/80 backdrop-blur-sm flex items-center justify-between px-6 py-4 border-b border-slate-100 shadow-sm relative z-10">
                 <div className="flex items-center gap-2">
                     <span className="text-xs text-slate-500 font-medium font-outfit">
@@ -228,7 +228,7 @@ export default function FavoritePage() {
                     <p className="text-sm font-medium tracking-tight text-slate-400">{t('fav.empty')}</p>
                 </div>
             ) : (
-                <div className="p-4 grid grid-cols-1 xl:grid-cols-2 gap-3 flex-1 overflow-y-auto scroll-smooth custom-scrollbar">
+                <div className="p-4 pb-24 md:pb-4 grid grid-cols-1 xl:grid-cols-2 gap-3 flex-1 md:overflow-y-auto overflow-visible scroll-smooth custom-scrollbar">
                     {uniqueProductIds.map((pid: string) => {
                         const groupItems = groupedFavorites[pid];
                         if (!groupItems || groupItems.length === 0) return null;

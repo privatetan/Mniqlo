@@ -97,14 +97,14 @@ function HomeContent() {
   };
 
   return (
-    <div className="h-[100dvh] flex bg-transparent overflow-hidden">
+    <div className="min-h-screen flex bg-transparent md:h-[100dvh] md:overflow-hidden">
       {/* Sidebar for Desktop */}
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      <div className="flex-1 flex flex-col min-w-0 bg-white/80 backdrop-blur-md md:my-4 md:mr-4 shadow-xl shadow-sky-100/50 overflow-hidden md:rounded-[32px] border border-white/50 relative z-10">
+      <div className="flex-1 flex flex-col min-w-0 bg-white/80 backdrop-blur-md md:my-4 md:mr-4 shadow-xl shadow-sky-100/50 md:overflow-hidden md:rounded-[32px] border border-white/50 relative z-10">
         <Header title={getHeaderTitle()} />
 
-        <main className="flex-1 overflow-hidden bg-transparent flex flex-col relative">
+        <main className="flex-1 bg-transparent flex flex-col relative md:overflow-hidden">
           <div className={activeTab === 'search' ? 'h-full' : 'hidden'}>
             <SearchPage initialQuery={searchQuery} />
           </div>
@@ -119,10 +119,11 @@ function HomeContent() {
           </div>
         </main>
 
-        {/* Bottom Nav for Mobile */}
-        <div className="md:hidden">
-          <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
-        </div>
+      </div>
+
+      {/* Bottom Nav for Mobile */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-t border-gray-100 pb-safe">
+        <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
       </div>
     </div>
   );
