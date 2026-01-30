@@ -32,6 +32,9 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
     const scrollContainerRef = useRef<HTMLElement>(null);
     const ticking = useRef(false);
 
+    // Check if we have results to determine if hiding is allowed
+    const canHideHeader = results && results.length > 0 && !results[0].error;
+
     const handleScroll = useCallback(() => {
         // Desktop: Scroll container ref
         if (scrollContainerRef.current && window.innerWidth >= 768) {
@@ -43,9 +46,13 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
                     const minScroll = 50;
                     const threshold = 10;
 
-                    if (diff > threshold && scrollTop > minScroll && showHeader) {
+                    // Only allow hiding if we have results
+                    if (canHideHeader && diff > threshold && scrollTop > minScroll && showHeader) {
                         setShowHeader(false);
                     } else if (diff < -threshold && !showHeader) {
+                        setShowHeader(true);
+                    } else if (!canHideHeader && !showHeader) {
+                        // Force show if we shouldn't execute hiding
                         setShowHeader(true);
                     }
                     lastScrollY.current = scrollTop;
@@ -54,7 +61,7 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
                 ticking.current = true;
             }
         }
-    }, [showHeader]);
+    }, [showHeader, canHideHeader]);
 
     // Mobile: Window scroll listener
     useEffect(() => {
@@ -67,11 +74,13 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
                         const minScroll = 50;
                         const threshold = 10;
 
-                        if (diff > threshold && scrollTop > minScroll && showHeader) {
+                        if (canHideHeader && diff > threshold && scrollTop > minScroll && showHeader) {
                             setShowHeader(false);
                         } else if (diff < -threshold && !showHeader) {
                             setShowHeader(true);
                         } else if (scrollTop < 10 && !showHeader) {
+                            setShowHeader(true);
+                        } else if (!canHideHeader && !showHeader) {
                             setShowHeader(true);
                         }
 
@@ -85,7 +94,7 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
 
         window.addEventListener('scroll', handleWindowScroll);
         return () => window.removeEventListener('scroll', handleWindowScroll);
-    }, [showHeader]);
+    }, [showHeader, canHideHeader]);
 
     useEffect(() => {
         if (initialQuery) {
@@ -384,7 +393,7 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
             {/* Header Section */}
             {/* Header Section */}
             <header
-                className={`fixed md:absolute top-0 left-0 right-0 bg-white z-40 transition-transform duration-300 ease-in-out shadow-sm border-b border-gray-100 ${showHeader ? 'translate-y-0' : '-translate-y-full'
+                className={`fixed md:absolute top-[60px] md:top-0 left-0 right-0 bg-white z-30 md:z-40 transition-transform duration-300 ease-in-out shadow-sm border-b border-gray-100 ${showHeader ? 'translate-y-0' : '-translate-y-[200%]'
                     }`}
             >
                 <div className="px-6 py-4">

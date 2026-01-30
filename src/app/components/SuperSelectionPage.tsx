@@ -333,7 +333,7 @@ export default function SuperSelectionPage() {
             {/* Header: Tabs & Search */}
             {/* Header: Tabs & Search */}
             <div
-                className={`fixed md:absolute top-0 left-0 right-0 bg-white z-40 transition-transform duration-300 ease-in-out shadow-sm border-b border-gray-100 ${showHeader ? 'translate-y-0' : '-translate-y-full'
+                className={`fixed md:absolute top-[60px] md:top-0 left-0 right-0 bg-white z-30 md:z-40 transition-transform duration-300 ease-in-out shadow-sm border-b border-gray-100 ${showHeader ? 'translate-y-0' : '-translate-y-[200%] md:-translate-y-full'
                     }`}
             >
                 <div className="px-6 py-4">
