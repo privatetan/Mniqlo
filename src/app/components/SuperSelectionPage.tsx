@@ -456,7 +456,7 @@ export default function SuperSelectionPage() {
                                                             <div className="flex items-center gap-1 mt-0.5">
                                                                 <div className="text-[10px] text-gray-400 line-through">¥{product.originPrice}</div>
                                                                 <div className="text-[10px] text-red-500 font-semibold">
-                                                                    {t('sel.off', { n: ((1 - product.minPrice / product.originPrice) * 10).toFixed(1) })}
+                                                                    {t('sel.off', { n: ((product.minPrice / product.originPrice) * 10).toFixed(1) })}
                                                                 </div>
                                                             </div>
                                                         )}

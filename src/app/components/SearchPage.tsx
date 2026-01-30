@@ -498,7 +498,12 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
                                                     <div className="flex items-baseline gap-1.5">
                                                         <p className="text-base font-bold text-red-600">¥{product.minPrice}</p>
                                                         {product.originPrice > product.minPrice && (
-                                                            <p className="text-[10px] text-gray-400 line-through">¥{product.originPrice}</p>
+                                                            <>
+                                                                <p className="text-[10px] text-gray-400 line-through">¥{product.originPrice}</p>
+                                                                <p className="text-[10px] text-red-500 font-semibold">
+                                                                    {t('sel.off', { n: ((product.minPrice / product.originPrice) * 10).toFixed(1) })}
+                                                                </p>
+                                                            </>
                                                         )}
                                                     </div>
                                                 </div>
