@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useLanguage } from '@/context/LanguageContext';
+import { saveSession } from '@/lib/session';
 
 export default function LoginForm() {
     const router = useRouter();
@@ -31,7 +32,7 @@ export default function LoginForm() {
             const data = await res.json();
 
             if (data.success) {
-                localStorage.setItem('user', JSON.stringify(data.user));
+                saveSession(data.user);
                 router.push('/');
             } else {
                 setError(data.message || (isRegistering ? t('reg.err_msg') : t('login.err_msg')));
@@ -44,7 +45,7 @@ export default function LoginForm() {
     };
 
     const handleGuestLogin = () => {
-        localStorage.setItem('user', JSON.stringify({ username: 'guest', id: -1 }));
+        saveSession({ username: 'guest', id: -1 });
         router.push('/');
     };
 

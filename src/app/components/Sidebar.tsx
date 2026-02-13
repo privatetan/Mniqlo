@@ -7,7 +7,7 @@ type SidebarProps = {
 
 import { useState, useEffect } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
-
+import { getUserString } from '@/lib/session';
 import Image from 'next/image';
 
 export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
@@ -15,7 +15,7 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
     const [isAdmin, setIsAdmin] = useState(false);
 
     useEffect(() => {
-        const userStr = localStorage.getItem('user');
+        const userStr = getUserString();
         if (userStr) {
             const user = JSON.parse(userStr);
             setIsAdmin(user.role === 'ADMIN');

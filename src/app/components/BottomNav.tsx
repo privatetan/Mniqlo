@@ -7,13 +7,14 @@ type BottomNavProps = {
 
 import { useState, useEffect } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
+import { getUserString } from '@/lib/session';
 
 export default function BottomNav({ activeTab, setActiveTab }: BottomNavProps) {
     const { t } = useLanguage();
     const [isAdmin, setIsAdmin] = useState(false);
 
     useEffect(() => {
-        const userStr = localStorage.getItem('user');
+        const userStr = getUserString();
         if (userStr) {
             const user = JSON.parse(userStr);
             setIsAdmin(user.role === 'ADMIN');

@@ -6,6 +6,7 @@ import Header from './components/Header';
 import BottomNav from './components/BottomNav';
 import Sidebar from './components/Sidebar';
 import { useLanguage } from '@/context/LanguageContext';
+import { isAuthenticated } from '@/lib/session';
 
 // Dynamic imports for better performance
 const SearchPage = dynamic(() => import('./components/SearchPage'), {
@@ -65,8 +66,7 @@ function HomeContent() {
   const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
-    const user = localStorage.getItem('user');
-    if (!user) {
+    if (!isAuthenticated()) {
       router.push('/login');
     } else {
       setIsAuthorized(true);
