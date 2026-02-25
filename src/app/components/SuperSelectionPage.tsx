@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
 import { CrawledItem, FavoriteItem } from '@/types';
 import { parseLocalTime } from '@/lib/date-utils';
+import { getUser } from '@/lib/session';
 
 type GroupedProduct = {
     code: string;
@@ -137,9 +138,8 @@ export default function SuperSelectionPage() {
     }, []);
 
     const fetchFavorites = useCallback(async () => {
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
-            const user = JSON.parse(userStr);
+        const user = getUser();
+        if (user) {
             if (user.id === -1) return;
             try {
                 const res = await fetch(`/api/favorites?userId=${user.id}`);
@@ -174,12 +174,11 @@ export default function SuperSelectionPage() {
     }, [activeGender, fetchItems, fetchFavorites]);
 
     const toggleFavorite = useCallback(async (item: CrawledItem, overrideStyle?: string, overrideSize?: string) => {
-        const userStr = localStorage.getItem('user');
-        if (!userStr) {
+        const user = getUser();
+        if (!user) {
             alert(language === 'zh' ? '请先登录' : 'Please login first');
             return;
         }
-        const user = JSON.parse(userStr);
         if (user.id === -1) return;
 
         const style = overrideStyle || item.color;

@@ -4,6 +4,7 @@ import { FavoriteItem } from '@/types';
 import { parseLocalTime } from '@/lib/date-utils';
 import { MonitorSchedulerModal } from './MonitorSchedulerModal';
 import { useLanguage } from '@/context/LanguageContext';
+import { getUser } from '@/lib/session';
 
 interface FavoriteItemRowProps {
     item: FavoriteItem;
@@ -106,8 +107,8 @@ export const FavoriteItemRow = memo(function FavoriteItemRow({ item, stockStatus
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        const userStr = localStorage.getItem('user');
-                                        if (userStr && JSON.parse(userStr).id === -1) {
+                                        const user = getUser();
+                                        if (user && user.id === -1) {
                                             alert(language === 'zh' ? '请登录以使用监控功能' : 'Sign in to use the Monitor feature');
                                             return;
                                         }
@@ -115,12 +116,14 @@ export const FavoriteItemRow = memo(function FavoriteItemRow({ item, stockStatus
                                     }}
                                     onTouchStart={(e) => e.stopPropagation()}
                                     onTouchEnd={(e) => e.stopPropagation()}
-                                    className="p-1.5 rounded-lg bg-sky-50 text-sky-400 hover:text-sky-600 hover:bg-sky-100 transition-all"
+                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-sky-50 text-sky-500 hover:text-sky-700 hover:bg-sky-100 transition-all"
                                     title={t('fav.monitor')}
+                                    aria-label={t('fav.monitor')}
                                 >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
+                                    <span className="text-[11px] font-semibold">{t('fav.monitor')}</span>
                                 </button>
 
                                 <button
@@ -174,8 +177,8 @@ export const FavoriteItemRow = memo(function FavoriteItemRow({ item, stockStatus
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            const userStr = localStorage.getItem('user');
-                                            if (userStr && JSON.parse(userStr).id === -1) {
+                                            const user = getUser();
+                                            if (user && user.id === -1) {
                                                 alert(language === 'zh' ? '游客无法使用监控功能，请注册登录' : 'Guests cannot use monitors, please sign in');
                                                 return;
                                             }
@@ -185,6 +188,7 @@ export const FavoriteItemRow = memo(function FavoriteItemRow({ item, stockStatus
                                         onTouchEnd={(e) => e.stopPropagation()}
                                         className="p-1.5 rounded-lg bg-sky-50/50 hover:bg-sky-100 shadow-sm transition-all hover:scale-110"
                                         title={t('fav.monitor')}
+                                        aria-label={t('fav.monitor')}
                                     >
                                         <svg className="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />

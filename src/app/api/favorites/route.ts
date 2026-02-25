@@ -2,19 +2,36 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { formatToLocalTime } from '@/lib/date-utils';
 
+function parseUserId(value: string | null) {
+    if (!value) return null;
+    const parsed = Number.parseInt(value, 10);
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+function parseRecordId(value: string | null) {
+    if (!value) return null;
+    const parsed = Number.parseInt(value, 10);
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+function parsePrice(value: unknown) {
+    const parsed = Number.parseFloat(String(value ?? ''));
+    return Number.isFinite(parsed) ? parsed : null;
+}
+
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId');
+    const userId = parseUserId(searchParams.get('userId'));
 
     if (!userId) {
-        return NextResponse.json({ success: false, message: 'User ID required' }, { status: 400 });
+        return NextResponse.json({ success: false, message: 'Valid user ID required' }, { status: 400 });
     }
 
     try {
         const { data: favorites, error } = await supabase
             .from('favorites')
             .select('*')
-            .eq('user_id', parseInt(userId, 10))
+            .eq('user_id', userId)
             .order('id', { ascending: false });
 
         if (error) throw error;
@@ -32,7 +49,9 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { userId, productId, code, name, price, style, size } = body;
+        const { productId, code, name, price, style, size } = body;
+        const userId = parseUserId(String(body.userId ?? ''));
+        const parsedPrice = parsePrice(price);
 
         if (!userId || !productId) {
             return NextResponse.json({ success: false, message: 'Missing required fields' }, { status: 400 });
@@ -42,11 +61,11 @@ export async function POST(req: Request) {
             .from('favorites')
             .insert([
                 {
-                    user_id: parseInt(userId, 10),
+                    user_id: userId,
                     product_id: productId,
                     code: code || productId,
                     name,
-                    price: parseFloat(price),
+                    price: parsedPrice,
                     color: style || '',
                     size: size || '',
                     timestamp: formatToLocalTime(),
@@ -67,8 +86,8 @@ export async function POST(req: Request) {
 
 export async function DELETE(req: Request) {
     const { searchParams } = new URL(req.url);
-    const id = searchParams.get('id');
-    const userId = searchParams.get('userId');
+    const id = parseRecordId(searchParams.get('id'));
+    const userId = parseUserId(searchParams.get('userId'));
     const productId = searchParams.get('productId');
     const style = searchParams.get('style');
     const size = searchParams.get('size');
@@ -78,7 +97,7 @@ export async function DELETE(req: Request) {
             const { error, count } = await supabase
                 .from('favorites')
                 .delete({ count: 'exact' })
-                .eq('id', parseInt(id, 10));
+                .eq('id', id);
 
             if (error) throw error;
             return NextResponse.json({ success: true, count });
@@ -96,7 +115,7 @@ export async function DELETE(req: Request) {
         const { error, count } = await supabase
             .from('favorites')
             .delete({ count: 'exact' })
-            .eq('user_id', parseInt(userId, 10))
+            .eq('user_id', userId)
             .eq('product_id', productId)
             .eq('color', style ?? '')
             .eq('size', size ?? '');

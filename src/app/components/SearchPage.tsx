@@ -5,6 +5,7 @@ import { useLanguage } from '@/context/LanguageContext';
 
 import { FavoriteItem, StockItem } from '@/types';
 import { parseLocalTime } from '@/lib/date-utils';
+import { getUser } from '@/lib/session';
 
 type GroupedData = {
     key: string;
@@ -105,10 +106,8 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
 
     useEffect(() => {
         const fetchFavorites = async () => {
-            const userStr = localStorage.getItem('user');
-            if (userStr) {
-                const user = JSON.parse(userStr);
-
+            const user = getUser();
+            if (user) {
                 if (user.id === -1) {
                     const savedFavs = localStorage.getItem('favorites');
                     if (savedFavs) {
@@ -158,10 +157,9 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
     }, []);
 
     const fetchHistory = useCallback(async () => {
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
+        const user = getUser();
+        if (user) {
             try {
-                const user = JSON.parse(userStr);
                 if (user.id !== -1) {
                     const res = await fetch(`/api/search/history?userId=${user.id}`);
                     const data = await res.json();
@@ -196,12 +194,11 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
 
         const isFav = favorites.some(f => f.productId === product.productId && f.color === style && f.size === size);
 
-        const userStr = localStorage.getItem('user');
-        if (!userStr) {
+        const user = getUser();
+        if (!user) {
             alert(language === 'zh' ? '请登录以使用收藏功能' : 'Please login to use favorites');
             return;
         }
-        const user = JSON.parse(userStr);
 
         if (user.id === -1) {
             let newFavs;
@@ -298,10 +295,9 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
         if (overrideQuery) setQuery(overrideQuery);
         updateHistory(searchText);
 
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
+        const user = getUser();
+        if (user) {
             try {
-                const user = JSON.parse(userStr);
                 if (user.id !== -1) {
                     fetch('/api/search/history', {
                         method: 'POST',

@@ -15,6 +15,30 @@ export interface SessionData {
 // Session duration: 7 days (in milliseconds)
 const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000;
 
+type StoredSessionLike = Partial<SessionData> & {
+    id?: unknown;
+    username?: unknown;
+    role?: unknown;
+    user?: {
+        id?: unknown;
+        username?: unknown;
+        role?: unknown;
+    };
+};
+
+function normalizeUser(input: unknown): SessionData['user'] | null {
+    if (!input || typeof input !== 'object') return null;
+    const raw = input as { id?: unknown; username?: unknown; role?: unknown };
+    const id = Number(raw.id);
+    if (!Number.isInteger(id)) return null;
+
+    const username = typeof raw.username === 'string' ? raw.username.trim() : '';
+    if (!username) return null;
+
+    const role = typeof raw.role === 'string' ? raw.role : undefined;
+    return { id, username, role };
+}
+
 /**
  * Save user session to localStorage with expiration
  */
@@ -23,7 +47,13 @@ export function saveSession(user: { id: number; username: string; role?: string 
         user,
         expiresAt: Date.now() + SESSION_DURATION,
     };
-    localStorage.setItem('user', JSON.stringify(sessionData));
+    // Keep root fields for legacy readers that still access JSON.parse(...).id.
+    localStorage.setItem('user', JSON.stringify({
+        ...sessionData,
+        id: user.id,
+        username: user.username,
+        role: user.role
+    }));
 }
 
 /**
@@ -34,22 +64,40 @@ export function getSession(): SessionData | null {
         const stored = localStorage.getItem('user');
         if (!stored) return null;
 
-        const sessionData = JSON.parse(stored) as SessionData;
+        const parsed = JSON.parse(stored) as StoredSessionLike;
 
-        // Check if session has expiresAt field (backward compatibility)
-        if (!sessionData.expiresAt) {
-            // Old session format without expiration - treat as expired
+        const nestedUser = normalizeUser(parsed.user);
+        const rootUser = normalizeUser(parsed);
+        const user = nestedUser || rootUser;
+        if (!user) {
             clearSession();
             return null;
+        }
+
+        const expiresAt = Number(parsed.expiresAt);
+
+        // If expiresAt is missing/invalid, migrate legacy format to a fresh session.
+        if (!Number.isFinite(expiresAt) || expiresAt <= 0) {
+            const migrated: SessionData = {
+                user,
+                expiresAt: Date.now() + SESSION_DURATION,
+            };
+            localStorage.setItem('user', JSON.stringify({
+                ...migrated,
+                id: user.id,
+                username: user.username,
+                role: user.role
+            }));
+            return migrated;
         }
 
         // Check if session is expired
-        if (Date.now() > sessionData.expiresAt) {
+        if (Date.now() > expiresAt) {
             clearSession();
             return null;
         }
 
-        return sessionData;
+        return { user, expiresAt };
     } catch (error) {
         console.error('Error reading session:', error);
         clearSession();
@@ -100,4 +148,3 @@ export function getUserString(): string | null {
     if (!session) return null;
     return JSON.stringify(session.user);
 }
-

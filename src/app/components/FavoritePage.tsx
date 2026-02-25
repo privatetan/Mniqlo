@@ -6,6 +6,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { FavoriteItemRow } from './FavoriteItemRow';
 import { FavoriteItem } from '@/types';
 import { parseLocalTime } from '@/lib/date-utils';
+import { getUser } from '@/lib/session';
 
 export default function FavoritePage() {
     const router = useRouter();
@@ -17,9 +18,8 @@ export default function FavoritePage() {
     const { t } = useLanguage();
 
     const fetchFavorites = useCallback(async () => {
-        const userStr = localStorage.getItem('user');
-        if (!userStr) return;
-        const user = JSON.parse(userStr);
+        const user = getUser();
+        if (!user) return;
 
         if (user.id === -1) {
             const savedFavs = localStorage.getItem('favorites');
@@ -141,10 +141,8 @@ export default function FavoritePage() {
         if (!itemToRemove) return;
 
         try {
-            const userStr = localStorage.getItem('user');
-            if (userStr) {
-                const user = JSON.parse(userStr);
-
+            const user = getUser();
+            if (user) {
                 if (user.id === -1) {
                     const newFavs = favorites.filter(f => f.key !== key);
                     setFavorites(newFavs);
