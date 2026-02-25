@@ -61,6 +61,14 @@ export default function SuperSelectionPage() {
     const [expandedState, setExpandedState] = useState<{ code: string; key: string } | null>(null);
     const [sortBy, setSortBy] = useState<'default' | 'price-asc' | 'price-desc' | 'discount'>('default');
     const { t, language } = useLanguage();
+    const searchKeywords = useMemo(
+        () => searchQuery
+            .toLowerCase()
+            .trim()
+            .split(/[\s\u3000]+/)
+            .filter(Boolean),
+        [searchQuery]
+    );
 
     // Scroll handling for header visibility
     const [showHeader, setShowHeader] = useState(true);
@@ -219,11 +227,22 @@ export default function SuperSelectionPage() {
         if (activeGender !== '全部') {
             filtered = filtered.filter(item => item.gender === activeGender);
         }
-        if (searchQuery) {
-            filtered = filtered.filter(item =>
-                item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                item.code.includes(searchQuery)
-            );
+        if (searchKeywords.length > 0) {
+            filtered = filtered.filter(item => {
+                const searchableText = [
+                    item.name,
+                    item.code,
+                    item.color,
+                    item.size,
+                    item.product_id,
+                    item.gender
+                ]
+                    .filter(Boolean)
+                    .join(' ')
+                    .toLowerCase();
+
+                return searchKeywords.every(keyword => searchableText.includes(keyword));
+            });
         }
 
         const groups = new Map<string, GroupedProduct>();
@@ -306,7 +325,7 @@ export default function SuperSelectionPage() {
         });
 
         return productsWithGrouping;
-    }, [items, activeGender, searchQuery, viewMode]);
+    }, [items, activeGender, searchKeywords, viewMode]);
 
     // Apply sorting
     const sortedProducts = useMemo(() => {
