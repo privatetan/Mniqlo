@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
+export const dynamic = 'force-dynamic';
+
 const PAGE_SIZE = 1000;
 
 export async function GET(req: Request) {
@@ -40,7 +42,7 @@ export async function GET(req: Request) {
         }
 
         // Debug: Log unique genders found in the database (useful for fixing mapping issues)
-        if (allItems.length > 0) {
+        if (process.env.NODE_ENV !== 'production' && allItems.length > 0) {
             const uniqueGenders = Array.from(new Set(allItems.map(item => item.gender)));
             console.log('[SuperSelection API] Unique genders in DB:', uniqueGenders, 'total:', allItems.length);
         }
