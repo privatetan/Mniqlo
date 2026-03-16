@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { intervalToCron, getCronDescription } from '@/lib/cron-utils';
+import { intervalToCron, getCronDescription, getIntervalCronSupportError, cronToIntervalMinutes } from '@/lib/cron-utils';
 import { getUser } from '@/lib/session';
 
 interface User {
@@ -92,6 +92,13 @@ const getFeatureCrawlEndpoint = (feature: CatalogFeature, gender: string) => fea
 const getFeaturePushSettingsEndpoint = (feature: CatalogFeature, userId: number) => feature === 'super'
     ? `/api/admin/users/${userId}/push-settings`
     : `/api/admin/users/${userId}/limited-time-push-settings`;
+const parseScheduleInterval = (value: string): number | null => {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+
+    const parsed = Number(trimmed);
+    return Number.isInteger(parsed) ? parsed : null;
+};
 
 export default function AdminUsers() {
     const [users, setUsers] = useState<User[]>([]);
@@ -130,7 +137,7 @@ export default function AdminUsers() {
     const [limitedTimeCrawlerSchedules, setLimitedTimeCrawlerSchedules] = useState<Record<string, any>>({});
     const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
     const [selectedScheduleGender, setSelectedScheduleGender] = useState<string | null>(null);
-    const [scheduleForm, setScheduleForm] = useState({ is_enabled: false, interval_minutes: 60 });
+    const [scheduleForm, setScheduleForm] = useState({ is_enabled: false, interval_minutes: '60' });
     const [savingSchedule, setSavingSchedule] = useState(false);
     const [scheduleFeature, setScheduleFeature] = useState<CatalogFeature>('super');
 
@@ -347,16 +354,28 @@ export default function AdminUsers() {
         if (currentSchedule) {
             setScheduleForm({
                 is_enabled: currentSchedule.is_enabled,
-                interval_minutes: currentSchedule.interval_minutes || 60
+                interval_minutes: String(currentSchedule.interval_minutes || cronToIntervalMinutes(currentSchedule.cron_expression || '') || 60)
             });
         } else {
-            setScheduleForm({ is_enabled: false, interval_minutes: 60 });
+            setScheduleForm({ is_enabled: false, interval_minutes: '60' });
         }
         setScheduleModalOpen(true);
     };
 
     const handleSaveSchedule = async () => {
         if (!selectedScheduleGender) return;
+        const parsedIntervalMinutes = parseScheduleInterval(scheduleForm.interval_minutes);
+
+        if (parsedIntervalMinutes === null || parsedIntervalMinutes < 1) {
+            alert('请输入大于 0 的整数分钟数');
+            return;
+        }
+
+        const intervalError = getIntervalCronSupportError(parsedIntervalMinutes);
+        if (intervalError) {
+            alert(intervalError);
+            return;
+        }
 
         try {
             setSavingSchedule(true);
@@ -365,7 +384,8 @@ export default function AdminUsers() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     gender: selectedScheduleGender,
-                    ...scheduleForm
+                    is_enabled: scheduleForm.is_enabled,
+                    interval_minutes: parsedIntervalMinutes
                 })
             });
             const data = await response.json();
@@ -442,6 +462,14 @@ export default function AdminUsers() {
         user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (user.wxUserId && user.wxUserId.toLowerCase().includes(searchQuery.toLowerCase()))
     );
+
+    const scheduleIntervalMinutes = parseScheduleInterval(scheduleForm.interval_minutes);
+    const scheduleIntervalError = scheduleIntervalMinutes === null
+        ? null
+        : getIntervalCronSupportError(scheduleIntervalMinutes);
+    const scheduleCronPreview = scheduleIntervalMinutes !== null && !scheduleIntervalError
+        ? intervalToCron(scheduleIntervalMinutes)
+        : null;
 
     const totalUsers = users.length;
     const totalFavorites = users.reduce((acc, user) => acc + user._count.favorites, 0);
@@ -1235,21 +1263,27 @@ export default function AdminUsers() {
                                         <input
                                             type="number"
                                             value={scheduleForm.interval_minutes}
-                                            onChange={(e) => setScheduleForm({ ...scheduleForm, interval_minutes: parseInt(e.target.value) || 60 })}
+                                            onChange={(e) => setScheduleForm({ ...scheduleForm, interval_minutes: e.target.value })}
                                             className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-bold text-gray-900"
                                             min="1"
                                             disabled={!scheduleForm.is_enabled}
                                         />
                                         <span className="text-sm text-gray-500 font-medium">分钟</span>
                                     </div>
-                                    <p className="text-xs text-gray-400 mt-2">建议设置为 15、30、60 或 120 分钟</p>
+                                    <p className="text-xs text-gray-400 mt-2">建议设置为 5、10、15、20、30、60、120、180、240、720 或 1440 分钟</p>
 
                                     {/* Cron Expression Display */}
-                                    {scheduleForm.is_enabled && scheduleForm.interval_minutes > 0 && (
+                                    {scheduleForm.is_enabled && scheduleCronPreview && (
                                         <div className="mt-3 p-3 bg-blue-50 border border-blue-100 rounded-xl">
                                             <p className="text-xs font-bold text-blue-600 mb-1">Cron 表达式</p>
-                                            <p className="text-xs font-mono text-blue-800 mb-2">{intervalToCron(scheduleForm.interval_minutes)}</p>
-                                            <p className="text-xs text-blue-600">{getCronDescription(intervalToCron(scheduleForm.interval_minutes))}</p>
+                                            <p className="text-xs font-mono text-blue-800 mb-2">{scheduleCronPreview}</p>
+                                            <p className="text-xs text-blue-600">{getCronDescription(scheduleCronPreview)}</p>
+                                        </div>
+                                    )}
+                                    {scheduleForm.is_enabled && scheduleIntervalMinutes !== null && scheduleIntervalError && (
+                                        <div className="mt-3 p-3 bg-amber-50 border border-amber-100 rounded-xl">
+                                            <p className="text-xs font-bold text-amber-700 mb-1">当前分钟数无法准确转换为单条 Cron</p>
+                                            <p className="text-xs text-amber-600">{scheduleIntervalError}</p>
                                         </div>
                                     )}
                                 </div>
@@ -1282,7 +1316,7 @@ export default function AdminUsers() {
                                 </button>
                                 <button
                                     onClick={handleSaveSchedule}
-                                    disabled={savingSchedule}
+                                    disabled={savingSchedule || !scheduleForm.interval_minutes.trim() || Boolean(scheduleIntervalError)}
                                     className="flex-1 py-3 bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-blue-200"
                                 >
                                     {savingSchedule ? '保存中...' : '保存设置'}

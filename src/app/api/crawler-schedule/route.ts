@@ -40,6 +40,7 @@ export async function POST(request: Request) {
     try {
         const body = await request.json();
         const { gender, is_enabled, interval_minutes } = body;
+        const parsedIntervalMinutes = Number(interval_minutes);
 
         if (!gender) {
             return NextResponse.json({
@@ -48,17 +49,21 @@ export async function POST(request: Request) {
             }, { status: 400 });
         }
 
-        if (interval_minutes && interval_minutes < 1) {
+        if (!Number.isInteger(parsedIntervalMinutes) || parsedIntervalMinutes < 1) {
             return NextResponse.json({
                 success: false,
                 error: 'Interval must be at least 1 minute'
             }, { status: 400 });
         }
 
-        // Convert interval_minutes to cron expression
-        let cron_expression = '0 * * * *'; // Default: every hour
-        if (interval_minutes) {
-            cron_expression = intervalToCron(interval_minutes);
+        let cron_expression: string;
+        try {
+            cron_expression = intervalToCron(parsedIntervalMinutes);
+        } catch (error: any) {
+            return NextResponse.json({
+                success: false,
+                error: error.message || 'Invalid interval'
+            }, { status: 400 });
         }
 
         const updatePayload = {

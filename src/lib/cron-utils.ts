@@ -23,40 +23,59 @@ const CronParser = cronParser.default || cronParser.CronExpressionParser;
  * intervalToCron(60)  // Returns: '0 * * * *'   (every hour at minute 0)
  * intervalToCron(120) // Returns: '0 * /2 * * *' (every 2 hours)
  */
-export function intervalToCron(minutes: number): string {
-    if (minutes <= 0) {
-        throw new Error('Interval must be greater than 0');
+export function getIntervalCronSupportError(minutes: number): string | null {
+    if (!Number.isInteger(minutes) || minutes <= 0) {
+        return '间隔必须是大于 0 的整数分钟';
     }
 
-    // For intervals that divide evenly into 60 minutes
-    if (minutes < 60 && 60 % minutes === 0) {
+    if (minutes === 1) {
+        return null;
+    }
+
+    if (minutes < 60) {
+        return 60 % minutes === 0
+            ? null
+            : '当前仅支持可整除 60 的分钟数，例如 5、10、15、20、30';
+    }
+
+    if (minutes < 1440) {
+        return minutes % 60 === 0 && 24 % (minutes / 60) === 0
+            ? null
+            : '当前仅支持整小时的倍数，例如 60、120、180、240、360、720';
+    }
+
+    return minutes % 1440 === 0
+        ? null
+        : '当前仅支持整天的倍数，例如 1440、2880、4320';
+}
+
+export function intervalToCron(minutes: number): string {
+    const validationError = getIntervalCronSupportError(minutes);
+    if (validationError) {
+        throw new Error(validationError);
+    }
+
+    if (minutes === 1) {
+        return '* * * * *';
+    }
+
+    if (minutes < 60) {
         return `*/${minutes} * * * *`;
     }
 
-    // For hourly intervals
     if (minutes === 60) {
         return '0 * * * *';
     }
 
-    // For multi-hour intervals
-    if (minutes % 60 === 0) {
-        const hours = minutes / 60;
-        if (hours < 24 && 24 % hours === 0) {
-            return `0 */${hours} * * *`;
-        }
+    if (minutes < 1440) {
+        return `0 */${minutes / 60} * * *`;
     }
 
-    // For daily intervals
-    if (minutes >= 1440) {
-        const days = Math.floor(minutes / 1440);
-        return `0 0 */${days} * *`;
+    if (minutes === 1440) {
+        return '0 0 * * *';
     }
 
-    // Default: use the closest standard interval
-    if (minutes < 30) return '*/15 * * * *';
-    if (minutes < 60) return '*/30 * * * *';
-    if (minutes < 120) return '0 * * * *';
-    return '0 */2 * * *';
+    return `0 0 */${minutes / 1440} * *`;
 }
 
 /**
@@ -131,6 +150,39 @@ export function getCronDescription(expression: string): string {
     } catch (e) {
         return '无效的 Cron 表达式';
     }
+}
+
+export function cronToIntervalMinutes(expression: string): number | null {
+    const parts = expression.trim().split(/\s+/);
+    if (parts.length !== 5) {
+        return null;
+    }
+
+    const [minute, hour, dayOfMonth, month, dayOfWeek] = parts;
+    if (month !== '*' || dayOfWeek !== '*') {
+        return null;
+    }
+
+    if (expression === '* * * * *') return 1;
+    if (expression === '0 * * * *') return 60;
+    if (expression === '0 0 * * *') return 1440;
+
+    if (minute.startsWith('*/') && hour === '*' && dayOfMonth === '*') {
+        const parsed = Number(minute.slice(2));
+        return Number.isInteger(parsed) ? parsed : null;
+    }
+
+    if (minute === '0' && hour.startsWith('*/') && dayOfMonth === '*') {
+        const parsed = Number(hour.slice(2));
+        return Number.isInteger(parsed) ? parsed * 60 : null;
+    }
+
+    if (minute === '0' && hour === '0' && dayOfMonth.startsWith('*/')) {
+        const parsed = Number(dayOfMonth.slice(2));
+        return Number.isInteger(parsed) ? parsed * 1440 : null;
+    }
+
+    return null;
 }
 
 /**
