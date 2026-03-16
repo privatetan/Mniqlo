@@ -237,6 +237,86 @@ COMMENT ON COLUMN super_push_subscriptions.frequency IS '推送频率限制 (暂
 COMMENT ON COLUMN super_push_subscriptions.genders IS '订阅的品类数组';
 COMMENT ON COLUMN super_push_subscriptions.updated_at IS '配置更新时间';
 
+-- 3.2 Limited Time Push Subscriptions
+-- Stores user subscriptions for limited time notifications
+CREATE TABLE IF NOT EXISTS limited_time_push_subscriptions (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL,            -- Associated user ID
+    is_enabled BOOLEAN DEFAULT FALSE,   -- Whether notifications are enabled
+    channel TEXT DEFAULT 'WECHAT',      -- Notification channel (default: WeChat)
+    frequency INTEGER DEFAULT 60,       -- Notification frequency (minutes)
+    genders TEXT[] DEFAULT '{}',        -- Subscribed genders (['女装', '中性/男女同款'], etc.)
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+COMMENT ON TABLE limited_time_push_subscriptions IS '限时特优推送配置表：用户的限时特优推送偏好';
+COMMENT ON COLUMN limited_time_push_subscriptions.id IS '主键ID';
+COMMENT ON COLUMN limited_time_push_subscriptions.user_id IS '关联用户ID';
+COMMENT ON COLUMN limited_time_push_subscriptions.is_enabled IS '全局推送开关';
+COMMENT ON COLUMN limited_time_push_subscriptions.channel IS '推送渠道 (默认 WECHAT)';
+COMMENT ON COLUMN limited_time_push_subscriptions.frequency IS '推送频率限制 (暂未深度使用)';
+COMMENT ON COLUMN limited_time_push_subscriptions.genders IS '订阅的品类数组';
+COMMENT ON COLUMN limited_time_push_subscriptions.updated_at IS '配置更新时间';
+
+-- 3.3 Limited Time Products
+-- Stores crawled limited time offer data from Uniqlo
+CREATE TABLE IF NOT EXISTS limited_time_products (
+    id BIGSERIAL PRIMARY KEY,
+    product_id TEXT NOT NULL,
+    code TEXT NOT NULL,
+    name TEXT NOT NULL,
+    color TEXT,
+    size TEXT,
+    price DOUBLE PRECISION,
+    min_price DOUBLE PRECISION,
+    origin_price DOUBLE PRECISION,
+    stock INTEGER DEFAULT 0,
+    stock_status TEXT DEFAULT 'new',
+    gender TEXT,
+    sku_id TEXT,
+    main_pic TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+COMMENT ON TABLE limited_time_products IS '爬虫数据表：存储从优衣库抓取的限时特优商品';
+COMMENT ON COLUMN limited_time_products.id IS '主键ID';
+COMMENT ON COLUMN limited_time_products.product_id IS '商品完整ID (如 u0000000066997)';
+COMMENT ON COLUMN limited_time_products.code IS '6位款号 (用于聚合)';
+COMMENT ON COLUMN limited_time_products.name IS '商品名称';
+COMMENT ON COLUMN limited_time_products.color IS '颜色/花色';
+COMMENT ON COLUMN limited_time_products.size IS '尺码';
+COMMENT ON COLUMN limited_time_products.price IS '当前折后价格';
+COMMENT ON COLUMN limited_time_products.min_price IS '活动价格';
+COMMENT ON COLUMN limited_time_products.origin_price IS '商品原价';
+COMMENT ON COLUMN limited_time_products.stock IS '库存数量 (粗略值)';
+COMMENT ON COLUMN limited_time_products.stock_status IS '库存状态 (''new'': 本次爬取新增, ''old'': 存量数据)';
+COMMENT ON COLUMN limited_time_products.gender IS '所属分类 (女装/男装/中性/男女同款/童装/婴幼儿装)';
+COMMENT ON COLUMN limited_time_products.sku_id IS 'SKU唯一标识符';
+COMMENT ON COLUMN limited_time_products.created_at IS '数据抓取时间';
+
+-- 3.4 Limited Time Crawler Schedules
+-- Stores scheduled crawler configurations for each limited time category
+CREATE TABLE IF NOT EXISTS limited_time_crawler_schedules (
+    id SERIAL PRIMARY KEY,
+    gender VARCHAR(50) NOT NULL,
+    is_enabled BOOLEAN DEFAULT true,
+    interval_minutes INTEGER DEFAULT 60,
+    cron_expression TEXT NOT NULL DEFAULT '0 * * * *',
+    last_run_time TIMESTAMP,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+COMMENT ON TABLE limited_time_crawler_schedules IS '限时特优调度表：配置各品类的自动抓取任务';
+COMMENT ON COLUMN limited_time_crawler_schedules.id IS '主键ID';
+COMMENT ON COLUMN limited_time_crawler_schedules.gender IS '品类名称 (唯一索引)';
+COMMENT ON COLUMN limited_time_crawler_schedules.is_enabled IS '是否启用自动抓取';
+COMMENT ON COLUMN limited_time_crawler_schedules.interval_minutes IS '抓取间隔 (分钟)';
+COMMENT ON COLUMN limited_time_crawler_schedules.cron_expression IS 'Cron 表达式';
+COMMENT ON COLUMN limited_time_crawler_schedules.last_run_time IS '上次成功执行时间';
+COMMENT ON COLUMN limited_time_crawler_schedules.created_at IS '配置创建时间';
+COMMENT ON COLUMN limited_time_crawler_schedules.updated_at IS '配置更新时间';
+
 -- ============================================================================
 -- SECTION 4: INDEXES
 -- ============================================================================
@@ -254,6 +334,18 @@ CREATE INDEX IF NOT EXISTS idx_crawler_schedules_enabled ON crawler_schedules(is
 
 -- 4.3 Super Push Subscriptions Indexes
 CREATE INDEX IF NOT EXISTS idx_super_push_subscriptions_user_id ON super_push_subscriptions(user_id);
+CREATE INDEX IF NOT EXISTS idx_limited_time_push_subscriptions_user_id ON limited_time_push_subscriptions(user_id);
+
+-- 4.4 Limited Time Products Indexes
+CREATE INDEX IF NOT EXISTS idx_limited_time_products_product_id ON limited_time_products(product_id);
+CREATE INDEX IF NOT EXISTS idx_limited_time_products_code ON limited_time_products(code);
+CREATE INDEX IF NOT EXISTS idx_limited_time_products_gender ON limited_time_products(gender);
+CREATE INDEX IF NOT EXISTS idx_limited_time_products_stock ON limited_time_products(stock);
+CREATE INDEX IF NOT EXISTS idx_limited_time_products_composite ON limited_time_products(code, size, color);
+
+-- 4.5 Limited Time Crawler Schedules Indexes
+CREATE UNIQUE INDEX IF NOT EXISTS idx_limited_time_crawler_schedules_gender ON limited_time_crawler_schedules(gender);
+CREATE INDEX IF NOT EXISTS idx_limited_time_crawler_schedules_enabled ON limited_time_crawler_schedules(is_enabled) WHERE is_enabled = true;
 
 -- ============================================================================
 -- SECTION 5: INITIAL DATA
@@ -268,6 +360,16 @@ VALUES
     ('男装', false, '0 * * * *'),
     ('童装', false, '0 * * * *'),
     ('婴幼儿装', false, '0 * * * *')
+ON CONFLICT (gender) DO NOTHING;
+
+-- 5.2 Insert Default Limited Time Crawler Schedules
+INSERT INTO limited_time_crawler_schedules (gender, is_enabled, interval_minutes, cron_expression)
+VALUES
+    ('女装', false, 60, '0 * * * *'),
+    ('男装', false, 60, '0 * * * *'),
+    ('中性/男女同款', false, 60, '0 * * * *'),
+    ('童装', false, 60, '0 * * * *'),
+    ('婴幼儿装', false, 60, '0 * * * *')
 ON CONFLICT (gender) DO NOTHING;
 
 -- ============================================================================

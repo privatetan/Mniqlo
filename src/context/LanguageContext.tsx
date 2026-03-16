@@ -14,6 +14,7 @@ interface Translations {
 export const translations: Translations = {
     // Sidebar
     'nav.selection': { zh: '超值精选', en: 'Super Selection' },
+    'nav.limited_time': { zh: '限时特优', en: 'Limited Time' },
     'nav.search': { zh: '商品搜索', en: 'Search' },
     'nav.favorites': { zh: '我的收藏', en: 'Favorites' },
     'nav.est': { zh: '始于 2026', en: 'Est. 2026' },
@@ -24,6 +25,7 @@ export const translations: Translations = {
     'header.search_title': { zh: '库存搜索', en: 'Search Inventory' },
     'header.gallery_title': { zh: '私人收藏', en: 'Private Collection' },
     'header.selection_title': { zh: '精选商品', en: 'Featured Selection' },
+    'header.limited_time_title': { zh: '限时特优', en: 'Limited Time Offer' },
 
     // Search Page
     'search.placeholder': { zh: '请输入6位商品编号...', en: 'Enter 6-digit product code...' },
@@ -53,6 +55,13 @@ export const translations: Translations = {
     'sel.none': { zh: '未找到匹配项', en: 'No items found' },
     'sel.new': { zh: '新品', en: 'NEW' },
     'sel.off': { zh: '{n} 折', en: '{n} OFF' },
+
+    // Limited Time Page
+    'lim.search_placeholder': { zh: '搜索限时特优代码或名称...', en: 'Search limited-time offers...' },
+    'lim.loading': { zh: '正在加载限时特优...', en: 'Loading limited-time offers...' },
+    'lim.none': { zh: '未找到限时特优商品', en: 'No limited-time items found' },
+    'lim.found': { zh: '找到 {n} 个限时商品', en: '{n} limited-time items found' },
+    'lim.flash': { zh: '限时', en: 'FLASH' },
 
     // Login Form
     'login.title': { zh: '欢迎使用 Mniqlo', en: 'Welcome to Mniqlo' },

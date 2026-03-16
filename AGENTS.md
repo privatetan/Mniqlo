@@ -12,6 +12,9 @@ Source lives in `src/` and follows the Next.js App Router. Pages, layouts, and A
 ## Coding Style & Naming Conventions
 Use TypeScript/React with 2-space indentation and single quotes, matching existing files in `src/app`. Components use `PascalCase` filenames and exports (`src/app/components/Header.tsx`). Hooks use the `useX` prefix and live in `src/hooks` (`useScheduledTask.ts`). Utilities in `src/lib` are lowercase or kebab-case (`cron-utils.ts`). Route segments under `src/app` use lowercase directories (e.g., `src/app/admin/users`).
 
+## Code Quality Expectations
+Assume every change will be reviewed for maintainability, boundary conditions, and regression risk before it can go live. Implement with the professionalism of a senior architect: favor clear and durable designs, handle edge cases explicitly, and avoid changes that introduce hidden coupling or fragile behavior.
+
 ## Testing Guidelines
 No test runner is configured in `package.json`, and no tests are present. If you add tests, use `.test.ts`/`.test.tsx` naming and place them alongside the module or under `src/__tests__`, then add the corresponding test script to `package.json`.
 

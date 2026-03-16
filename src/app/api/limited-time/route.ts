@@ -1,0 +1,51 @@
+import { NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabase';
+
+export const dynamic = 'force-dynamic';
+
+const PAGE_SIZE = 1000;
+
+export async function GET(req: Request) {
+    try {
+        const { searchParams } = new URL(req.url);
+        const gender = searchParams.get('gender');
+        const code = searchParams.get('code');
+        const allItems: any[] = [];
+        let from = 0;
+
+        while (true) {
+            let query = supabase
+                .from('limited_time_products')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .range(from, from + PAGE_SIZE - 1);
+
+            if (gender && gender !== '全部' && gender !== 'null') {
+                query = query.eq('gender', gender);
+            }
+
+            if (code) {
+                query = query.ilike('code', `%${code}%`);
+            }
+
+            const { data, error } = await query;
+            if (error) {
+                throw error;
+            }
+
+            const pageItems = data || [];
+            allItems.push(...pageItems);
+
+            if (pageItems.length < PAGE_SIZE) {
+                break;
+            }
+
+            from += PAGE_SIZE;
+        }
+
+        return NextResponse.json({ success: true, items: allItems });
+    } catch (error) {
+        console.error('Limited time fetch error:', error);
+        return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
+    }
+}

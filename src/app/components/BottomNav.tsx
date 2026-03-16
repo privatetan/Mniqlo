@@ -1,8 +1,8 @@
 'use client';
 
 type BottomNavProps = {
-    activeTab: 'search' | 'favorites' | 'super-selection' | 'admin';
-    setActiveTab: (tab: 'search' | 'favorites' | 'super-selection' | 'admin') => void;
+    activeTab: 'search' | 'favorites' | 'super-selection' | 'limited-time' | 'admin';
+    setActiveTab: (tab: 'search' | 'favorites' | 'super-selection' | 'limited-time' | 'admin') => void;
 };
 
 import { useState, useEffect } from 'react';
@@ -34,6 +34,20 @@ export default function BottomNav({ activeTab, setActiveTab }: BottomNavProps) {
                         </svg>
                     </div>
                     <span className={`text-[10px] font-semibold tracking-wide transition-opacity ${activeTab === 'super-selection' ? 'opacity-100' : 'opacity-70'}`}>{t('nav.selection')}</span>
+                </button>
+                <button
+                    onClick={() => setActiveTab('limited-time')}
+                    className={`flex flex-col items-center gap-1.5 w-full bg-transparent group transition-all duration-300 ${activeTab === 'limited-time' ? 'text-orange-500' : 'text-slate-400'}`}
+                >
+                    <div className={`transition-transform duration-300 ${activeTab === 'limited-time' ? 'scale-110 -translate-y-1' : 'group-hover:scale-105'}`}>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={activeTab === 'limited-time' ? '2.5' : '2'} strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="9" />
+                            <path d="M12 7v5l3 2" />
+                            <path d="M8 2 6 5" />
+                            <path d="M16 2 18 5" />
+                        </svg>
+                    </div>
+                    <span className={`text-[10px] font-semibold tracking-wide transition-opacity ${activeTab === 'limited-time' ? 'opacity-100' : 'opacity-70'}`}>{t('nav.limited_time')}</span>
                 </button>
                 <button
                     onClick={() => setActiveTab('search')}

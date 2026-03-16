@@ -1,8 +1,8 @@
 'use client';
 
 type SidebarProps = {
-    activeTab: 'search' | 'favorites' | 'super-selection' | 'admin';
-    setActiveTab: (tab: 'search' | 'favorites' | 'super-selection' | 'admin') => void;
+    activeTab: 'search' | 'favorites' | 'super-selection' | 'limited-time' | 'admin';
+    setActiveTab: (tab: 'search' | 'favorites' | 'super-selection' | 'limited-time' | 'admin') => void;
 };
 
 import { useState, useEffect } from 'react';
@@ -29,6 +29,18 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
             icon: (
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                </svg>
+            )
+        },
+        {
+            id: 'limited-time',
+            label: t('nav.limited_time'),
+            icon: (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 7v5l3 2" />
+                    <path d="M8 2 6 5" />
+                    <path d="M16 2 18 5" />
                 </svg>
             )
         },

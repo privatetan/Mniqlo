@@ -51,6 +51,48 @@ interface PushSettings {
     genders: string[];
 }
 
+type CatalogFeature = 'super' | 'limited-time';
+
+type CrawlSummary = {
+    totalFound: number;
+    newCount: number;
+    soldOutCount: number;
+    gender: string;
+    feature: CatalogFeature;
+    featureLabel: string;
+};
+
+type CrawlLoadingState = {
+    feature: CatalogFeature;
+    gender: string;
+} | null;
+
+const SUPER_CATEGORIES = [
+    { name: '女装', color: 'bg-rose-50 text-rose-600 hover:bg-rose-100 border-rose-100' },
+    { name: '男装', color: 'bg-blue-50 text-blue-600 hover:bg-blue-100 border-blue-100' },
+    { name: '童装', color: 'bg-amber-50 text-amber-600 hover:bg-amber-100 border-amber-100' },
+    { name: '婴幼儿装', color: 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border-emerald-100' }
+];
+
+const LIMITED_TIME_CATEGORIES = [
+    { name: '女装', color: 'bg-rose-50 text-rose-600 hover:bg-rose-100 border-rose-100' },
+    { name: '男装', color: 'bg-blue-50 text-blue-600 hover:bg-blue-100 border-blue-100' },
+    { name: '中性/男女同款', color: 'bg-violet-50 text-violet-600 hover:bg-violet-100 border-violet-100' },
+    { name: '童装', color: 'bg-amber-50 text-amber-600 hover:bg-amber-100 border-amber-100' },
+    { name: '婴幼儿装', color: 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border-emerald-100' }
+];
+
+const getFeatureLabel = (feature: CatalogFeature) => feature === 'super' ? '超值精选' : '限时特优';
+const getFeatureAccent = (feature: CatalogFeature) => feature === 'super' ? '#0b5fff' : '#f97316';
+const getFeatureCategories = (feature: CatalogFeature) => feature === 'super' ? SUPER_CATEGORIES : LIMITED_TIME_CATEGORIES;
+const getFeatureScheduleEndpoint = (feature: CatalogFeature) => feature === 'super' ? '/api/crawler-schedule' : '/api/limited-time/crawler-schedule';
+const getFeatureCrawlEndpoint = (feature: CatalogFeature, gender: string) => feature === 'super'
+    ? `/api/crawl?gender=${encodeURIComponent(gender)}`
+    : `/api/limited-time/crawl?gender=${encodeURIComponent(gender)}`;
+const getFeaturePushSettingsEndpoint = (feature: CatalogFeature, userId: number) => feature === 'super'
+    ? `/api/admin/users/${userId}/push-settings`
+    : `/api/admin/users/${userId}/limited-time-push-settings`;
+
 export default function AdminUsers() {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
@@ -59,13 +101,13 @@ export default function AdminUsers() {
     const [editingUserId, setEditingUserId] = useState<number | null>(null);
     const [editForm, setEditForm] = useState<{ wxUserId: string; notifyFrequency: string }>({ wxUserId: '', notifyFrequency: '' });
     const [savingUserId, setSavingUserId] = useState<number | null>(null);
-    const [crawlLoading, setCrawlLoading] = useState<string | null>(null);
+    const [crawlLoading, setCrawlLoading] = useState<CrawlLoadingState>(null);
 
     // Crawl result modal states
     const [newItems, setNewItems] = useState<CrawledItem[]>([]);
     const [soldOutItems, setSoldOutItems] = useState<CrawledItem[]>([]);
     const [isNewItemsModalOpen, setIsNewItemsModalOpen] = useState(false);
-    const [crawlSummary, setCrawlSummary] = useState<{ totalFound: number; newCount: number; soldOutCount: number; gender: string } | null>(null);
+    const [crawlSummary, setCrawlSummary] = useState<CrawlSummary | null>(null);
     const [activeResultTab, setActiveResultTab] = useState<'new' | 'soldout'>('new');
 
     // Task modal states
@@ -81,13 +123,16 @@ export default function AdminUsers() {
     const [selectedPushSettings, setSelectedPushSettings] = useState<PushSettings | null>(null);
     const [savingPushSettings, setSavingPushSettings] = useState(false);
     const [loadingPushSettings, setLoadingPushSettings] = useState(false);
+    const [pushSettingsFeature, setPushSettingsFeature] = useState<CatalogFeature>('super');
 
     // Crawler Schedule states
     const [crawlerSchedules, setCrawlerSchedules] = useState<Record<string, any>>({});
+    const [limitedTimeCrawlerSchedules, setLimitedTimeCrawlerSchedules] = useState<Record<string, any>>({});
     const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
     const [selectedScheduleGender, setSelectedScheduleGender] = useState<string | null>(null);
     const [scheduleForm, setScheduleForm] = useState({ is_enabled: false, interval_minutes: 60 });
     const [savingSchedule, setSavingSchedule] = useState(false);
+    const [scheduleFeature, setScheduleFeature] = useState<CatalogFeature>('super');
 
     useEffect(() => {
         const user = getUser();
@@ -101,6 +146,7 @@ export default function AdminUsers() {
 
         fetchUsers(user.username);
         fetchCrawlerSchedules();
+        fetchLimitedTimeCrawlerSchedules();
     }, []);
 
     const fetchUsers = async (username?: string) => {
@@ -197,18 +243,19 @@ export default function AdminUsers() {
         }
     };
 
-    const fetchPushSettings = async (user: User) => {
+    const fetchPushSettings = async (feature: CatalogFeature, user: User) => {
         try {
             setSelectedUser(user);
             setLoadingPushSettings(true);
             setIsPushSettingsModalOpen(true);
+            setPushSettingsFeature(feature);
 
             const currentUser = getUser()?.username;
             if (!currentUser) {
                 alert('未授权');
                 return;
             }
-            const response = await fetch(`/api/admin/users/${user.id}/push-settings`, {
+            const response = await fetch(getFeaturePushSettingsEndpoint(feature, user.id), {
                 headers: {
                     'X-Admin-User': currentUser
                 }
@@ -237,7 +284,7 @@ export default function AdminUsers() {
                 alert('未授权');
                 return;
             }
-            const response = await fetch(`/api/admin/users/${selectedUser.id}/push-settings`, {
+            const response = await fetch(getFeaturePushSettingsEndpoint(pushSettingsFeature, selectedUser.id), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -262,7 +309,7 @@ export default function AdminUsers() {
 
     const fetchCrawlerSchedules = async () => {
         try {
-            const response = await fetch('/api/crawler-schedule');
+            const response = await fetch(getFeatureScheduleEndpoint('super'));
             const data = await response.json();
             if (data.success) {
                 const scheduleMap = data.schedules.reduce((acc: Record<string, any>, s: any) => {
@@ -276,13 +323,31 @@ export default function AdminUsers() {
         }
     };
 
-    const openScheduleModal = (gender: string) => {
+    const fetchLimitedTimeCrawlerSchedules = async () => {
+        try {
+            const response = await fetch(getFeatureScheduleEndpoint('limited-time'));
+            const data = await response.json();
+            if (data.success) {
+                const scheduleMap = data.schedules.reduce((acc: Record<string, any>, s: any) => {
+                    acc[s.gender] = s;
+                    return acc;
+                }, {});
+                setLimitedTimeCrawlerSchedules(scheduleMap);
+            }
+        } catch (err) {
+            console.error('Failed to fetch limited-time crawler schedules:', err);
+        }
+    };
+
+    const openScheduleModal = (feature: CatalogFeature, gender: string) => {
+        setScheduleFeature(feature);
         setSelectedScheduleGender(gender);
-        const currentSchedule = crawlerSchedules[gender];
+        const scheduleMap = feature === 'super' ? crawlerSchedules : limitedTimeCrawlerSchedules;
+        const currentSchedule = scheduleMap[gender];
         if (currentSchedule) {
             setScheduleForm({
                 is_enabled: currentSchedule.is_enabled,
-                interval_minutes: currentSchedule.interval_minutes
+                interval_minutes: currentSchedule.interval_minutes || 60
             });
         } else {
             setScheduleForm({ is_enabled: false, interval_minutes: 60 });
@@ -295,7 +360,7 @@ export default function AdminUsers() {
 
         try {
             setSavingSchedule(true);
-            const response = await fetch('/api/crawler-schedule', {
+            const response = await fetch(getFeatureScheduleEndpoint(scheduleFeature), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -306,7 +371,11 @@ export default function AdminUsers() {
             const data = await response.json();
             if (data.success) {
                 setScheduleModalOpen(false);
-                await fetchCrawlerSchedules();
+                if (scheduleFeature === 'super') {
+                    await fetchCrawlerSchedules();
+                } else {
+                    await fetchLimitedTimeCrawlerSchedules();
+                }
                 alert(data.message || '定时任务设置已保存');
             } else {
                 alert(data.error || '保存失败');
@@ -319,15 +388,16 @@ export default function AdminUsers() {
         }
     };
 
-    const handleSyncCrawl = async (gender: string) => {
+    const handleSyncCrawl = async (feature: CatalogFeature, gender: string) => {
         if (crawlLoading) return;
 
-        const confirmResult = confirm(`确定开始同步【${gender}】的数据吗？将对数据库进行去重校验，这可能需要几十秒时间。`);
+        const featureLabel = getFeatureLabel(feature);
+        const confirmResult = confirm(`确定开始同步【${featureLabel} / ${gender}】的数据吗？将对数据库进行去重校验，这可能需要几十秒时间。`);
         if (!confirmResult) return;
 
         try {
-            setCrawlLoading(gender);
-            const response = await fetch(`/api/crawl?gender=${encodeURIComponent(gender)}`, {
+            setCrawlLoading({ feature, gender });
+            const response = await fetch(getFeatureCrawlEndpoint(feature, gender), {
                 method: 'POST'
             });
             const data = await response.json();
@@ -339,8 +409,14 @@ export default function AdminUsers() {
                     totalFound: data.totalFound,
                     newCount: data.newCount,
                     soldOutCount: data.soldOutCount,
-                    gender: gender
+                    gender,
+                    feature,
+                    featureLabel
                 });
+
+                if (feature === 'limited-time') {
+                    window.dispatchEvent(new Event('limited-time-updated'));
+                }
 
                 // Reset tab to 'new' if there are new items, otherwise 'soldout'
                 setActiveResultTab(data.newCount > 0 ? 'new' : 'soldout');
@@ -349,7 +425,7 @@ export default function AdminUsers() {
                     setIsNewItemsModalOpen(true);
                     setExpandedSyncCode(null);
                 } else {
-                    alert(`同步完成！共发现 ${data.totalFound} 条数据，数据库中已存在，没有发现任何库存变动。`);
+                    alert(`同步完成！【${featureLabel} / ${gender}】共发现 ${data.totalFound} 条数据，数据库中已存在，没有发现任何库存变动。`);
                 }
             } else {
                 alert(`同步失败: ${data.error || '未知错误'}`);
@@ -395,72 +471,94 @@ export default function AdminUsers() {
                     )}
 
                     {/* Data Sync Section */}
-                    <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-[#0b5fff]/5 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-700"></div>
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                        {(['super', 'limited-time'] as CatalogFeature[]).map((feature) => {
+                            const isSuper = feature === 'super';
+                            const scheduleMap = isSuper ? crawlerSchedules : limitedTimeCrawlerSchedules;
+                            const accentColor = isSuper ? '#0b5fff' : '#f97316';
+                            const sectionBg = isSuper ? 'bg-[#0b5fff]/5' : 'bg-orange-500/5';
+                            const iconBg = isSuper ? 'bg-blue-50 text-[#0b5fff]' : 'bg-orange-50 text-orange-500';
+                            const featureLabel = getFeatureLabel(feature);
+                            const featureDescription = isSuper
+                                ? '实时抓取优衣库最新库存数据'
+                                : '抓取限时特优活动商品并拆分独立分类';
 
-                        <div className="flex items-center gap-3 mb-5">
-                            <div className="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center text-[#0b5fff]">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" /><path d="M16 16h5v5" /></svg>
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-black text-gray-900 leading-none">超值精选</h3>
-                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">实时抓取优衣库最新库存数据</p>
-                            </div>
-                        </div>
+                            return (
+                                <div key={feature} className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 relative overflow-hidden group">
+                                    <div className={`absolute top-0 right-0 w-32 h-32 ${sectionBg} rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-700`}></div>
 
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            {[
-                                { name: '女装', color: 'bg-rose-50 text-rose-600 hover:bg-rose-100 border-rose-100' },
-                                { name: '男装', color: 'bg-blue-50 text-blue-600 hover:bg-blue-100 border-blue-100' },
-                                { name: '童装', color: 'bg-amber-50 text-amber-600 hover:bg-amber-100 border-amber-100' },
-                                { name: '婴幼儿装', color: 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border-emerald-100' }
-                            ].map((cat) => {
-                                const schedule = crawlerSchedules[cat.name];
-                                return (
-                                    <div key={cat.name} className="relative">
-                                        <button
-                                            onClick={() => handleSyncCrawl(cat.name)}
-                                            disabled={crawlLoading !== null}
-                                            className={`w-full flex flex-col items-center justify-center p-4 rounded-2xl border transition-all active:scale-95 ${cat.color} ${crawlLoading === cat.name ? 'ring-2 ring-offset-2 ring-gray-200 opacity-80' : ''} ${crawlLoading && crawlLoading !== cat.name ? 'opacity-40 grayscale pointer-events-none' : ''}`}
-                                        >
-                                            {crawlLoading === cat.name ? (
-                                                <div className="animate-spin rounded-full h-5 w-5 border-2 border-current border-t-transparent mb-1"></div>
+                                    <div className="flex items-center gap-3 mb-5">
+                                        <div className={`w-10 h-10 rounded-2xl ${iconBg} flex items-center justify-center`}>
+                                            {isSuper ? (
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" /><path d="M16 16h5v5" /></svg>
                                             ) : (
-                                                <span className="text-xl mb-1">📦</span>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /><path d="M8 2 6 5" /><path d="M16 2 18 5" /></svg>
                                             )}
-                                            <span className="text-xs font-black tracking-tight">{crawlLoading === cat.name ? '正在同步...' : cat.name}</span>
-                                        </button>
-
-                                        {/* Schedule Settings Button */}
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                openScheduleModal(cat.name);
-                                            }}
-                                            className="absolute top-2 right-2 p-1.5 rounded-lg bg-white/90 hover:bg-white shadow-sm transition-all hover:scale-110"
-                                            title="定时任务设置"
-                                        >
-                                            {schedule?.is_enabled ? (
-                                                <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
-                                            ) : (
-                                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
-                                            )}
-                                        </button>
-
-                                        {/* Last Run Time */}
-                                        {schedule?.last_run_time && (
-                                            <div className="text-[9px] text-gray-400 mt-1.5 text-center font-mono">
-                                                {new Date(schedule.last_run_time).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                                            </div>
-                                        )}
+                                        </div>
+                                        <div>
+                                            <h3 className="text-lg font-black text-gray-900 leading-none">{featureLabel}</h3>
+                                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">{featureDescription}</p>
+                                        </div>
                                     </div>
-                                );
-                            })}
-                        </div>
+
+                                    <div className={`grid gap-3 ${isSuper ? 'grid-cols-2 md:grid-cols-4' : 'grid-cols-2 md:grid-cols-3 xl:grid-cols-5'}`}>
+                                        {getFeatureCategories(feature).map((cat) => {
+                                            const schedule = scheduleMap[cat.name];
+                                            const isLoadingThisCategory = crawlLoading?.feature === feature && crawlLoading?.gender === cat.name;
+                                            const isOtherLoading = crawlLoading !== null && !isLoadingThisCategory;
+
+                                            return (
+                                                <div key={cat.name} className="relative">
+                                                    <button
+                                                        onClick={() => handleSyncCrawl(feature, cat.name)}
+                                                        disabled={crawlLoading !== null}
+                                                        className={`w-full flex flex-col items-center justify-center p-4 rounded-2xl border transition-all active:scale-95 ${cat.color} ${isLoadingThisCategory ? 'ring-2 ring-offset-2 ring-gray-200 opacity-80' : ''} ${isOtherLoading ? 'opacity-40 grayscale pointer-events-none' : ''}`}
+                                                    >
+                                                        {isLoadingThisCategory ? (
+                                                            <div className="animate-spin rounded-full h-5 w-5 border-2 border-current border-t-transparent mb-1"></div>
+                                                        ) : (
+                                                            <span className="text-xl mb-1">{isSuper ? '📦' : '⏰'}</span>
+                                                        )}
+                                                        <span className="text-xs font-black tracking-tight text-center leading-tight">{isLoadingThisCategory ? '正在同步...' : cat.name}</span>
+                                                    </button>
+
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            openScheduleModal(feature, cat.name);
+                                                        }}
+                                                        className="absolute top-2 right-2 p-1.5 rounded-lg bg-white/90 hover:bg-white shadow-sm transition-all hover:scale-110"
+                                                        title="定时任务设置"
+                                                    >
+                                                        {schedule?.is_enabled ? (
+                                                            <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                            </svg>
+                                                        ) : (
+                                                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                            </svg>
+                                                        )}
+                                                    </button>
+
+                                                    {schedule?.last_run_time && (
+                                                        <div className="text-[9px] text-gray-400 mt-1.5 text-center font-mono">
+                                                            {new Date(schedule.last_run_time).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+
+                                    <div className="mt-4 pt-4 border-t border-gray-50">
+                                        <span className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: accentColor }}>
+                                            {isSuper ? 'Featured Sync Engine' : 'Limited Time Sync Engine'}
+                                        </span>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
 
                     {/* Controls */}
@@ -542,11 +640,18 @@ export default function AdminUsers() {
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <button
-                                                        onClick={() => fetchPushSettings(user)}
+                                                        onClick={() => fetchPushSettings('super', user)}
                                                         className="text-gray-400 hover:text-emerald-500 transition-colors p-1"
-                                                        title="推送设置"
+                                                        title="超值精选推送设置"
                                                     >
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => fetchPushSettings('limited-time', user)}
+                                                        className="text-gray-400 hover:text-orange-500 transition-colors p-1"
+                                                        title="限时特优推送设置"
+                                                    >
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /><path d="M8 2 6 5" /><path d="M16 2 18 5" /></svg>
                                                     </button>
                                                     {editingUserId === user.id ? (
                                                         <div className="flex gap-1.5">
@@ -772,12 +877,17 @@ export default function AdminUsers() {
                             <div className="p-8 pb-6 border-b border-gray-100 flex justify-between items-start bg-gradient-to-br from-white to-[#0b5fff]/5">
                                 <div className="space-y-1">
                                     <div className="flex items-center gap-2">
-                                        <span className="bg-[#0b5fff] text-white text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full">同步成功</span>
+                                        <span
+                                            className="text-white text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full"
+                                            style={{ backgroundColor: crawlSummary?.feature === 'limited-time' ? '#f97316' : '#0b5fff' }}
+                                        >
+                                            {crawlSummary?.featureLabel}
+                                        </span>
                                         <h2 className="text-2xl font-black text-gray-900 tracking-tight">抓取完成：库存变动详情</h2>
                                     </div>
                                     <p className="text-sm text-gray-500 font-medium">
-                                        【{crawlSummary?.gender}】共找到 <span className="text-gray-900 font-bold">{crawlSummary?.totalFound}</span> 条库存 |
-                                        新增 <span className="text-[#0b5fff] font-black">{crawlSummary?.newCount}</span> 条 (共 <span className="text-[#0b5fff] font-black">{
+                                        【{crawlSummary?.featureLabel} / {crawlSummary?.gender}】共找到 <span className="text-gray-900 font-bold">{crawlSummary?.totalFound}</span> 条库存 |
+                                        新增 <span style={{ color: crawlSummary?.feature === 'limited-time' ? '#f97316' : '#0b5fff' }} className="font-black">{crawlSummary?.newCount}</span> 条 (共 <span style={{ color: crawlSummary?.feature === 'limited-time' ? '#f97316' : '#0b5fff' }} className="font-black">{
                                             Object.keys((activeResultTab === 'new' ? newItems : soldOutItems).reduce((acc, item) => {
                                                 if (!acc[item.code]) acc[item.code] = [];
                                                 acc[item.code].push(item);
@@ -949,9 +1059,9 @@ export default function AdminUsers() {
                                     <div className="min-w-0 flex-1">
                                         <div className="flex items-center gap-1.5 sm:gap-2 mb-1 flex-wrap">
                                             <span className="bg-emerald-500 text-white text-[9px] sm:text-[10px] font-black uppercase tracking-widest px-1.5 sm:px-2 py-0.5 rounded-full shadow-sm">Notification</span>
-                                            <h2 className="text-lg sm:text-2xl font-black text-gray-900 tracking-tight">超值精选推送设置</h2>
+                                            <h2 className="text-lg sm:text-2xl font-black text-gray-900 tracking-tight">{getFeatureLabel(pushSettingsFeature)}推送设置</h2>
                                         </div>
-                                        <p className="text-[10px] sm:text-xs text-gray-400 font-medium">设置 <span className="font-bold text-gray-900">{selectedUser?.username}</span> 的全局库存推送权限</p>
+                                        <p className="text-[10px] sm:text-xs text-gray-400 font-medium">设置 <span className="font-bold text-gray-900">{selectedUser?.username}</span> 的 {getFeatureLabel(pushSettingsFeature)} 全局库存推送权限</p>
                                     </div>
                                     <button
                                         onClick={() => setIsPushSettingsModalOpen(false)}
@@ -1020,7 +1130,7 @@ export default function AdminUsers() {
                                             </div>
 
                                             <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                                                {['女装', '男装', '童装', '婴幼儿装'].map((gender) => {
+                                                {getFeatureCategories(pushSettingsFeature).map(({ name: gender }) => {
                                                     const isSelected = selectedPushSettings.genders.includes(gender);
                                                     return (
                                                         <button
@@ -1089,7 +1199,7 @@ export default function AdminUsers() {
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <h2 className="text-xl font-black text-gray-900">定时任务设置</h2>
-                                        <p className="text-sm text-gray-500 mt-1">{selectedScheduleGender} 自动爬取配置</p>
+                                        <p className="text-sm text-gray-500 mt-1">{getFeatureLabel(scheduleFeature)} / {selectedScheduleGender} 自动爬取配置</p>
                                     </div>
                                     <button
                                         onClick={() => setScheduleModalOpen(false)}
@@ -1145,15 +1255,15 @@ export default function AdminUsers() {
                                 </div>
 
                                 {/* Schedule Info */}
-                                {crawlerSchedules[selectedScheduleGender] && (
+                                {(scheduleFeature === 'super' ? crawlerSchedules[selectedScheduleGender] : limitedTimeCrawlerSchedules[selectedScheduleGender]) && (
                                     <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
                                         <h3 className="text-xs font-black text-gray-700 uppercase tracking-wider mb-3">任务状态</h3>
                                         <div className="space-y-2 text-sm">
                                             <div className="flex justify-between">
                                                 <span className="text-gray-600">上次运行:</span>
                                                 <span className="font-mono text-gray-900 font-bold">
-                                                    {crawlerSchedules[selectedScheduleGender].last_run_time
-                                                        ? new Date(crawlerSchedules[selectedScheduleGender].last_run_time).toLocaleString('zh-CN')
+                                                    {(scheduleFeature === 'super' ? crawlerSchedules[selectedScheduleGender] : limitedTimeCrawlerSchedules[selectedScheduleGender]).last_run_time
+                                                        ? new Date((scheduleFeature === 'super' ? crawlerSchedules[selectedScheduleGender] : limitedTimeCrawlerSchedules[selectedScheduleGender]).last_run_time).toLocaleString('zh-CN')
                                                         : '从未运行'}
                                                 </span>
                                             </div>

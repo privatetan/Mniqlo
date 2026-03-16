@@ -42,6 +42,17 @@ const SuperSelectionPage = dynamic(() => import('./components/SuperSelectionPage
     );
   }
 });
+const LimitedTimePage = dynamic(() => import('./components/LimitedTimePage'), {
+  loading: () => {
+    const { t } = useLanguage();
+    return (
+      <div className="h-full flex flex-col items-center justify-center p-8 text-orange-400">
+        <div className="w-8 h-8 border-2 border-orange-100 border-t-orange-500 rounded-full animate-spin mb-4" />
+        <span className="text-sm font-medium tracking-tight">{t('lim.loading')}</span>
+      </div>
+    );
+  }
+});
 
 const AdminUsers = dynamic(() => import('./components/AdminUsers'), {
   loading: () => {
@@ -61,7 +72,7 @@ function HomeContent() {
   const initialCode = searchParams.get('code');
   const { t } = useLanguage();
 
-  const [activeTab, setActiveTab] = useState<'search' | 'favorites' | 'super-selection' | 'admin'>('super-selection');
+  const [activeTab, setActiveTab] = useState<'search' | 'favorites' | 'super-selection' | 'limited-time' | 'admin'>('super-selection');
   const [searchQuery, setSearchQuery] = useState<string | null>(null);
   const [isAuthorized, setIsAuthorized] = useState(false);
 
@@ -91,6 +102,7 @@ function HomeContent() {
       case 'search': return t('header.search_title');
       case 'favorites': return t('header.gallery_title');
       case 'super-selection': return t('header.selection_title');
+      case 'limited-time': return t('header.limited_time_title');
       case 'admin': return t('header.admin') || 'User Management';
       default: return '';
     }
@@ -113,6 +125,9 @@ function HomeContent() {
           </div>
           <div className={activeTab === 'super-selection' ? 'h-full' : 'hidden'}>
             <SuperSelectionPage />
+          </div>
+          <div className={activeTab === 'limited-time' ? 'h-full' : 'hidden'}>
+            <LimitedTimePage />
           </div>
           <div className={activeTab === 'admin' ? 'h-full' : 'hidden'}>
             <AdminUsers />
