@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/context/LanguageContext';
 import { CrawledItem, FavoriteItem } from '@/types';
 import { parseLocalTime } from '@/lib/date-utils';
@@ -51,6 +52,7 @@ const getSizeWeight = (size: string): number => {
 };
 
 export default function SuperSelectionPage() {
+    const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [items, setItems] = useState<CrawledItem[]>([]);
     const [activeGender, setActiveGender] = useState('全部');
@@ -171,6 +173,11 @@ export default function SuperSelectionPage() {
             }
         }
     }, []);
+
+    const handleCodeClick = useCallback((e: React.MouseEvent, code: string) => {
+        e.stopPropagation();
+        router.push(`/?code=${encodeURIComponent(code)}`);
+    }, [router]);
 
     useEffect(() => {
         fetchItems(activeGender);
@@ -456,7 +463,12 @@ export default function SuperSelectionPage() {
                                                 <div className="flex-1 min-w-0 pr-2">
                                                     <div className="flex flex-col gap-1 h-full">
                                                         <div className="flex items-center gap-1.5 flex-wrap">
-                                                            <span className="text-sm code-text font-bold font-mono tracking-tight">{product.code}</span>
+                                                            <span
+                                                                className="text-sm code-text font-bold font-mono tracking-tight cursor-pointer hover:underline"
+                                                                onClick={(e) => handleCodeClick(e, product.code)}
+                                                            >
+                                                                {product.code}
+                                                            </span>
                                                             <span className="text-[10px] px-1.5 py-0.5 bg-slate-100/90 text-slate-500 font-semibold rounded-full uppercase tracking-tight">{product.gender}</span>
                                                             {product.items.some(i => i.stock_status === 'new') && (
                                                                 <span className="px-1.5 py-0.5 text-[10px] font-bold bg-emerald-600 text-white rounded-full uppercase tracking-tight">
