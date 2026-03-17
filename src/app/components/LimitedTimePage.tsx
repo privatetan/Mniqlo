@@ -50,7 +50,12 @@ const getSizeWeight = (size: string): number => {
     return 9999;
 };
 
-export default function LimitedTimePage() {
+type LimitedTimePageProps = {
+    isFilterPanelOpen?: boolean;
+    onCloseFilterPanel?: () => void;
+};
+
+export default function LimitedTimePage({ isFilterPanelOpen = false, onCloseFilterPanel }: LimitedTimePageProps) {
     const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [items, setItems] = useState<CrawledItem[]>([]);
@@ -71,29 +76,18 @@ export default function LimitedTimePage() {
         [searchQuery]
     );
 
-    const [showHeader, setShowHeader] = useState(true);
-    const lastScrollY = useRef(0);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
-    const ticking = useRef(false);
+    const closeFilterPanel = useCallback(() => {
+        if (isFilterPanelOpen) {
+            onCloseFilterPanel?.();
+        }
+    }, [isFilterPanelOpen, onCloseFilterPanel]);
 
     const handleScroll = useCallback(() => {
         if (scrollContainerRef.current && window.innerWidth >= 768) {
-            const scrollTop = scrollContainerRef.current.scrollTop;
-
-            if (!ticking.current) {
-                window.requestAnimationFrame(() => {
-                    if (scrollTop > lastScrollY.current && scrollTop > 50) {
-                        setShowHeader(false);
-                    } else if (scrollTop < lastScrollY.current) {
-                        setShowHeader(true);
-                    }
-                    lastScrollY.current = scrollTop;
-                    ticking.current = false;
-                });
-                ticking.current = true;
-            }
+            closeFilterPanel();
         }
-    }, []);
+    }, [closeFilterPanel]);
 
     const handleCodeClick = useCallback((e: React.MouseEvent, code: string) => {
         e.stopPropagation();
@@ -101,32 +95,17 @@ export default function LimitedTimePage() {
     }, [router]);
 
     useEffect(() => {
+        if (!isFilterPanelOpen) return;
+
         const handleWindowScroll = () => {
             if (window.innerWidth < 768) {
-                const scrollTop = window.scrollY;
-                if (!ticking.current) {
-                    window.requestAnimationFrame(() => {
-                        if (scrollTop > lastScrollY.current && scrollTop > 50) {
-                            setShowHeader(false);
-                        } else if (scrollTop < lastScrollY.current) {
-                            setShowHeader(true);
-                        }
-
-                        if (scrollTop < 10) {
-                            setShowHeader(true);
-                        }
-
-                        lastScrollY.current = scrollTop;
-                        ticking.current = false;
-                    });
-                    ticking.current = true;
-                }
+                closeFilterPanel();
             }
         };
 
-        window.addEventListener('scroll', handleWindowScroll);
+        window.addEventListener('scroll', handleWindowScroll, { passive: true });
         return () => window.removeEventListener('scroll', handleWindowScroll);
-    }, []);
+    }, [isFilterPanelOpen, closeFilterPanel]);
 
     const categories = ['全部', '女装', '男装', '中性/男女同款', '童装', '婴幼儿装'];
 
@@ -351,7 +330,7 @@ export default function LimitedTimePage() {
     return (
         <div className="h-full flex flex-col bg-transparent overflow-hidden">
             <div
-                className={`fixed md:absolute top-[60px] md:top-0 left-0 right-0 z-30 md:z-40 transition-transform duration-300 ease-in-out ${showHeader ? 'translate-y-0' : '-translate-y-[200%] md:-translate-y-full'
+                className={`fixed md:absolute top-[60px] md:top-0 left-0 right-0 z-30 md:z-40 transition-transform duration-300 ease-in-out ${isFilterPanelOpen ? 'translate-y-0' : '-translate-y-[200%] md:-translate-y-full'
                     }`}
             >
                 <div className="space-y-3 px-4 py-3 md:px-6">
@@ -361,8 +340,8 @@ export default function LimitedTimePage() {
                                 key={cat}
                                 onClick={() => setActiveGender(cat)}
                                 className={`px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all border ${activeGender === cat
-                                    ? 'bg-amber-50 text-amber-800 border-amber-100 shadow-[0_16px_30px_-24px_rgba(180,83,9,0.42)]'
-                                    : 'bg-white/70 text-amber-700 border-white/70 hover:bg-amber-50/80 hover:border-amber-100'
+                                    ? 'filter-pill-warm-active'
+                                    : 'filter-pill-warm hover:bg-amber-50/80 hover:border-amber-100'
                                     }`}
                             >
                                 {cat === '全部' ? (language === 'zh' ? '全部' : 'All') :
@@ -392,7 +371,7 @@ export default function LimitedTimePage() {
                     </div>
 
                     <div className="flex items-center justify-between gap-3">
-                        <div className="frost-panel rounded-2xl px-1.5 py-1">
+                        <div className="filter-surface rounded-2xl px-1.5 py-1">
                             <select
                                 value={sortBy}
                                 onChange={(e) => setSortBy(e.target.value as any)}
@@ -405,7 +384,7 @@ export default function LimitedTimePage() {
                             </select>
                         </div>
                         {!loading && (
-                            <div className="frost-panel rounded-full px-3 py-2 text-[11px] text-amber-700/70 font-medium">
+                            <div className="filter-surface rounded-full px-3 py-2 text-[11px] text-amber-700/70 font-medium">
                                 {t('lim.found', { n: sortedProducts.length })}
                             </div>
                         )}
@@ -416,7 +395,7 @@ export default function LimitedTimePage() {
             <div
                 ref={scrollContainerRef}
                 onScroll={handleScroll}
-                className="flex-1 md:overflow-y-auto overflow-visible px-4 pb-20 pt-44 md:pb-4 scroll-smooth"
+                className={`flex-1 md:overflow-y-auto overflow-visible px-4 pb-20 md:pb-4 scroll-smooth ${isFilterPanelOpen ? 'pt-44' : 'pt-4'}`}
             >
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-24 text-amber-700">

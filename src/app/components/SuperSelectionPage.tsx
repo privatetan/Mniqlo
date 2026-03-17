@@ -51,7 +51,12 @@ const getSizeWeight = (size: string): number => {
     return 9999; // Unknown last
 };
 
-export default function SuperSelectionPage() {
+type SuperSelectionPageProps = {
+    isFilterPanelOpen?: boolean;
+    onCloseFilterPanel?: () => void;
+};
+
+export default function SuperSelectionPage({ isFilterPanelOpen = false, onCloseFilterPanel }: SuperSelectionPageProps) {
     const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [items, setItems] = useState<CrawledItem[]>([]);
@@ -72,62 +77,31 @@ export default function SuperSelectionPage() {
         [searchQuery]
     );
 
-    // Scroll handling for header visibility
-    const [showHeader, setShowHeader] = useState(true);
-    const lastScrollY = useRef(0);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
-    const ticking = useRef(false);
+    const closeFilterPanel = useCallback(() => {
+        if (isFilterPanelOpen) {
+            onCloseFilterPanel?.();
+        }
+    }, [isFilterPanelOpen, onCloseFilterPanel]);
 
     const handleScroll = useCallback(() => {
-        // Desktop: Scroll container ref
         if (scrollContainerRef.current && window.innerWidth >= 768) {
-            const scrollTop = scrollContainerRef.current.scrollTop;
-
-            if (!ticking.current) {
-                window.requestAnimationFrame(() => {
-                    if (scrollTop > lastScrollY.current && scrollTop > 50) {
-                        setShowHeader(false);
-                    } else if (scrollTop < lastScrollY.current) {
-                        setShowHeader(true);
-                    }
-                    lastScrollY.current = scrollTop;
-                    ticking.current = false;
-                });
-                ticking.current = true;
-            }
+            closeFilterPanel();
         }
-    }, []);
+    }, [closeFilterPanel]);
 
-    // Mobile: Window scroll listener
     useEffect(() => {
+        if (!isFilterPanelOpen) return;
+
         const handleWindowScroll = () => {
             if (window.innerWidth < 768) {
-                const scrollTop = window.scrollY;
-                if (!ticking.current) {
-                    window.requestAnimationFrame(() => {
-                        // Add buffer to prevent jitter at top
-                        if (scrollTop > lastScrollY.current && scrollTop > 50) {
-                            setShowHeader(false);
-                        } else if (scrollTop < lastScrollY.current) {
-                            setShowHeader(true);
-                        }
-
-                        // Always show if at top
-                        if (scrollTop < 10) {
-                            setShowHeader(true);
-                        }
-
-                        lastScrollY.current = scrollTop;
-                        ticking.current = false;
-                    });
-                    ticking.current = true;
-                }
+                closeFilterPanel();
             }
         };
 
-        window.addEventListener('scroll', handleWindowScroll);
+        window.addEventListener('scroll', handleWindowScroll, { passive: true });
         return () => window.removeEventListener('scroll', handleWindowScroll);
-    }, []);
+    }, [isFilterPanelOpen, closeFilterPanel]);
 
     const categories = ['全部', '女装', '男装', '童装', '婴幼儿装'];
 
@@ -358,7 +332,7 @@ export default function SuperSelectionPage() {
             {/* Header: Tabs & Search */}
             {/* Header: Tabs & Search */}
             <div
-                className={`fixed md:absolute top-[60px] md:top-0 left-0 right-0 z-30 md:z-40 transition-transform duration-300 ease-in-out ${showHeader ? 'translate-y-0' : '-translate-y-[200%] md:-translate-y-full'
+                className={`fixed md:absolute top-[60px] md:top-0 left-0 right-0 z-30 md:z-40 transition-transform duration-300 ease-in-out ${isFilterPanelOpen ? 'translate-y-0' : '-translate-y-[200%] md:-translate-y-full'
                     }`}
             >
                 <div className="space-y-3 px-4 py-3 md:px-6">
@@ -368,8 +342,8 @@ export default function SuperSelectionPage() {
                                 key={cat}
                                 onClick={() => setActiveGender(cat)}
                                 className={`px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all border ${activeGender === cat
-                                    ? 'soft-pill-active'
-                                    : 'soft-pill hover:bg-white/80 hover:text-slate-700'
+                                    ? 'filter-pill-active'
+                                    : 'filter-pill hover:bg-white/80 hover:text-slate-700'
                                     }`}
                             >
                                 {cat === '全部' ? (language === 'zh' ? '全部' : 'All') :
@@ -398,7 +372,7 @@ export default function SuperSelectionPage() {
 
                     {/* Sort Dropdown */}
                     <div className="flex items-center justify-between gap-3">
-                        <div className="frost-panel rounded-2xl px-1.5 py-1">
+                        <div className="filter-surface rounded-2xl px-1.5 py-1">
                             <select
                                 value={sortBy}
                                 onChange={(e) => setSortBy(e.target.value as any)}
@@ -411,7 +385,7 @@ export default function SuperSelectionPage() {
                             </select>
                         </div>
                         {!loading && (
-                            <div className="frost-panel rounded-full px-3 py-2 text-[11px] text-slate-500 font-medium">
+                            <div className="filter-surface rounded-full px-3 py-2 text-[11px] text-slate-500 font-medium">
                                 {t('sel.found', { n: items.length })}
                             </div>
                         )}
@@ -422,7 +396,7 @@ export default function SuperSelectionPage() {
             <div
                 ref={scrollContainerRef}
                 onScroll={handleScroll}
-                className="flex-1 md:overflow-y-auto overflow-visible px-4 pb-20 pt-44 md:pb-4 scroll-smooth"
+                className={`flex-1 md:overflow-y-auto overflow-visible px-4 pb-20 md:pb-4 scroll-smooth ${isFilterPanelOpen ? 'pt-44' : 'pt-4'}`}
             >
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-24 text-slate-500">

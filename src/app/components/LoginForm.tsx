@@ -9,7 +9,7 @@ import ThemeSwitcher from './ThemeSwitcher';
 
 export default function LoginForm() {
     const router = useRouter();
-    const { t, language, setLanguage } = useLanguage();
+    const { t } = useLanguage();
     const [isRegistering, setIsRegistering] = useState(false);
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -50,24 +50,11 @@ export default function LoginForm() {
         router.push('/');
     };
 
-    const toggleLanguage = () => {
-        setLanguage(language === 'zh' ? 'en' : 'zh');
-    };
-
     return (
         <div className="shell-panel w-full max-w-md p-10 space-y-8 md:rounded-[32px] relative overflow-hidden border border-white/70">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(151,174,199,0.16),transparent_34%),radial-gradient(circle_at_bottom,rgba(95,146,132,0.12),transparent_30%)]" />
             <div className="absolute top-6 left-6 z-10">
                 <ThemeSwitcher align="left" compact />
-            </div>
-            {/* Language Toggle */}
-            <div className="absolute top-6 right-6 z-10">
-                <button
-                    onClick={toggleLanguage}
-                    className="text-xs font-bold text-slate-500 hover:text-teal-800 transition-colors uppercase tracking-[0.24em] bg-transparent border-0 shadow-none"
-                >
-                    {language === 'zh' ? 'EN' : 'ZH'}
-                </button>
             </div>
 
             <div className="space-y-4 text-center flex flex-col items-center relative z-10">

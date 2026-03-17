@@ -75,6 +75,9 @@ function HomeContent() {
   const [activeTab, setActiveTab] = useState<'search' | 'favorites' | 'super-selection' | 'limited-time' | 'admin'>('super-selection');
   const [searchQuery, setSearchQuery] = useState<string | null>(null);
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+
+  const canToggleFilters = activeTab === 'search' || activeTab === 'super-selection' || activeTab === 'limited-time';
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -92,6 +95,10 @@ function HomeContent() {
       router.replace('/');
     }
   }, [initialCode, router]);
+
+  useEffect(() => {
+    setIsFilterPanelOpen(false);
+  }, [activeTab]);
 
   if (!isAuthorized) {
     return null;
@@ -130,20 +137,38 @@ function HomeContent() {
 
       <div className="shell-panel flex-1 flex flex-col min-w-0 md:my-4 md:mr-4 md:overflow-hidden md:rounded-[36px] relative z-10">
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.18),transparent_24%,transparent_76%,rgba(255,255,255,0.08))]" />
-        <Header title={getHeaderTitle()} />
+        <Header
+          title={getHeaderTitle()}
+          showFilterToggle={canToggleFilters}
+          isFilterPanelOpen={isFilterPanelOpen}
+          onToggleFilterPanel={() => {
+            if (!canToggleFilters) return;
+            setIsFilterPanelOpen((open) => !open);
+          }}
+        />
 
         <main className="flex-1 bg-transparent flex flex-col relative md:overflow-hidden">
           <div className={activeTab === 'search' ? 'h-full' : 'hidden'}>
-            <SearchPage initialQuery={searchQuery} />
+            <SearchPage
+              initialQuery={searchQuery}
+              isFilterPanelOpen={isFilterPanelOpen}
+              onCloseFilterPanel={() => setIsFilterPanelOpen(false)}
+            />
           </div>
           <div className={activeTab === 'favorites' ? 'h-full' : 'hidden'}>
             <FavoritePage />
           </div>
           <div className={activeTab === 'super-selection' ? 'h-full' : 'hidden'}>
-            <SuperSelectionPage />
+            <SuperSelectionPage
+              isFilterPanelOpen={isFilterPanelOpen}
+              onCloseFilterPanel={() => setIsFilterPanelOpen(false)}
+            />
           </div>
           <div className={activeTab === 'limited-time' ? 'h-full' : 'hidden'}>
-            <LimitedTimePage />
+            <LimitedTimePage
+              isFilterPanelOpen={isFilterPanelOpen}
+              onCloseFilterPanel={() => setIsFilterPanelOpen(false)}
+            />
           </div>
           <div className={activeTab === 'admin' ? 'h-full' : 'hidden'}>
             <AdminUsers />

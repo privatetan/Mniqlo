@@ -17,7 +17,13 @@ type GroupedData = {
     }[];
 };
 
-export default function SearchPage({ initialQuery }: { initialQuery?: string | null }) {
+type SearchPageProps = {
+    initialQuery?: string | null;
+    isFilterPanelOpen?: boolean;
+    onCloseFilterPanel?: () => void;
+};
+
+export default function SearchPage({ initialQuery, isFilterPanelOpen = false, onCloseFilterPanel }: SearchPageProps) {
     const [query, setQuery] = useState('');
     const [loading, setLoading] = useState(false);
     const [results, setResults] = useState<any[] | null>(null);
@@ -27,75 +33,31 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
 
     const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
 
-    // Scroll handling
-    const [showHeader, setShowHeader] = useState(true);
-    const lastScrollY = useRef(0);
     const scrollContainerRef = useRef<HTMLElement>(null);
-    const ticking = useRef(false);
-
-    // Check if we have results to determine if hiding is allowed
-    const canHideHeader = results && results.length > 0 && !results[0].error;
+    const closeFilterPanel = useCallback(() => {
+        if (isFilterPanelOpen) {
+            onCloseFilterPanel?.();
+        }
+    }, [isFilterPanelOpen, onCloseFilterPanel]);
 
     const handleScroll = useCallback(() => {
-        // Desktop: Scroll container ref
         if (scrollContainerRef.current && window.innerWidth >= 768) {
-            const scrollTop = scrollContainerRef.current.scrollTop;
-
-            if (!ticking.current) {
-                window.requestAnimationFrame(() => {
-                    const diff = scrollTop - lastScrollY.current;
-                    const minScroll = 50;
-                    const threshold = 10;
-
-                    // Only allow hiding if we have results
-                    if (canHideHeader && diff > threshold && scrollTop > minScroll && showHeader) {
-                        setShowHeader(false);
-                    } else if (diff < -threshold && !showHeader) {
-                        setShowHeader(true);
-                    } else if (!canHideHeader && !showHeader) {
-                        // Force show if we shouldn't execute hiding
-                        setShowHeader(true);
-                    }
-                    lastScrollY.current = scrollTop;
-                    ticking.current = false;
-                });
-                ticking.current = true;
-            }
+            closeFilterPanel();
         }
-    }, [showHeader, canHideHeader]);
+    }, [closeFilterPanel]);
 
-    // Mobile: Window scroll listener
     useEffect(() => {
+        if (!isFilterPanelOpen) return;
+
         const handleWindowScroll = () => {
             if (window.innerWidth < 768) {
-                const scrollTop = window.scrollY;
-                if (!ticking.current) {
-                    window.requestAnimationFrame(() => {
-                        const diff = scrollTop - lastScrollY.current;
-                        const minScroll = 50;
-                        const threshold = 10;
-
-                        if (canHideHeader && diff > threshold && scrollTop > minScroll && showHeader) {
-                            setShowHeader(false);
-                        } else if (diff < -threshold && !showHeader) {
-                            setShowHeader(true);
-                        } else if (scrollTop < 10 && !showHeader) {
-                            setShowHeader(true);
-                        } else if (!canHideHeader && !showHeader) {
-                            setShowHeader(true);
-                        }
-
-                        lastScrollY.current = scrollTop;
-                        ticking.current = false;
-                    });
-                    ticking.current = true;
-                }
+                closeFilterPanel();
             }
         };
 
-        window.addEventListener('scroll', handleWindowScroll);
+        window.addEventListener('scroll', handleWindowScroll, { passive: true });
         return () => window.removeEventListener('scroll', handleWindowScroll);
-    }, [showHeader, canHideHeader]);
+    }, [isFilterPanelOpen, closeFilterPanel]);
 
     useEffect(() => {
         if (initialQuery) {
@@ -389,7 +351,7 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
             {/* Header Section */}
             {/* Header Section */}
             <header
-                className={`fixed md:absolute top-[60px] md:top-0 left-0 right-0 z-30 md:z-40 transition-transform duration-300 ease-in-out ${showHeader ? 'translate-y-0' : '-translate-y-[200%]'
+                className={`fixed md:absolute top-[60px] md:top-0 left-0 right-0 z-30 md:z-40 transition-transform duration-300 ease-in-out ${isFilterPanelOpen ? 'translate-y-0' : '-translate-y-[200%]'
                     }`}
             >
                 <div className="space-y-3 px-4 py-3 md:px-6">
@@ -425,7 +387,7 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
 
                     {/* Secondary Nav */}
                     {history.length > 0 && (
-                        <div className="frost-panel flex items-center gap-3 rounded-[24px] px-4 py-3 text-xs font-medium text-slate-400 min-h-[24px]">
+                        <div className="filter-surface flex items-center gap-3 rounded-[24px] px-4 py-3 text-xs font-medium text-slate-400 min-h-[24px]">
                             <>
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-slate-300 shrink-0">
                                     <path d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2Z" />
@@ -460,7 +422,7 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
             <main
                 ref={scrollContainerRef}
                 onScroll={handleScroll}
-                className="px-4 pb-24 md:pb-4 pt-32 flex-1 md:overflow-y-auto overflow-visible scroll-smooth"
+                className={`px-4 pb-24 md:pb-4 flex-1 md:overflow-y-auto overflow-visible scroll-smooth ${isFilterPanelOpen ? 'pt-32' : 'pt-4'}`}
             >
                 {/* Search Results / Loading */}
                 {(loading || results) && (

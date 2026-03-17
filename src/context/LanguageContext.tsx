@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, ReactNode } from 'react';
 
 export type LanguageType = 'zh' | 'en';
 
@@ -22,6 +22,8 @@ export const translations: Translations = {
     // Header
     'header.admin': { zh: '管理后台', en: 'Admin' },
     'header.logout': { zh: '退出登录', en: 'Logout' },
+    'header.filters': { zh: '筛选', en: 'Filters' },
+    'header.logout_confirm': { zh: '确定要退出登录吗？', en: 'Are you sure you want to logout?' },
     'header.search_title': { zh: '库存搜索', en: 'Search Inventory' },
     'header.gallery_title': { zh: '私人收藏', en: 'Private Collection' },
     'header.selection_title': { zh: '精选商品', en: 'Featured Selection' },
@@ -127,18 +129,18 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-    const [language, setLanguageState] = useState<LanguageType>('zh');
+    const language: LanguageType = 'zh';
 
     useEffect(() => {
-        const savedLang = localStorage.getItem('language') as LanguageType;
-        if (savedLang) {
-            setLanguageState(savedLang);
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('language');
         }
     }, []);
 
-    const setLanguage = (lang: LanguageType) => {
-        setLanguageState(lang);
-        localStorage.setItem('language', lang);
+    const setLanguage = (_lang: LanguageType) => {
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('language');
+        }
     };
 
     const t = (key: string, variables?: Record<string, string | number>) => {
