@@ -32,7 +32,7 @@ export default function AdminUsersPage() {
     return (
         <div className="min-h-screen bg-transparent">
             <div className="max-w-[1600px] mx-auto p-4 md:p-6">
-                <div className="bg-white/80 backdrop-blur-md shadow-xl shadow-sky-100/50 rounded-[32px] border border-white/50 overflow-hidden">
+                <div className="admin-theme-scope shell-panel rounded-[32px] overflow-hidden">
                     <Header title="管理后台" />
                     <div className="h-[calc(100vh-120px)]">
                         <AdminUsers />

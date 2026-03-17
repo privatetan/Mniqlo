@@ -22,13 +22,13 @@ export default function BottomNav({ activeTab, setActiveTab }: BottomNavProps) {
     }, []);
 
     return (
-        <nav className="w-full bg-white/90 backdrop-blur-xl border-t border-slate-200/50 z-50 pb-safe shrink-0 shadow-[0_-4px_20px_-1px_rgba(14,165,233,0.1)]">
-            <div className="h-[70px] flex items-center justify-around px-4">
+        <nav className="shell-panel mx-4 mb-4 rounded-[30px] z-50 pb-safe shrink-0">
+            <div className="h-[74px] flex items-center justify-around px-4">
                 <button
                     onClick={() => setActiveTab('super-selection')}
-                    className={`flex flex-col items-center gap-1.5 w-full bg-transparent group transition-all duration-300 ${activeTab === 'super-selection' ? 'text-sky-600' : 'text-slate-400'}`}
+                    className={`flex flex-col items-center gap-1.5 w-full bg-transparent group transition-all duration-300 ${activeTab === 'super-selection' ? 'text-slate-700' : 'text-slate-400'}`}
                 >
-                    <div className={`transition-transform duration-300 ${activeTab === 'super-selection' ? 'scale-110 -translate-y-1' : 'group-hover:scale-105'}`}>
+                    <div className={`flex items-center justify-center w-11 h-11 rounded-2xl transition-all duration-300 ${activeTab === 'super-selection' ? 'soft-pill-active scale-110 -translate-y-1' : 'soft-pill group-hover:scale-105 group-hover:bg-white/80'}`}>
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={activeTab === 'super-selection' ? '2.5' : '2'} strokeLinecap="round" strokeLinejoin="round">
                             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                         </svg>
@@ -37,9 +37,9 @@ export default function BottomNav({ activeTab, setActiveTab }: BottomNavProps) {
                 </button>
                 <button
                     onClick={() => setActiveTab('limited-time')}
-                    className={`flex flex-col items-center gap-1.5 w-full bg-transparent group transition-all duration-300 ${activeTab === 'limited-time' ? 'text-orange-500' : 'text-slate-400'}`}
+                    className={`flex flex-col items-center gap-1.5 w-full bg-transparent group transition-all duration-300 ${activeTab === 'limited-time' ? 'text-amber-700' : 'text-slate-400'}`}
                 >
-                    <div className={`transition-transform duration-300 ${activeTab === 'limited-time' ? 'scale-110 -translate-y-1' : 'group-hover:scale-105'}`}>
+                    <div className={`flex items-center justify-center w-11 h-11 rounded-2xl transition-all duration-300 ${activeTab === 'limited-time' ? 'bg-amber-50 text-amber-700 border border-amber-100 shadow-[0_18px_34px_-26px_rgba(180,83,9,0.42)] scale-110 -translate-y-1' : 'soft-pill group-hover:scale-105 group-hover:bg-white/80'}`}>
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={activeTab === 'limited-time' ? '2.5' : '2'} strokeLinecap="round" strokeLinejoin="round">
                             <circle cx="12" cy="12" r="9" />
                             <path d="M12 7v5l3 2" />
@@ -51,9 +51,9 @@ export default function BottomNav({ activeTab, setActiveTab }: BottomNavProps) {
                 </button>
                 <button
                     onClick={() => setActiveTab('search')}
-                    className={`flex flex-col items-center gap-1.5 w-full bg-transparent group transition-all duration-300 ${activeTab === 'search' ? 'text-sky-600' : 'text-slate-400'}`}
+                    className={`flex flex-col items-center gap-1.5 w-full bg-transparent group transition-all duration-300 ${activeTab === 'search' ? 'text-slate-700' : 'text-slate-400'}`}
                 >
-                    <div className={`transition-transform duration-300 ${activeTab === 'search' ? 'scale-110 -translate-y-1' : 'group-hover:scale-105'}`}>
+                    <div className={`flex items-center justify-center w-11 h-11 rounded-2xl transition-all duration-300 ${activeTab === 'search' ? 'soft-pill-active scale-110 -translate-y-1' : 'soft-pill group-hover:scale-105 group-hover:bg-white/80'}`}>
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={activeTab === 'search' ? '2.5' : '2'} strokeLinecap="round" strokeLinejoin="round">
                             <circle cx="11" cy="11" r="8" />
                             <path d="m21 21-4.3-4.3" />
@@ -63,9 +63,9 @@ export default function BottomNav({ activeTab, setActiveTab }: BottomNavProps) {
                 </button>
                 <button
                     onClick={() => setActiveTab('favorites')}
-                    className={`flex flex-col items-center gap-1.5 w-full bg-transparent group transition-all duration-300 ${activeTab === 'favorites' ? 'text-sky-600' : 'text-slate-400'}`}
+                    className={`flex flex-col items-center gap-1.5 w-full bg-transparent group transition-all duration-300 ${activeTab === 'favorites' ? 'text-slate-700' : 'text-slate-400'}`}
                 >
-                    <div className={`transition-transform duration-300 ${activeTab === 'favorites' ? 'scale-110 -translate-y-1' : 'group-hover:scale-105'}`}>
+                    <div className={`flex items-center justify-center w-11 h-11 rounded-2xl transition-all duration-300 ${activeTab === 'favorites' ? 'soft-pill-active scale-110 -translate-y-1' : 'soft-pill group-hover:scale-105 group-hover:bg-white/80'}`}>
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={activeTab === 'favorites' ? '2.5' : '2'} strokeLinecap="round" strokeLinejoin="round">
                             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                         </svg>
@@ -75,9 +75,9 @@ export default function BottomNav({ activeTab, setActiveTab }: BottomNavProps) {
                 {isAdmin && (
                     <button
                         onClick={() => setActiveTab('admin')}
-                        className={`flex flex-col items-center gap-1.5 w-full bg-transparent group transition-all duration-300 ${activeTab === 'admin' ? 'text-sky-600' : 'text-slate-400'}`}
+                        className={`flex flex-col items-center gap-1.5 w-full bg-transparent group transition-all duration-300 ${activeTab === 'admin' ? 'text-slate-700' : 'text-slate-400'}`}
                     >
-                        <div className={`transition-transform duration-300 ${activeTab === 'admin' ? 'scale-110 -translate-y-1' : 'group-hover:scale-105'}`}>
+                        <div className={`flex items-center justify-center w-11 h-11 rounded-2xl transition-all duration-300 ${activeTab === 'admin' ? 'soft-pill-active scale-110 -translate-y-1' : 'soft-pill group-hover:scale-105 group-hover:bg-white/80'}`}>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={activeTab === 'admin' ? '2.5' : '2'} strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
                                 <circle cx="8.5" cy="7" r="4" />

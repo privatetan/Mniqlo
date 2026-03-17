@@ -347,11 +347,11 @@ export default function SuperSelectionPage() {
     }, [filteredAndGroupedProducts, sortBy]);
 
     return (
-        <div className="h-full flex flex-col bg-gray-50/30 overflow-hidden">
+        <div className="h-full flex flex-col bg-transparent overflow-hidden">
             {/* Header: Tabs & Search */}
             {/* Header: Tabs & Search */}
             <div
-                className={`fixed md:absolute top-[60px] md:top-0 left-0 right-0 bg-white z-30 md:z-40 transition-transform duration-300 ease-in-out shadow-sm border-b border-gray-100 ${showHeader ? 'translate-y-0' : '-translate-y-[200%] md:-translate-y-full'
+                className={`fixed md:absolute top-[60px] md:top-0 left-0 right-0 frost-panel z-30 md:z-40 transition-transform duration-300 ease-in-out border-b border-white/60 ${showHeader ? 'translate-y-0' : '-translate-y-[200%] md:-translate-y-full'
                     }`}
             >
                 <div className="px-6 py-4">
@@ -360,9 +360,9 @@ export default function SuperSelectionPage() {
                             <button
                                 key={cat}
                                 onClick={() => setActiveGender(cat)}
-                                className={`px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${activeGender === cat
-                                    ? 'bg-gray-900 text-white shadow-sm'
-                                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                                className={`px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all border ${activeGender === cat
+                                    ? 'soft-pill-active'
+                                    : 'soft-pill hover:bg-white/80 hover:text-slate-700'
                                     }`}
                             >
                                 {cat === '全部' ? (language === 'zh' ? '全部' : 'All') :
@@ -377,11 +377,11 @@ export default function SuperSelectionPage() {
                         <input
                             type="text"
                             placeholder={t('sel.search_placeholder')}
-                            className="w-full h-10 pl-10 pr-4 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-gray-900/5 focus:border-gray-400 transition-all"
+                            className="w-full h-10 pl-10 pr-4 bg-white/75 border border-white/70 rounded-2xl text-sm outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-600 transition-all"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
-                        <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <circle cx="11" cy="11" r="8" />
                             <path d="m21 21-4.3-4.3" />
                         </svg>
@@ -392,7 +392,7 @@ export default function SuperSelectionPage() {
                         <select
                             value={sortBy}
                             onChange={(e) => setSortBy(e.target.value as any)}
-                            className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-600 outline-none focus:border-gray-400 cursor-pointer transition-all"
+                            className="w-[8.5rem] shrink-0 text-xs px-3 py-1.5 pr-8 rounded-xl border border-white/70 bg-white/80 text-slate-600 outline-none focus:border-teal-500 cursor-pointer transition-all"
                         >
                             <option value="default">{t('sel.sort_default')}</option>
                             <option value="price-asc">{t('sel.sort_price_asc')}</option>
@@ -400,7 +400,7 @@ export default function SuperSelectionPage() {
                             <option value="discount">{t('sel.sort_discount')}</option>
                         </select>
                         {!loading && (
-                            <div className="text-[11px] text-gray-400 font-medium">
+                            <div className="text-[11px] text-slate-500 font-medium">
                                 {t('sel.found', { n: items.length })}
                             </div>
                         )}
@@ -414,12 +414,12 @@ export default function SuperSelectionPage() {
                 className="flex-1 md:overflow-y-auto overflow-visible px-4 pb-20 pt-44 md:pb-4 scroll-smooth"
             >
                 {loading ? (
-                    <div className="flex flex-col items-center justify-center py-24 text-gray-400">
-                        <div className="w-8 h-8 border-2 border-gray-100 border-t-gray-900 rounded-full animate-spin mb-4" />
+                    <div className="flex flex-col items-center justify-center py-24 text-slate-500">
+                        <div className="w-8 h-8 border-2 border-slate-200 border-t-teal-700 rounded-full animate-spin mb-4" />
                         <p className="text-sm font-medium tracking-tight">{t('sel.loading')}</p>
                     </div>
                 ) : sortedProducts.length === 0 ? (
-                    <div className="text-center py-24 text-gray-400">
+                    <div className="text-center py-24 text-slate-500">
                         <p className="text-sm font-medium tracking-tight">{t('sel.none')}</p>
                     </div>
                 ) : (
@@ -427,12 +427,12 @@ export default function SuperSelectionPage() {
                         {sortedProducts.map(product => (
                             <div key={product.code} className="card p-0 overflow-hidden">
                                 <div
-                                    className="p-3 cursor-pointer hover:bg-gray-50/50 transition-colors"
+                                    className="p-3 cursor-pointer hover:bg-emerald-50/35 transition-colors"
                                     onClick={() => setExpandedCode(expandedCode === product.code ? null : product.code)}
                                 >
                                     <div className="flex gap-3 mb-3">
                                         {/* Image */}
-                                        <div className="w-20 h-20 shrink-0 bg-gray-100 rounded-lg overflow-hidden relative border border-gray-200">
+                                        <div className="w-20 h-20 shrink-0 bg-white/80 rounded-xl overflow-hidden relative border border-white/70">
                                             {product.items[0]?.main_pic ? (
                                                 <img
                                                     src={`https://www.uniqlo.cn${product.items[0].main_pic}`}
@@ -441,7 +441,7 @@ export default function SuperSelectionPage() {
                                                     loading="lazy"
                                                 />
                                             ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-gray-300">
+                                                <div className="w-full h-full flex items-center justify-center text-slate-300">
                                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                                                         <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                                                         <circle cx="8.5" cy="8.5" r="1.5"></circle>
@@ -456,24 +456,24 @@ export default function SuperSelectionPage() {
                                                 <div className="flex-1 min-w-0 pr-2">
                                                     <div className="flex flex-col gap-1 h-full">
                                                         <div className="flex items-center gap-1.5 flex-wrap">
-                                                            <span className="text-sm text-green-600 font-bold font-mono tracking-tight">{product.code}</span>
-                                                            <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-500 font-semibold rounded-full uppercase tracking-tight">{product.gender}</span>
+                                                            <span className="text-sm code-text font-bold font-mono tracking-tight">{product.code}</span>
+                                                            <span className="text-[10px] px-1.5 py-0.5 bg-slate-100/90 text-slate-500 font-semibold rounded-full uppercase tracking-tight">{product.gender}</span>
                                                             {product.items.some(i => i.stock_status === 'new') && (
-                                                                <span className="px-1.5 py-0.5 text-[10px] font-bold bg-red-500 text-white rounded-full uppercase tracking-tight">
+                                                                <span className="px-1.5 py-0.5 text-[10px] font-bold bg-emerald-600 text-white rounded-full uppercase tracking-tight">
                                                                     {t('sel.new')}
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        <h3 className="text-xs text-gray-900 font-medium line-clamp-2 leading-relaxed">{product.name}</h3>
+                                                        <h3 className="text-xs text-slate-800 font-medium line-clamp-2 leading-relaxed">{product.name}</h3>
                                                     </div>
                                                 </div>
                                                 <div className="text-right shrink-0">
                                                     <div className="flex flex-col items-end">
-                                                        <div className="text-red-600 font-bold text-base leading-none">¥{product.minPrice}</div>
+                                                        <div className="price-text font-bold text-base leading-none">¥{product.minPrice}</div>
                                                         {product.originPrice > product.minPrice && (
                                                             <div className="flex items-center gap-1 mt-0.5">
-                                                                <div className="text-[10px] text-gray-400 line-through">¥{product.originPrice}</div>
-                                                                <div className="text-[10px] text-red-500 font-semibold">
+                                                                <div className="text-[10px] text-slate-400 line-through">¥{product.originPrice}</div>
+                                                                <div className="text-[10px] text-rose-500 font-semibold">
                                                                     {t('sel.off', { n: ((product.minPrice / product.originPrice) * 10).toFixed(1) })}
                                                                 </div>
                                                             </div>
@@ -483,7 +483,7 @@ export default function SuperSelectionPage() {
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="flex items-center justify-between text-[10px] font-medium text-gray-400 border-t border-gray-50 pt-2">
+                                    <div className="flex items-center justify-between text-[10px] font-medium text-slate-400 border-t border-slate-100/80 pt-2">
                                         <span>{t('fav.variants', { n: product.items.length })}</span>
                                         <svg
                                             className={`transition-transform duration-300 ${expandedCode === product.code ? 'rotate-180' : ''}`}
@@ -497,22 +497,22 @@ export default function SuperSelectionPage() {
                                 {/* Details */}
                                 {expandedCode === product.code && (
                                     <div className="px-4 pb-4 animate-in fade-in slide-in-from-top-2 duration-200">
-                                        <div className="h-px bg-gray-50 mb-4" />
+                                        <div className="h-px bg-slate-100/80 mb-4" />
 
                                         {/* Toggle Button */}
                                         <div
-                                            className="mb-3 flex items-center gap-1 text-xs font-bold border border-gray-200 rounded px-3 py-1.5 inline-flex cursor-pointer hover:bg-gray-50 transition-colors"
+                                            className="mb-3 flex items-center gap-1 text-xs font-bold border border-white/70 bg-white/80 rounded-full px-3 py-1.5 inline-flex cursor-pointer hover:bg-emerald-50/60 transition-colors"
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 setViewMode(viewMode === 'color' ? 'size' : 'color');
                                                 setExpandedState(null);
                                             }}
                                         >
-                                            <span className={viewMode === 'color' ? 'text-green-500' : 'text-gray-400'}>
+                                            <span className={viewMode === 'color' ? 'text-teal-700' : 'text-slate-400'}>
                                                 {t('search.color')}
                                             </span>
-                                            <span className="text-gray-300 font-normal">|</span>
-                                            <span className={viewMode === 'size' ? 'text-green-500' : 'text-gray-400'}>
+                                            <span className="text-slate-300 font-normal">|</span>
+                                            <span className={viewMode === 'size' ? 'text-teal-700' : 'text-slate-400'}>
                                                 {t('search.size')}
                                             </span>
                                         </div>
@@ -531,13 +531,13 @@ export default function SuperSelectionPage() {
                                                         className={`
                                                             px-3 py-1.5 rounded-lg border text-xs font-medium transition flex flex-col items-center gap-0.5 min-w-[70px]
                                                             ${isExpanded
-                                                                ? 'border-black bg-transparent text-black'
-                                                                : 'border-gray-200 bg-transparent text-gray-700 hover:border-gray-300'
+                                                                ? 'bg-emerald-50/90 text-teal-800 border-emerald-100 shadow-[0_16px_30px_-24px_rgba(47,96,93,0.55)]'
+                                                                : 'border-white/70 bg-white/80 text-slate-700 hover:border-emerald-100 hover:bg-emerald-50/60'
                                                             }
                                                         `}
                                                     >
                                                         <span>{group.key}</span>
-                                                        <span className={`text-[10px] ${isExpanded ? 'text-gray-300' : 'text-gray-500'}`}>
+                                                        <span className={`text-[10px] ${isExpanded ? 'text-teal-600/70' : 'text-slate-500'}`}>
                                                             {t('search.stock')}: {group.totalStock}
                                                         </span>
                                                     </button>
@@ -547,9 +547,9 @@ export default function SuperSelectionPage() {
 
                                         {/* Expanded Detail View */}
                                         {expandedState?.code === product.code && (
-                                            <div className="bg-gray-50 rounded-xl border border-gray-100 p-3 animate-in fade-in slide-in-from-top-2 duration-200">
-                                                <h4 className="text-xs font-medium text-gray-500 mb-2">
-                                                    <span className="text-black">{expandedState?.key}</span> {language === 'zh' ? '库存详情:' : 'Stock Details:'}
+                                            <div className="bg-slate-50/85 rounded-2xl border border-white/70 p-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                                                <h4 className="text-xs font-medium text-slate-500 mb-2">
+                                                    <span className="text-slate-800">{expandedState?.key}</span> {language === 'zh' ? '库存详情:' : 'Stock Details:'}
                                                 </h4>
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                                                     {product.groupedData
@@ -567,17 +567,17 @@ export default function SuperSelectionPage() {
                                                             const isNewStock = item.stock_status === 'new';
 
                                                             return (
-                                                                <div key={idx} className="flex justify-between items-center p-2 bg-white rounded border border-gray-100 relative">
+                                                                <div key={idx} className="flex justify-between items-center p-2 bg-white/85 rounded-xl border border-white/70 relative">
                                                                     <div className="flex items-center gap-2">
-                                                                        <span className="font-medium text-xs text-gray-700">{sub.key}</span>
+                                                                        <span className="font-medium text-xs text-slate-700">{sub.key}</span>
                                                                         {isNewStock && (
-                                                                            <span className="px-1.5 py-0.5 text-[9px] font-bold bg-gradient-to-r from-orange-500 to-red-500 text-white rounded uppercase tracking-wide shadow-sm">
+                                                                            <span className="px-1.5 py-0.5 text-[9px] font-bold bg-emerald-600 text-white rounded uppercase tracking-wide shadow-sm">
                                                                                 {t('sel.new')}
                                                                             </span>
                                                                         )}
                                                                     </div>
                                                                     <div className="flex items-center gap-2">
-                                                                        <div className={`text-xs font-bold ${sub.stock > 0 ? 'text-green-600' : 'text-red-500'}`}>
+                                                                        <div className={`text-xs font-bold ${sub.stock > 0 ? 'text-emerald-700' : 'text-rose-500'}`}>
                                                                             {sub.stock > 0 ? sub.stock : (language === 'zh' ? '售罄' : 'Sold Out')}
                                                                         </div>
                                                                         <button
@@ -586,8 +586,8 @@ export default function SuperSelectionPage() {
                                                                                 toggleFavorite(item, style, size);
                                                                             }}
                                                                             className={`p-1.5 rounded-full border shadow-sm transition-all ${isFav
-                                                                                ? 'bg-red-50 border-red-200 text-red-500'
-                                                                                : 'bg-white border-gray-200 text-gray-300 hover:text-red-400 hover:border-red-200'
+                                                                                ? 'bg-rose-50 border-rose-200 text-rose-500'
+                                                                                : 'bg-white border-slate-200 text-slate-300 hover:text-rose-400 hover:border-rose-200'
                                                                                 }`}
                                                                             title={isFav ? (language === 'zh' ? "取消收藏" : "Remove from Favorites") : (language === 'zh' ? "收藏" : "Add to Favorites")}
                                                                         >

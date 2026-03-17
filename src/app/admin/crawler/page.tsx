@@ -31,9 +31,9 @@ export default function CrawlerPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="admin-theme-scope min-h-screen bg-transparent py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl mx-auto">
-                <div className="bg-white shadow-xl rounded-2xl overflow-hidden">
+                <div className="shell-panel rounded-2xl overflow-hidden">
                     <div className="bg-indigo-600 px-6 py-8">
                         <h1 className="text-3xl font-extrabold text-white">Uniqlo Crawler Dashboard</h1>
                         <p className="mt-2 text-indigo-100 italic">Fetch and update in-stock products from Uniqlo</p>

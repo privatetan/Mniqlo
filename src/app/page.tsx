@@ -13,8 +13,8 @@ const SearchPage = dynamic(() => import('./components/SearchPage'), {
   loading: () => {
     const { t } = useLanguage();
     return (
-      <div className="h-full flex flex-col items-center justify-center p-8 text-gray-400">
-        <div className="w-8 h-8 border-2 border-gray-100 border-t-gray-900 rounded-full animate-spin mb-4" />
+      <div className="h-full flex flex-col items-center justify-center p-8 text-slate-500">
+        <div className="w-8 h-8 border-2 border-slate-200 border-t-teal-700 rounded-full animate-spin mb-4" />
         <span className="text-sm font-medium tracking-tight">{t('search.searching')}</span>
       </div>
     );
@@ -24,8 +24,8 @@ const FavoritePage = dynamic(() => import('./components/FavoritePage'), {
   loading: () => {
     const { t } = useLanguage();
     return (
-      <div className="h-full flex flex-col items-center justify-center p-8 text-gray-400">
-        <div className="w-8 h-8 border-2 border-gray-100 border-t-gray-900 rounded-full animate-spin mb-4" />
+      <div className="h-full flex flex-col items-center justify-center p-8 text-slate-500">
+        <div className="w-8 h-8 border-2 border-slate-200 border-t-teal-700 rounded-full animate-spin mb-4" />
         <span className="text-sm font-medium tracking-tight">{t('fav.syncing')}</span>
       </div>
     );
@@ -35,8 +35,8 @@ const SuperSelectionPage = dynamic(() => import('./components/SuperSelectionPage
   loading: () => {
     const { t } = useLanguage();
     return (
-      <div className="h-full flex flex-col items-center justify-center p-8 text-gray-400">
-        <div className="w-8 h-8 border-2 border-gray-100 border-t-gray-900 rounded-full animate-spin mb-4" />
+      <div className="h-full flex flex-col items-center justify-center p-8 text-slate-500">
+        <div className="w-8 h-8 border-2 border-slate-200 border-t-teal-700 rounded-full animate-spin mb-4" />
         <span className="text-sm font-medium tracking-tight">{t('sel.loading')}</span>
       </div>
     );
@@ -46,8 +46,8 @@ const LimitedTimePage = dynamic(() => import('./components/LimitedTimePage'), {
   loading: () => {
     const { t } = useLanguage();
     return (
-      <div className="h-full flex flex-col items-center justify-center p-8 text-orange-400">
-        <div className="w-8 h-8 border-2 border-orange-100 border-t-orange-500 rounded-full animate-spin mb-4" />
+      <div className="h-full flex flex-col items-center justify-center p-8 text-amber-600">
+        <div className="w-8 h-8 border-2 border-amber-200 border-t-amber-600 rounded-full animate-spin mb-4" />
         <span className="text-sm font-medium tracking-tight">{t('lim.loading')}</span>
       </div>
     );
@@ -58,8 +58,8 @@ const AdminUsers = dynamic(() => import('./components/AdminUsers'), {
   loading: () => {
     const { t } = useLanguage();
     return (
-      <div className="h-full flex flex-col items-center justify-center p-8 text-gray-400">
-        <div className="w-8 h-8 border-2 border-gray-100 border-t-gray-900 rounded-full animate-spin mb-4" />
+      <div className="h-full flex flex-col items-center justify-center p-8 text-slate-500">
+        <div className="w-8 h-8 border-2 border-slate-200 border-t-teal-700 rounded-full animate-spin mb-4" />
         <span className="text-sm font-medium tracking-tight">{t('sel.loading')}</span>
       </div>
     );
@@ -109,11 +109,27 @@ function HomeContent() {
   };
 
   return (
-    <div className="min-h-screen flex bg-transparent md:h-[100dvh] md:overflow-hidden">
+    <div className="relative min-h-screen flex bg-transparent md:h-[100dvh] md:overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div
+          className="absolute left-[-7rem] top-[-6rem] h-80 w-80 rounded-full blur-3xl"
+          style={{ background: 'radial-gradient(circle, var(--bg-radial-a) 0%, transparent 72%)' }}
+        />
+        <div
+          className="absolute right-[-6rem] top-12 h-72 w-72 rounded-full blur-3xl"
+          style={{ background: 'radial-gradient(circle, var(--bg-radial-b) 0%, transparent 70%)' }}
+        />
+        <div
+          className="absolute bottom-[-8rem] left-1/3 h-80 w-80 rounded-full blur-3xl"
+          style={{ background: 'radial-gradient(circle, var(--bg-overlay-b) 0%, transparent 72%)' }}
+        />
+      </div>
+
       {/* Sidebar for Desktop */}
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      <div className="flex-1 flex flex-col min-w-0 bg-white/80 backdrop-blur-md md:my-4 md:mr-4 shadow-xl shadow-sky-100/50 md:overflow-hidden md:rounded-[32px] border border-white/50 relative z-10">
+      <div className="shell-panel flex-1 flex flex-col min-w-0 md:my-4 md:mr-4 md:overflow-hidden md:rounded-[36px] relative z-10">
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.18),transparent_24%,transparent_76%,rgba(255,255,255,0.08))]" />
         <Header title={getHeaderTitle()} />
 
         <main className="flex-1 bg-transparent flex flex-col relative md:overflow-hidden">
@@ -137,7 +153,7 @@ function HomeContent() {
       </div>
 
       {/* Bottom Nav for Mobile */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-t border-gray-100 pb-safe">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-transparent pb-safe">
         <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
       </div>
     </div>
@@ -146,7 +162,7 @@ function HomeContent() {
 
 export default function Home() {
   return (
-    <Suspense fallback={<div className="h-screen flex items-center justify-center text-sky-500">Loading...</div>}>
+    <Suspense fallback={<div className="h-screen flex items-center justify-center text-teal-700">Loading...</div>}>
       <HomeContent />
     </Suspense>
   );

@@ -23,16 +23,19 @@ export const viewport = {
 }
 
 import { LanguageProvider } from '@/context/LanguageContext'
+import { ThemeProvider } from '@/context/ThemeContext'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" data-theme="mist">
       <body>
-        <LanguageProvider>
-          <main>
-            {children}
-          </main>
-        </LanguageProvider>
+        <ThemeProvider>
+          <LanguageProvider>
+            <main>
+              {children}
+            </main>
+          </LanguageProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

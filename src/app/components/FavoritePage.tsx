@@ -184,10 +184,10 @@ export default function FavoritePage() {
     }, [favorites]);
 
     return (
-        <div className="flex flex-col bg-sky-50/20 md:overflow-hidden md:max-h-full min-h-full">
-            <div className="bg-white/80 backdrop-blur-sm flex items-center justify-between px-6 py-4 border-b border-slate-100 shadow-sm relative z-10">
+        <div className="flex flex-col bg-transparent md:overflow-hidden md:max-h-full min-h-full">
+            <div className="frost-panel flex items-center justify-between px-6 py-4 border-b border-white/60 relative z-10">
                 <div className="flex items-center gap-2">
-                    <span className="text-xs text-slate-500 font-medium font-outfit">
+                    <span className="text-xs text-slate-500 font-medium tracking-[0.14em] uppercase">
                         {t('fav.collection', { p: uniqueProductIds.length, v: favorites.length })}
                     </span>
                 </div>
@@ -196,7 +196,7 @@ export default function FavoritePage() {
                     <button
                         onClick={checkStock}
                         disabled={checking}
-                        className="text-xs px-4 py-2 bg-slate-800 text-white font-semibold rounded-lg disabled:opacity-50 flex items-center gap-2 hover:bg-slate-900 transition-all shadow-sm"
+                        className="text-xs px-4 py-2 bg-gradient-to-r from-teal-700 to-slate-800 text-white font-semibold rounded-xl disabled:opacity-50 flex items-center gap-2 hover:from-teal-800 hover:to-slate-900 transition-all shadow-[0_18px_34px_-22px_rgba(47,96,93,0.65)] border border-white/20"
                     >
                         {checking ? (
                             <>
@@ -220,7 +220,7 @@ export default function FavoritePage() {
 
             {favorites.length === 0 ? (
                 <div className="flex flex-col items-center justify-center flex-1 py-32 text-slate-300 overflow-y-auto">
-                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mb-6 opacity-30 text-sky-200">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mb-6 opacity-30 text-teal-200">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                     </svg>
                     <p className="text-sm font-medium tracking-tight text-slate-400">{t('fav.empty')}</p>
@@ -241,14 +241,14 @@ export default function FavoritePage() {
                         };
 
                         return (
-                            <div key={pid} className="card p-0 flex flex-col transition-all duration-300 border border-slate-100 shadow-sm hover:shadow-md bg-white/60 backdrop-blur-sm">
+                            <div key={pid} className="card p-0 flex flex-col transition-all duration-300 border border-white/70 shadow-sm hover:shadow-md bg-white/70 backdrop-blur-sm">
                                 {/* Simplified Group Header */}
                                 <div
                                     role="button"
                                     onClick={() => setSelectedProductId(isExpanded ? null : pid)}
-                                    className={`p-3 cursor-pointer bg-white/50 transition-colors hover:bg-white flex items-center justify-between relative group select-none ${isExpanded ? 'border-b border-slate-100' : ''}`}
+                                    className={`p-3 cursor-pointer bg-white/50 transition-colors hover:bg-emerald-50/40 flex items-center justify-between relative group select-none ${isExpanded ? 'border-b border-slate-100/80' : ''}`}
                                 >
-                                    <div className="w-20 h-20 mr-4 shrink-0 bg-white rounded-lg overflow-hidden border border-slate-100/50 shadow-sm relative">
+                                    <div className="w-20 h-20 mr-4 shrink-0 bg-white/80 rounded-xl overflow-hidden border border-white/70 shadow-sm relative">
                                         {representative.mainPic ? (
                                             <img
                                                 src={`https://www.uniqlo.cn${representative.mainPic}`}
@@ -270,12 +270,12 @@ export default function FavoritePage() {
                                     <div className="flex flex-col gap-1 flex-1 min-w-0 pr-2">
                                         <div className="flex items-center gap-2">
                                             <span
-                                                className="font-mono text-sm text-emerald-600 font-bold tracking-tight cursor-pointer hover:underline"
+                                                className="font-mono text-sm code-text font-bold tracking-tight cursor-pointer hover:underline"
                                                 onClick={handleCodeClick}
                                             >
                                                 {representative.code}
                                             </span>
-                                            <span className="text-sm font-bold text-red-600">¥{representative.price}</span>
+                                            <span className="text-sm font-bold price-text">¥{representative.price}</span>
                                             {details?.originPrice && (
                                                 <span className="text-[10px] text-slate-400 line-through shrink-0">¥{details.originPrice}</span>
                                             )}
@@ -286,7 +286,7 @@ export default function FavoritePage() {
                                         </div>
                                         <div className="flex items-center gap-2">
                                             {groupItems.length > 0 && (
-                                                <span className="text-[11px] font-semibold text-sky-600 bg-sky-50 px-2.5 py-1 rounded-full">
+                                                <span className="text-[11px] font-semibold text-teal-800 bg-emerald-50/80 px-2.5 py-1 rounded-full border border-emerald-100/80">
                                                     {t('fav.variants', { n: groupItems.length })}
                                                 </span>
                                             )}
@@ -295,7 +295,7 @@ export default function FavoritePage() {
 
                                     <div className="flex items-center gap-3">
 
-                                        <div className="p-2 -m-2 rounded-full hover:bg-slate-50 transition-colors">
+                                        <div className="p-2 -m-2 rounded-full hover:bg-emerald-50/60 transition-colors">
                                             <svg className={`w-4 h-4 text-slate-300 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                                 <path d="M19 9l-7 7-7-7" />
                                             </svg>
@@ -305,7 +305,7 @@ export default function FavoritePage() {
 
                                 {/* Expanded List - Show ALL items when expanded */}
                                 {isExpanded && (
-                                    <div className="bg-gray-50/50 p-2 space-y-2 animate-in fade-in slide-in-from-top-1">
+                                    <div className="surface-muted p-2 space-y-2 animate-in fade-in slide-in-from-top-1 rounded-b-[24px]">
                                         {groupItems.map((item: FavoriteItem) => (
                                             <FavoriteItemRow
                                                 key={item.key}

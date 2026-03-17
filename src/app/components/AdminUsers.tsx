@@ -476,7 +476,7 @@ export default function AdminUsers() {
     const totalTasks = users.reduce((acc, user) => acc + user._count.tasks, 0);
 
     return (
-        <div className="h-full flex flex-col bg-gray-50/30 w-full overflow-hidden">
+        <div className="admin-theme-scope h-full flex flex-col bg-transparent w-full overflow-hidden">
 
             <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 scroll-smooth">
                 <div className="w-full space-y-6">

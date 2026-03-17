@@ -26,6 +26,11 @@ export const translations: Translations = {
     'header.gallery_title': { zh: '私人收藏', en: 'Private Collection' },
     'header.selection_title': { zh: '精选商品', en: 'Featured Selection' },
     'header.limited_time_title': { zh: '限时特优', en: 'Limited Time Offer' },
+    'theme.label': { zh: '主题换肤', en: 'Theme' },
+    'theme.mist': { zh: '清雾绿', en: 'Mist Green' },
+    'theme.ocean': { zh: '海岸蓝', en: 'Coastal Blue' },
+    'theme.forest': { zh: '林间绿', en: 'Forest Sage' },
+    'theme.night': { zh: '夜幕黑', en: 'Night Mode' },
 
     // Search Page
     'search.placeholder': { zh: '请输入6位商品编号...', en: 'Enter 6-digit product code...' },

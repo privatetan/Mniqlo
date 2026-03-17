@@ -342,9 +342,9 @@ export default function LimitedTimePage() {
     }, [filteredAndGroupedProducts, sortBy]);
 
     return (
-        <div className="h-full flex flex-col bg-orange-50/30 overflow-hidden">
+        <div className="h-full flex flex-col bg-transparent overflow-hidden">
             <div
-                className={`fixed md:absolute top-[60px] md:top-0 left-0 right-0 bg-white z-30 md:z-40 transition-transform duration-300 ease-in-out shadow-sm border-b border-orange-100 ${showHeader ? 'translate-y-0' : '-translate-y-[200%] md:-translate-y-full'
+                className={`fixed md:absolute top-[60px] md:top-0 left-0 right-0 frost-panel z-30 md:z-40 transition-transform duration-300 ease-in-out border-b border-white/60 ${showHeader ? 'translate-y-0' : '-translate-y-[200%] md:-translate-y-full'
                     }`}
             >
                 <div className="px-6 py-4">
@@ -353,9 +353,9 @@ export default function LimitedTimePage() {
                             <button
                                 key={cat}
                                 onClick={() => setActiveGender(cat)}
-                                className={`px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${activeGender === cat
-                                    ? 'bg-orange-500 text-white shadow-sm'
-                                    : 'bg-orange-50 text-orange-500 hover:bg-orange-100'
+                                className={`px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all border ${activeGender === cat
+                                    ? 'bg-amber-50 text-amber-800 border-amber-100 shadow-[0_16px_30px_-24px_rgba(180,83,9,0.42)]'
+                                    : 'bg-white/70 text-amber-700 border-white/70 hover:bg-amber-50/80 hover:border-amber-100'
                                     }`}
                             >
                                 {cat === '全部' ? (language === 'zh' ? '全部' : 'All') :
@@ -372,11 +372,11 @@ export default function LimitedTimePage() {
                         <input
                             type="text"
                             placeholder={t('lim.search_placeholder')}
-                            className="w-full h-10 pl-10 pr-4 bg-orange-50/70 border border-orange-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-500/10 focus:border-orange-300 transition-all"
+                            className="w-full h-10 pl-10 pr-4 bg-white/80 border border-white/70 rounded-2xl text-sm outline-none focus:ring-4 focus:ring-amber-500/10 focus:border-amber-400 transition-all"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
-                        <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 text-orange-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 text-amber-500" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <circle cx="11" cy="11" r="8" />
                             <path d="m21 21-4.3-4.3" />
                         </svg>
@@ -386,7 +386,7 @@ export default function LimitedTimePage() {
                         <select
                             value={sortBy}
                             onChange={(e) => setSortBy(e.target.value as any)}
-                            className="text-xs px-3 py-1.5 rounded-lg border border-orange-100 bg-white text-orange-600 outline-none focus:border-orange-300 cursor-pointer transition-all"
+                            className="w-[8.5rem] shrink-0 text-xs px-3 py-1.5 pr-8 rounded-xl border border-white/70 bg-white/80 text-amber-700 outline-none focus:border-amber-300 cursor-pointer transition-all"
                         >
                             <option value="default">{t('sel.sort_default')}</option>
                             <option value="price-asc">{t('sel.sort_price_asc')}</option>
@@ -394,7 +394,7 @@ export default function LimitedTimePage() {
                             <option value="discount">{t('sel.sort_discount')}</option>
                         </select>
                         {!loading && (
-                            <div className="text-[11px] text-orange-400 font-medium">
+                            <div className="text-[11px] text-amber-700/70 font-medium">
                                 {t('lim.found', { n: sortedProducts.length })}
                             </div>
                         )}
@@ -408,24 +408,24 @@ export default function LimitedTimePage() {
                 className="flex-1 md:overflow-y-auto overflow-visible px-4 pb-20 pt-44 md:pb-4 scroll-smooth"
             >
                 {loading ? (
-                    <div className="flex flex-col items-center justify-center py-24 text-orange-400">
-                        <div className="w-8 h-8 border-2 border-orange-100 border-t-orange-500 rounded-full animate-spin mb-4" />
+                    <div className="flex flex-col items-center justify-center py-24 text-amber-700">
+                        <div className="w-8 h-8 border-2 border-amber-200 border-t-amber-600 rounded-full animate-spin mb-4" />
                         <p className="text-sm font-medium tracking-tight">{t('lim.loading')}</p>
                     </div>
                 ) : sortedProducts.length === 0 ? (
-                    <div className="text-center py-24 text-orange-400">
+                    <div className="text-center py-24 text-amber-700">
                         <p className="text-sm font-medium tracking-tight">{t('lim.none')}</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
                         {sortedProducts.map(product => (
-                            <div key={product.code} className="card p-0 overflow-hidden border border-orange-100/60 shadow-[0_16px_40px_-28px_rgba(249,115,22,0.45)]">
+                            <div key={product.code} className="card p-0 overflow-hidden border border-white/70 shadow-[0_20px_44px_-34px_rgba(180,83,9,0.36)]">
                                 <div
-                                    className="p-3 cursor-pointer hover:bg-orange-50/40 transition-colors"
+                                    className="p-3 cursor-pointer hover:bg-amber-50/40 transition-colors"
                                     onClick={() => setExpandedCode(expandedCode === product.code ? null : product.code)}
                                 >
                                     <div className="flex gap-3 mb-3">
-                                        <div className="w-20 h-20 shrink-0 bg-orange-50 rounded-lg overflow-hidden relative border border-orange-100">
+                                        <div className="w-20 h-20 shrink-0 bg-amber-50/50 rounded-xl overflow-hidden relative border border-amber-100/80">
                                             {product.items[0]?.main_pic ? (
                                                 <img
                                                     src={`https://www.uniqlo.cn${product.items[0].main_pic}`}
@@ -434,7 +434,7 @@ export default function LimitedTimePage() {
                                                     loading="lazy"
                                                 />
                                             ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-orange-200">
+                                                <div className="w-full h-full flex items-center justify-center text-amber-200">
                                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                                                         <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                                                         <circle cx="8.5" cy="8.5" r="1.5"></circle>
@@ -449,23 +449,23 @@ export default function LimitedTimePage() {
                                                 <div className="flex-1 min-w-0 pr-2">
                                                     <div className="flex flex-col gap-1 h-full">
                                                         <div className="flex items-center gap-1.5 flex-wrap">
-                                                            <span className="text-sm text-orange-500 font-bold font-mono tracking-tight">{product.code}</span>
-                                                            <span className="text-[10px] px-1.5 py-0.5 bg-orange-50 text-orange-600 font-semibold rounded-full uppercase tracking-tight">{product.gender}</span>
+                                                            <span className="text-sm text-amber-700 font-bold font-mono tracking-tight">{product.code}</span>
+                                                            <span className="text-[10px] px-1.5 py-0.5 bg-amber-50/90 text-amber-700 font-semibold rounded-full uppercase tracking-tight">{product.gender}</span>
                                                             {product.items.some(i => i.stock_status === 'new') && (
                                                                 <span className="px-1.5 py-0.5 text-[10px] font-bold bg-gradient-to-r from-orange-500 to-rose-500 text-white rounded-full uppercase tracking-tight">
                                                                     {t('lim.flash')}
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        <h3 className="text-xs text-gray-900 font-medium line-clamp-2 leading-relaxed">{product.name}</h3>
+                                                        <h3 className="text-xs text-slate-800 font-medium line-clamp-2 leading-relaxed">{product.name}</h3>
                                                     </div>
                                                 </div>
                                                 <div className="text-right shrink-0">
                                                     <div className="flex flex-col items-end">
-                                                        <div className="text-orange-600 font-bold text-base leading-none">¥{product.minPrice}</div>
+                                                        <div className="text-amber-700 font-bold text-base leading-none">¥{product.minPrice}</div>
                                                         {product.originPrice > product.minPrice && (
                                                             <div className="flex items-center gap-1 mt-0.5">
-                                                                <div className="text-[10px] text-gray-400 line-through">¥{product.originPrice}</div>
+                                                                <div className="text-[10px] text-slate-400 line-through">¥{product.originPrice}</div>
                                                                 <div className="text-[10px] text-rose-500 font-semibold">
                                                                     {t('sel.off', { n: ((product.minPrice / product.originPrice) * 10).toFixed(1) })}
                                                                 </div>
@@ -476,7 +476,7 @@ export default function LimitedTimePage() {
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="flex items-center justify-between text-[10px] font-medium text-orange-400 border-t border-orange-50 pt-2">
+                                    <div className="flex items-center justify-between text-[10px] font-medium text-amber-700/70 border-t border-amber-100/70 pt-2">
                                         <span>{t('fav.variants', { n: product.items.length })}</span>
                                         <svg
                                             className={`transition-transform duration-300 ${expandedCode === product.code ? 'rotate-180' : ''}`}
@@ -489,21 +489,21 @@ export default function LimitedTimePage() {
 
                                 {expandedCode === product.code && (
                                     <div className="px-4 pb-4 animate-in fade-in slide-in-from-top-2 duration-200">
-                                        <div className="h-px bg-orange-50 mb-4" />
+                                        <div className="h-px bg-amber-100/70 mb-4" />
 
                                         <div
-                                            className="mb-3 flex items-center gap-1 text-xs font-bold border border-orange-100 rounded px-3 py-1.5 inline-flex cursor-pointer hover:bg-orange-50 transition-colors"
+                                            className="mb-3 flex items-center gap-1 text-xs font-bold border border-white/70 bg-white/80 rounded-full px-3 py-1.5 inline-flex cursor-pointer hover:bg-amber-50/60 transition-colors"
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 setViewMode(viewMode === 'color' ? 'size' : 'color');
                                                 setExpandedState(null);
                                             }}
                                         >
-                                            <span className={viewMode === 'color' ? 'text-orange-500' : 'text-gray-400'}>
+                                            <span className={viewMode === 'color' ? 'text-amber-700' : 'text-slate-400'}>
                                                 {t('search.color')}
                                             </span>
-                                            <span className="text-orange-200 font-normal">|</span>
-                                            <span className={viewMode === 'size' ? 'text-orange-500' : 'text-gray-400'}>
+                                            <span className="text-amber-200 font-normal">|</span>
+                                            <span className={viewMode === 'size' ? 'text-amber-700' : 'text-slate-400'}>
                                                 {t('search.size')}
                                             </span>
                                         </div>
@@ -521,13 +521,13 @@ export default function LimitedTimePage() {
                                                         className={`
                                                             px-3 py-1.5 rounded-lg border text-xs font-medium transition flex flex-col items-center gap-0.5 min-w-[70px]
                                                             ${isExpanded
-                                                                ? 'border-orange-500 bg-orange-50/80 text-orange-700'
-                                                                : 'border-orange-100 bg-transparent text-gray-700 hover:border-orange-200'
+                                                                ? 'border-amber-100 bg-amber-50/90 text-amber-800 shadow-[0_16px_30px_-24px_rgba(180,83,9,0.42)]'
+                                                                : 'border-white/70 bg-white/80 text-slate-700 hover:border-amber-100 hover:bg-amber-50/60'
                                                             }
                                                         `}
                                                     >
                                                         <span>{group.key}</span>
-                                                        <span className={`text-[10px] ${isExpanded ? 'text-orange-400' : 'text-gray-500'}`}>
+                                                        <span className={`text-[10px] ${isExpanded ? 'text-amber-600/70' : 'text-slate-500'}`}>
                                                             {t('search.stock')}: {group.totalStock}
                                                         </span>
                                                     </button>
@@ -536,9 +536,9 @@ export default function LimitedTimePage() {
                                         </div>
 
                                         {expandedState?.code === product.code && (
-                                            <div className="bg-orange-50/40 rounded-xl border border-orange-100 p-3 animate-in fade-in slide-in-from-top-2 duration-200">
-                                                <h4 className="text-xs font-medium text-orange-500 mb-2">
-                                                    <span className="text-gray-900">{expandedState?.key}</span> {language === 'zh' ? '库存详情:' : 'Stock Details:'}
+                                            <div className="bg-amber-50/55 rounded-2xl border border-amber-100/80 p-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                                                <h4 className="text-xs font-medium text-amber-700 mb-2">
+                                                    <span className="text-slate-800">{expandedState?.key}</span> {language === 'zh' ? '库存详情:' : 'Stock Details:'}
                                                 </h4>
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                                                     {product.groupedData
@@ -555,9 +555,9 @@ export default function LimitedTimePage() {
                                                             const isNewStock = item.stock_status === 'new';
 
                                                             return (
-                                                                <div key={idx} className="flex justify-between items-center p-2 bg-white rounded border border-orange-100 relative">
+                                                                <div key={idx} className="flex justify-between items-center p-2 bg-white/90 rounded-xl border border-amber-100/80 relative">
                                                                     <div className="flex items-center gap-2">
-                                                                        <span className="font-medium text-xs text-gray-700">{sub.key}</span>
+                                                                        <span className="font-medium text-xs text-slate-700">{sub.key}</span>
                                                                         {isNewStock && (
                                                                             <span className="px-1.5 py-0.5 text-[9px] font-bold bg-gradient-to-r from-orange-500 to-rose-500 text-white rounded uppercase tracking-wide shadow-sm">
                                                                                 {t('lim.flash')}
@@ -565,7 +565,7 @@ export default function LimitedTimePage() {
                                                                         )}
                                                                     </div>
                                                                     <div className="flex items-center gap-2">
-                                                                        <div className={`text-xs font-bold ${sub.stock > 0 ? 'text-orange-600' : 'text-rose-500'}`}>
+                                                                        <div className={`text-xs font-bold ${sub.stock > 0 ? 'text-amber-700' : 'text-rose-500'}`}>
                                                                             {sub.stock > 0 ? sub.stock : (language === 'zh' ? '售罄' : 'Sold Out')}
                                                                         </div>
                                                                         <button
@@ -575,7 +575,7 @@ export default function LimitedTimePage() {
                                                                             }}
                                                                             className={`p-1.5 rounded-full border shadow-sm transition-all ${isFav
                                                                                 ? 'bg-rose-50 border-rose-200 text-rose-500'
-                                                                                : 'bg-white border-orange-100 text-orange-300 hover:text-rose-400 hover:border-rose-200'
+                                                                                : 'bg-white border-amber-100 text-amber-300 hover:text-rose-400 hover:border-rose-200'
                                                                                 }`}
                                                                         >
                                                                             <svg

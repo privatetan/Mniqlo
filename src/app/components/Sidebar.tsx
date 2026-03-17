@@ -81,36 +81,38 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
     }
 
     return (
-        <aside className="hidden md:flex flex-col w-64 bg-transparent h-full shrink-0 z-20">
-            <div className="p-8 flex items-center gap-3">
-                <div className="relative w-10 h-10 shrink-0">
+        <aside className="hidden md:flex flex-col w-72 bg-transparent h-full shrink-0 z-20 px-4 py-4">
+            <div className="frost-panel rounded-[30px] px-5 py-5 flex items-center gap-3 mb-5">
+                <div className="relative w-12 h-12 shrink-0 overflow-hidden rounded-full ring-1 ring-white/70 shadow-[0_18px_36px_-26px_rgba(47,96,93,0.6)]">
                     <Image
                         src="/logo.jpg"
                         alt="Mniqlo"
                         fill
-                        className="object-contain rounded-full"
+                        className="object-cover"
                         priority
                     />
                 </div>
-                <h2 className="text-2xl font-bold text-sky-900 tracking-tight font-outfit">Mniqlo</h2>
+                <div>
+                    <h2 className="text-[2rem] leading-none text-slate-800 tracking-tight font-outfit">Mniqlo</h2>
+                </div>
             </div>
-            <nav className="flex-1 px-4 space-y-2">
+            <nav className="flex-1 px-2 space-y-2.5">
                 {navItems.map((item) => (
                     <button
                         key={item.id}
                         onClick={() => setActiveTab(item.id as any)}
-                        className={`flex items-center gap-3 w-full px-4 py-3.5 rounded-2xl transition-all duration-300 group ${activeTab === item.id
-                            ? 'bg-sky-100 text-sky-600 shadow-sm shadow-sky-100'
-                            : 'text-slate-500 hover:bg-white/60 hover:text-slate-700'
+                        className={`flex items-center gap-3 w-full px-4 py-3.5 rounded-[22px] transition-all duration-300 group border ${activeTab === item.id
+                            ? 'frost-panel text-teal-900 border-white/70 shadow-[0_24px_42px_-34px_rgba(47,96,93,0.58)]'
+                            : 'bg-transparent text-slate-500 border-transparent hover:bg-white/55 hover:text-slate-700 hover:border-white/60'
                             }`}
                     >
-                        <span className={`shrink-0 transition-transform duration-300 ${activeTab === item.id ? 'scale-110' : 'group-hover:scale-110'}`}>{item.icon}</span>
+                        <span className={`shrink-0 transition-transform duration-300 ${activeTab === item.id ? 'scale-110 text-teal-800' : 'group-hover:scale-110'}`}>{item.icon}</span>
                         <span className="font-semibold text-sm">{item.label}</span>
                     </button>
                 ))}
             </nav>
-            <div className="p-6">
-                <div className="text-[11px] text-sky-900/40 font-semibold tracking-wide">{t('nav.est')}</div>
+            <div className="px-4 pb-4 pt-6">
+                <div className="text-[11px] text-slate-400 font-semibold tracking-[0.22em] uppercase">{t('nav.est')}</div>
             </div>
         </aside>
     );
