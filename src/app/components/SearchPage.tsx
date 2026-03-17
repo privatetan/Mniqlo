@@ -393,14 +393,14 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
                     }`}
             >
                 <div className="space-y-3 px-4 py-3 md:px-6">
-                    <div className="frost-panel rounded-[28px] px-4 py-3">
+                    <div>
                         <div className="flex items-center gap-4">
                         {/* Search Input */}
                             <div className="flex-1 relative">
                                 <input
                                     type="text"
                                     placeholder={t('search.placeholder')}
-                                    className="w-full h-11 pl-11 pr-12 bg-white/75 border border-white/70 rounded-2xl text-sm outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-600 transition-all font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]"
+                                    className="w-full h-11 pl-11 pr-12 bg-white/72 border border-white/70 rounded-full text-sm outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-600 transition-all font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]"
                                     value={query}
                                     onChange={(e) => setQuery(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && handleSearch()}

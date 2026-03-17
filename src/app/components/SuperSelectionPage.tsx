@@ -380,12 +380,12 @@ export default function SuperSelectionPage() {
                             </button>
                         ))}
                     </div>
-                    <div className="frost-panel rounded-[28px] px-4 py-3">
+                    <div>
                         <div className="relative">
                             <input
                                 type="text"
                                 placeholder={t('sel.search_placeholder')}
-                                className="w-full h-10 pl-10 pr-4 bg-white/75 border border-white/70 rounded-2xl text-sm outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-600 transition-all"
+                                className="w-full h-10 pl-10 pr-4 bg-white/72 border border-white/70 rounded-full text-sm outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-600 transition-all"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
