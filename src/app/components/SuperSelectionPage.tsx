@@ -358,10 +358,10 @@ export default function SuperSelectionPage() {
             {/* Header: Tabs & Search */}
             {/* Header: Tabs & Search */}
             <div
-                className={`fixed md:absolute top-[60px] md:top-0 left-0 right-0 frost-panel z-30 md:z-40 transition-transform duration-300 ease-in-out border-b border-white/60 ${showHeader ? 'translate-y-0' : '-translate-y-[200%] md:-translate-y-full'
+                className={`fixed md:absolute top-[60px] md:top-0 left-0 right-0 z-30 md:z-40 transition-transform duration-300 ease-in-out ${showHeader ? 'translate-y-0' : '-translate-y-[200%] md:-translate-y-full'
                     }`}
             >
-                <div className="px-6 py-4">
+                <div className="space-y-3 px-4 py-3 md:px-6">
                     <div className="flex gap-2 mb-4 overflow-x-auto no-scrollbar">
                         {categories.map(cat => (
                             <button
@@ -380,34 +380,38 @@ export default function SuperSelectionPage() {
                             </button>
                         ))}
                     </div>
-                    <div className="relative">
-                        <input
-                            type="text"
-                            placeholder={t('sel.search_placeholder')}
-                            className="w-full h-10 pl-10 pr-4 bg-white/75 border border-white/70 rounded-2xl text-sm outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-600 transition-all"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                        <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <circle cx="11" cy="11" r="8" />
-                            <path d="m21 21-4.3-4.3" />
-                        </svg>
+                    <div className="frost-panel rounded-[28px] px-4 py-3">
+                        <div className="relative">
+                            <input
+                                type="text"
+                                placeholder={t('sel.search_placeholder')}
+                                className="w-full h-10 pl-10 pr-4 bg-white/75 border border-white/70 rounded-2xl text-sm outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-600 transition-all"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                            <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <circle cx="11" cy="11" r="8" />
+                                <path d="m21 21-4.3-4.3" />
+                            </svg>
+                        </div>
                     </div>
 
                     {/* Sort Dropdown */}
-                    <div className="mt-3 flex items-center justify-between">
-                        <select
-                            value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value as any)}
-                            className="w-[8.5rem] shrink-0 text-xs px-3 py-1.5 pr-8 rounded-xl border border-white/70 bg-white/80 text-slate-600 outline-none focus:border-teal-500 cursor-pointer transition-all"
-                        >
-                            <option value="default">{t('sel.sort_default')}</option>
-                            <option value="price-asc">{t('sel.sort_price_asc')}</option>
-                            <option value="price-desc">{t('sel.sort_price_desc')}</option>
-                            <option value="discount">{t('sel.sort_discount')}</option>
-                        </select>
+                    <div className="flex items-center justify-between gap-3">
+                        <div className="frost-panel rounded-2xl px-1.5 py-1">
+                            <select
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value as any)}
+                                className="w-[8.5rem] shrink-0 text-xs px-3 py-1.5 pr-8 rounded-xl border-0 bg-transparent text-slate-600 outline-none focus:border-teal-500 cursor-pointer transition-all"
+                            >
+                                <option value="default">{t('sel.sort_default')}</option>
+                                <option value="price-asc">{t('sel.sort_price_asc')}</option>
+                                <option value="price-desc">{t('sel.sort_price_desc')}</option>
+                                <option value="discount">{t('sel.sort_discount')}</option>
+                            </select>
+                        </div>
                         {!loading && (
-                            <div className="text-[11px] text-slate-500 font-medium">
+                            <div className="frost-panel rounded-full px-3 py-2 text-[11px] text-slate-500 font-medium">
                                 {t('sel.found', { n: items.length })}
                             </div>
                         )}

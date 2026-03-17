@@ -91,7 +91,7 @@ export default function ThemeSwitcher({ align = 'right', compact = false }: Them
                 ref={buttonRef}
                 type="button"
                 onClick={() => setIsOpen((open) => !open)}
-                className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/72 px-3 py-2 text-slate-500 transition-all hover:bg-white/90 hover:text-[color:var(--accent-strong)]"
+                className="frost-panel inline-flex items-center gap-2 rounded-full px-3 py-2 text-slate-500 transition-all hover:bg-white/90 hover:text-[color:var(--accent-strong)]"
                 aria-label={t('theme.label')}
                 title={t('theme.label')}
             >

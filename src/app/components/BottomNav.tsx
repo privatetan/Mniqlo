@@ -24,7 +24,7 @@ export default function BottomNav({ activeTab, setActiveTab }: BottomNavProps) {
 
     return (
         <nav className="mx-3 mb-2 z-50 pb-safe shrink-0">
-            <div className="h-[64px] flex items-center justify-around gap-0.5 rounded-[28px] bg-white/38 px-2 shadow-[0_18px_42px_-34px_rgba(31,48,55,0.34)] backdrop-blur-xl">
+            <div className="mobile-nav-glass h-[64px] flex items-center justify-around gap-0.5 rounded-[28px] px-2">
                 <button
                     onClick={() => setActiveTab('super-selection')}
                     className={`${buttonBaseClass} ${activeTab === 'super-selection' ? 'text-slate-700' : 'text-slate-400'}`}

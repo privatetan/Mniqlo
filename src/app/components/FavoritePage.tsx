@@ -185,9 +185,9 @@ export default function FavoritePage() {
 
     return (
         <div className="flex flex-col bg-transparent md:overflow-hidden md:max-h-full min-h-full">
-            <div className="frost-panel flex items-center justify-between px-6 py-4 border-b border-white/60 relative z-10">
-                <div className="flex items-center gap-2">
-                    <span className="text-xs text-slate-500 font-medium tracking-[0.14em] uppercase">
+            <div className="flex items-center justify-between gap-3 px-4 pt-3 md:px-6 relative z-10">
+                <div className="frost-panel rounded-full px-4 py-2">
+                    <span className="text-xs text-slate-500 font-medium tracking-[0.14em] uppercase block">
                         {t('fav.collection', { p: uniqueProductIds.length, v: favorites.length })}
                     </span>
                 </div>
@@ -196,7 +196,7 @@ export default function FavoritePage() {
                     <button
                         onClick={checkStock}
                         disabled={checking}
-                        className="text-xs px-4 py-2 bg-gradient-to-r from-teal-700 to-slate-800 text-white font-semibold rounded-xl disabled:opacity-50 flex items-center gap-2 hover:from-teal-800 hover:to-slate-900 transition-all shadow-[0_18px_34px_-22px_rgba(47,96,93,0.65)] border border-white/20"
+                        className="frost-panel text-xs px-4 py-2 text-slate-700 font-semibold rounded-full disabled:opacity-50 flex items-center gap-2 hover:text-teal-800 transition-all"
                     >
                         {checking ? (
                             <>

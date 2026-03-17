@@ -23,28 +23,31 @@ export default function Header({ title }: HeaderProps) {
     };
 
     return (
-        <header className="sticky top-0 z-40 frost-panel px-6 py-4 flex justify-between items-center border-b border-white/60">
-            <div className="w-10">
+        <header className="sticky top-0 z-40 bg-transparent px-4 py-3 md:px-6">
+            <div className="flex items-center justify-between gap-2 md:gap-3">
                 <button
                     onClick={toggleLanguage}
-                    className="text-xs font-bold text-slate-500 hover:text-teal-800 transition-colors uppercase tracking-[0.24em]"
-                    style={{ background: 'transparent', padding: 0 }}
+                    className="frost-panel inline-flex h-10 min-w-[3.5rem] items-center justify-center rounded-full px-3 text-xs font-bold text-slate-500 transition-colors uppercase tracking-[0.24em] hover:text-teal-800"
                 >
                     {language === 'zh' ? 'EN' : 'ZH'}
                 </button>
-            </div>
-            <h1 className="text-[1.35rem] font-bold text-slate-800 tracking-tight flex-1 text-center font-outfit">
-                {title}
-            </h1>
-            <div className="flex items-center gap-3">
-                <ThemeSwitcher />
+
+                <div className="frost-panel min-w-0 flex-1 rounded-full px-4 py-2.5 text-center">
+                    <h1 className="truncate text-[1.2rem] font-bold text-slate-800 tracking-tight font-outfit md:text-[1.35rem]">
+                        {title}
+                    </h1>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <ThemeSwitcher />
+                
                 <button
                     onClick={handleLogout}
-                    className="text-xs font-medium text-slate-500 hover:text-rose-500 hover:bg-rose-50/80 hover:border-rose-100 px-3 py-1.5 rounded-full transition-all"
-                    style={{ background: 'transparent' }}
+                    className="frost-panel inline-flex h-10 items-center justify-center rounded-full px-3 text-xs font-medium text-slate-500 transition-all hover:text-rose-500 hover:bg-rose-50/80"
                 >
                     {t('header.logout')}
                 </button>
+                </div>
             </div>
         </header>
     );

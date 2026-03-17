@@ -389,41 +389,43 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
             {/* Header Section */}
             {/* Header Section */}
             <header
-                className={`fixed md:absolute top-[60px] md:top-0 left-0 right-0 frost-panel z-30 md:z-40 transition-transform duration-300 ease-in-out border-b border-white/60 ${showHeader ? 'translate-y-0' : '-translate-y-[200%]'
+                className={`fixed md:absolute top-[60px] md:top-0 left-0 right-0 z-30 md:z-40 transition-transform duration-300 ease-in-out ${showHeader ? 'translate-y-0' : '-translate-y-[200%]'
                     }`}
             >
-                <div className="px-6 py-4">
-                    <div className="flex items-center gap-4">
+                <div className="space-y-3 px-4 py-3 md:px-6">
+                    <div className="frost-panel rounded-[28px] px-4 py-3">
+                        <div className="flex items-center gap-4">
                         {/* Search Input */}
-                        <div className="flex-1 relative">
-                            <input
-                                type="text"
-                                placeholder={t('search.placeholder')}
-                                className="w-full h-11 pl-11 pr-12 bg-white/75 border border-white/70 rounded-2xl text-sm outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-600 transition-all font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]"
-                                value={query}
-                                onChange={(e) => setQuery(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                            />
-                            <button
-                                onClick={() => handleSearch()}
-                                disabled={loading}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-teal-800 transition-colors p-1 bg-transparent border-0 shadow-none"
-                            >
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <div className="flex-1 relative">
+                                <input
+                                    type="text"
+                                    placeholder={t('search.placeholder')}
+                                    className="w-full h-11 pl-11 pr-12 bg-white/75 border border-white/70 rounded-2xl text-sm outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-600 transition-all font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]"
+                                    value={query}
+                                    onChange={(e) => setQuery(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                                />
+                                <button
+                                    onClick={() => handleSearch()}
+                                    disabled={loading}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-teal-800 transition-colors p-1 bg-transparent border-0 shadow-none"
+                                >
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                        <circle cx="11" cy="11" r="8" />
+                                        <path d="m21 21-4.3-4.3" />
+                                    </svg>
+                                </button>
+                                <svg className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                                     <circle cx="11" cy="11" r="8" />
                                     <path d="m21 21-4.3-4.3" />
                                 </svg>
-                            </button>
-                            <svg className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                <circle cx="11" cy="11" r="8" />
-                                <path d="m21 21-4.3-4.3" />
-                            </svg>
+                            </div>
                         </div>
                     </div>
 
                     {/* Secondary Nav */}
-                    <div className="flex items-center gap-3 mt-4 text-xs font-medium text-slate-400 min-h-[24px]">
-                        {history.length > 0 && (
+                    {history.length > 0 && (
+                        <div className="frost-panel flex items-center gap-3 rounded-[24px] px-4 py-3 text-xs font-medium text-slate-400 min-h-[24px]">
                             <>
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-slate-300 shrink-0">
                                     <path d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2Z" />
@@ -450,8 +452,8 @@ export default function SearchPage({ initialQuery }: { initialQuery?: string | n
                                     ))}
                                 </div>
                             </>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
             </header>
 
