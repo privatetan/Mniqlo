@@ -77,7 +77,7 @@ function HomeContent() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
 
-  const canToggleFilters = activeTab === 'search' || activeTab === 'super-selection' || activeTab === 'limited-time';
+  const canToggleFilters = activeTab === 'super-selection' || activeTab === 'limited-time';
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -149,11 +149,7 @@ function HomeContent() {
 
         <main className="flex-1 bg-transparent flex flex-col relative md:overflow-hidden">
           <div className={activeTab === 'search' ? 'h-full' : 'hidden'}>
-            <SearchPage
-              initialQuery={searchQuery}
-              isFilterPanelOpen={isFilterPanelOpen}
-              onCloseFilterPanel={() => setIsFilterPanelOpen(false)}
-            />
+            <SearchPage initialQuery={searchQuery} />
           </div>
           <div className={activeTab === 'favorites' ? 'h-full' : 'hidden'}>
             <FavoritePage />

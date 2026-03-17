@@ -90,18 +90,11 @@ export default function SuperSelectionPage({ isFilterPanelOpen = false, onCloseF
         }
     }, [closeFilterPanel]);
 
-    useEffect(() => {
-        if (!isFilterPanelOpen) return;
-
-        const handleWindowScroll = () => {
-            if (window.innerWidth < 768) {
-                closeFilterPanel();
-            }
-        };
-
-        window.addEventListener('scroll', handleWindowScroll, { passive: true });
-        return () => window.removeEventListener('scroll', handleWindowScroll);
-    }, [isFilterPanelOpen, closeFilterPanel]);
+    const handleTouchMove = useCallback(() => {
+        if (window.innerWidth < 768) {
+            closeFilterPanel();
+        }
+    }, [closeFilterPanel]);
 
     const categories = ['全部', '女装', '男装', '童装', '婴幼儿装'];
 
@@ -359,7 +352,7 @@ export default function SuperSelectionPage({ isFilterPanelOpen = false, onCloseF
                             <input
                                 type="text"
                                 placeholder={t('sel.search_placeholder')}
-                                className="w-full h-10 pl-10 pr-4 bg-white/72 border border-white/70 rounded-full text-sm outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-600 transition-all"
+                                className="w-full h-10 pl-10 pr-4 bg-white/72 border border-white/70 rounded-full text-sm outline-none appearance-none shadow-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-600 transition-all"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
@@ -372,11 +365,11 @@ export default function SuperSelectionPage({ isFilterPanelOpen = false, onCloseF
 
                     {/* Sort Dropdown */}
                     <div className="flex items-center justify-between gap-3">
-                        <div className="filter-surface rounded-2xl px-1.5 py-1">
+                        <div className="filter-control-shell rounded-2xl px-1.5 py-1">
                             <select
                                 value={sortBy}
                                 onChange={(e) => setSortBy(e.target.value as any)}
-                                className="w-[8.5rem] shrink-0 text-xs px-3 py-1.5 pr-8 rounded-xl border-0 bg-transparent text-slate-600 outline-none focus:border-teal-500 cursor-pointer transition-all"
+                                className="w-[8.5rem] shrink-0 text-xs px-3 py-1.5 pr-8 rounded-xl border-0 bg-transparent text-slate-600 outline-none appearance-none shadow-none focus:ring-0 focus:shadow-none cursor-pointer transition-all"
                             >
                                 <option value="default">{t('sel.sort_default')}</option>
                                 <option value="price-asc">{t('sel.sort_price_asc')}</option>
@@ -396,6 +389,7 @@ export default function SuperSelectionPage({ isFilterPanelOpen = false, onCloseF
             <div
                 ref={scrollContainerRef}
                 onScroll={handleScroll}
+                onTouchMove={handleTouchMove}
                 className={`flex-1 md:overflow-y-auto overflow-visible px-4 pb-20 md:pb-4 scroll-smooth ${isFilterPanelOpen ? 'pt-44' : 'pt-4'}`}
             >
                 {loading ? (

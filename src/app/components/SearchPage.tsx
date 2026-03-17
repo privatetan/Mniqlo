@@ -19,11 +19,9 @@ type GroupedData = {
 
 type SearchPageProps = {
     initialQuery?: string | null;
-    isFilterPanelOpen?: boolean;
-    onCloseFilterPanel?: () => void;
 };
 
-export default function SearchPage({ initialQuery, isFilterPanelOpen = false, onCloseFilterPanel }: SearchPageProps) {
+export default function SearchPage({ initialQuery }: SearchPageProps) {
     const [query, setQuery] = useState('');
     const [loading, setLoading] = useState(false);
     const [results, setResults] = useState<any[] | null>(null);
@@ -33,31 +31,70 @@ export default function SearchPage({ initialQuery, isFilterPanelOpen = false, on
 
     const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
 
+    const [showHeader, setShowHeader] = useState(true);
+    const lastScrollY = useRef(0);
     const scrollContainerRef = useRef<HTMLElement>(null);
-    const closeFilterPanel = useCallback(() => {
-        if (isFilterPanelOpen) {
-            onCloseFilterPanel?.();
-        }
-    }, [isFilterPanelOpen, onCloseFilterPanel]);
+    const ticking = useRef(false);
+    const canHideHeader = results && results.length > 0 && !results[0].error;
 
     const handleScroll = useCallback(() => {
         if (scrollContainerRef.current && window.innerWidth >= 768) {
-            closeFilterPanel();
+            const scrollTop = scrollContainerRef.current.scrollTop;
+
+            if (!ticking.current) {
+                window.requestAnimationFrame(() => {
+                    const diff = scrollTop - lastScrollY.current;
+                    const minScroll = 50;
+                    const threshold = 10;
+
+                    if (canHideHeader && diff > threshold && scrollTop > minScroll && showHeader) {
+                        setShowHeader(false);
+                    } else if (diff < -threshold && !showHeader) {
+                        setShowHeader(true);
+                    } else if (!canHideHeader && !showHeader) {
+                        setShowHeader(true);
+                    }
+
+                    lastScrollY.current = scrollTop;
+                    ticking.current = false;
+                });
+                ticking.current = true;
+            }
         }
-    }, [closeFilterPanel]);
+    }, [canHideHeader, showHeader]);
 
     useEffect(() => {
-        if (!isFilterPanelOpen) return;
-
         const handleWindowScroll = () => {
             if (window.innerWidth < 768) {
-                closeFilterPanel();
+                const scrollTop = window.scrollY;
+
+                if (!ticking.current) {
+                    window.requestAnimationFrame(() => {
+                        const diff = scrollTop - lastScrollY.current;
+                        const minScroll = 50;
+                        const threshold = 10;
+
+                        if (canHideHeader && diff > threshold && scrollTop > minScroll && showHeader) {
+                            setShowHeader(false);
+                        } else if (diff < -threshold && !showHeader) {
+                            setShowHeader(true);
+                        } else if (scrollTop < 10 && !showHeader) {
+                            setShowHeader(true);
+                        } else if (!canHideHeader && !showHeader) {
+                            setShowHeader(true);
+                        }
+
+                        lastScrollY.current = scrollTop;
+                        ticking.current = false;
+                    });
+                    ticking.current = true;
+                }
             }
         };
 
         window.addEventListener('scroll', handleWindowScroll, { passive: true });
         return () => window.removeEventListener('scroll', handleWindowScroll);
-    }, [isFilterPanelOpen, closeFilterPanel]);
+    }, [canHideHeader, showHeader]);
 
     useEffect(() => {
         if (initialQuery) {
@@ -351,7 +388,7 @@ export default function SearchPage({ initialQuery, isFilterPanelOpen = false, on
             {/* Header Section */}
             {/* Header Section */}
             <header
-                className={`fixed md:absolute top-[60px] md:top-0 left-0 right-0 z-30 md:z-40 transition-transform duration-300 ease-in-out ${isFilterPanelOpen ? 'translate-y-0' : '-translate-y-[200%]'
+                className={`fixed md:absolute top-[60px] md:top-0 left-0 right-0 z-30 md:z-40 transition-transform duration-300 ease-in-out ${showHeader ? 'translate-y-0' : '-translate-y-[200%]'
                     }`}
             >
                 <div className="space-y-3 px-4 py-3 md:px-6">
@@ -362,7 +399,7 @@ export default function SearchPage({ initialQuery, isFilterPanelOpen = false, on
                                 <input
                                     type="text"
                                     placeholder={t('search.placeholder')}
-                                    className="w-full h-11 pl-11 pr-12 bg-white/72 border border-white/70 rounded-full text-sm outline-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-600 transition-all font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]"
+                                    className="w-full h-11 pl-11 pr-12 bg-white/72 border border-white/70 rounded-full text-sm outline-none appearance-none shadow-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-600 transition-all font-medium"
                                     value={query}
                                     onChange={(e) => setQuery(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -422,7 +459,7 @@ export default function SearchPage({ initialQuery, isFilterPanelOpen = false, on
             <main
                 ref={scrollContainerRef}
                 onScroll={handleScroll}
-                className={`px-4 pb-24 md:pb-4 flex-1 md:overflow-y-auto overflow-visible scroll-smooth ${isFilterPanelOpen ? 'pt-32' : 'pt-4'}`}
+                className="px-4 pb-24 md:pb-4 pt-32 flex-1 md:overflow-y-auto overflow-visible scroll-smooth"
             >
                 {/* Search Results / Loading */}
                 {(loading || results) && (
