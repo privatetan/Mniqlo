@@ -1,9 +1,9 @@
 'use client';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/context/LanguageContext';
 import { CrawledItem, FavoriteItem } from '@/types';
-import { parseLocalTime } from '@/lib/date-utils';
 import { getUser } from '@/lib/session';
 
 type GroupedProduct = {
@@ -53,11 +53,13 @@ const getSizeWeight = (size: string): number => {
 
 type SuperSelectionPageProps = {
     isFilterPanelOpen?: boolean;
+    onToggleFilterPanel?: () => void;
     onCloseFilterPanel?: () => void;
 };
 
-export default function SuperSelectionPage({ isFilterPanelOpen = false, onCloseFilterPanel }: SuperSelectionPageProps) {
+export default function SuperSelectionPage({ isFilterPanelOpen = false, onToggleFilterPanel, onCloseFilterPanel }: SuperSelectionPageProps) {
     const router = useRouter();
+    const [isMounted, setIsMounted] = useState(false);
     const [loading, setLoading] = useState(true);
     const [items, setItems] = useState<CrawledItem[]>([]);
     const [activeGender, setActiveGender] = useState('全部');
@@ -78,25 +80,26 @@ export default function SuperSelectionPage({ isFilterPanelOpen = false, onCloseF
     );
 
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const sheetTouchStartY = useRef<number | null>(null);
+    const [sheetOffsetY, setSheetOffsetY] = useState(0);
     const closeFilterPanel = useCallback(() => {
         if (isFilterPanelOpen) {
             onCloseFilterPanel?.();
         }
     }, [isFilterPanelOpen, onCloseFilterPanel]);
 
-    const handleScroll = useCallback(() => {
-        if (scrollContainerRef.current && window.innerWidth >= 768) {
-            closeFilterPanel();
-        }
-    }, [closeFilterPanel]);
-
-    const handleTouchMove = useCallback(() => {
-        if (window.innerWidth < 768) {
-            closeFilterPanel();
-        }
-    }, [closeFilterPanel]);
-
     const categories = ['全部', '女装', '男装', '童装', '婴幼儿装'];
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (!isFilterPanelOpen) {
+            setSheetOffsetY(0);
+            sheetTouchStartY.current = null;
+        }
+    }, [isFilterPanelOpen]);
 
     const fetchItems = useCallback(async (gender: string) => {
         setLoading(true);
@@ -320,78 +323,201 @@ export default function SuperSelectionPage({ isFilterPanelOpen = false, onCloseF
         return products; // default order
     }, [filteredAndGroupedProducts, sortBy]);
 
-    return (
-        <div className="h-full flex flex-col bg-transparent overflow-hidden">
-            {/* Header: Tabs & Search */}
-            {/* Header: Tabs & Search */}
-            <div
-                className={`fixed md:absolute top-[60px] md:top-0 left-0 right-0 z-30 md:z-40 transition-transform duration-300 ease-in-out ${isFilterPanelOpen ? 'translate-y-0' : '-translate-y-[200%] md:-translate-y-full'
-                    }`}
-            >
-                <div className="space-y-3 px-4 py-3 md:px-6">
-                    <div className="flex gap-2 mb-4 overflow-x-auto no-scrollbar">
-                        {categories.map(cat => (
-                            <button
-                                key={cat}
-                                onClick={() => setActiveGender(cat)}
-                                className={`px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all border ${activeGender === cat
-                                    ? 'filter-pill-active'
-                                    : 'filter-pill hover:bg-white/80 hover:text-slate-700'
-                                    }`}
-                            >
-                                {cat === '全部' ? (language === 'zh' ? '全部' : 'All') :
-                                    cat === '女装' ? (language === 'zh' ? '女装' : 'Women') :
-                                        cat === '男装' ? (language === 'zh' ? '男装' : 'Men') :
-                                            cat === '童装' ? (language === 'zh' ? '童装' : 'Kids') :
-                                                cat === '婴幼儿装' ? (language === 'zh' ? '婴幼儿装' : 'Baby') : cat}
-                            </button>
-                        ))}
-                    </div>
-                    <div>
-                        <div className="relative">
-                            <input
-                                type="text"
-                                placeholder={t('sel.search_placeholder')}
-                                className="w-full h-10 pl-10 pr-4 bg-white/72 border border-white/70 rounded-full text-sm outline-none appearance-none shadow-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-600 transition-all"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
-                            <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <circle cx="11" cy="11" r="8" />
-                                <path d="m21 21-4.3-4.3" />
-                            </svg>
-                        </div>
-                    </div>
+    const sortOptions = useMemo(() => ([
+        { value: 'default' as const, label: t('sel.sort_default') },
+        { value: 'price-asc' as const, label: t('sel.sort_price_asc') },
+        { value: 'price-desc' as const, label: t('sel.sort_price_desc') },
+        { value: 'discount' as const, label: t('sel.sort_discount') }
+    ]), [t]);
 
-                    {/* Sort Dropdown */}
-                    <div className="flex items-center justify-between gap-3">
-                        <div className="filter-control-shell rounded-2xl px-1.5 py-1">
-                            <select
-                                value={sortBy}
-                                onChange={(e) => setSortBy(e.target.value as any)}
-                                className="w-[8.5rem] shrink-0 text-xs px-3 py-1.5 pr-8 rounded-xl border-0 bg-transparent text-slate-600 outline-none appearance-none shadow-none focus:ring-0 focus:shadow-none cursor-pointer transition-all"
-                            >
-                                <option value="default">{t('sel.sort_default')}</option>
-                                <option value="price-asc">{t('sel.sort_price_asc')}</option>
-                                <option value="price-desc">{t('sel.sort_price_desc')}</option>
-                                <option value="discount">{t('sel.sort_discount')}</option>
-                            </select>
-                        </div>
-                        {!loading && (
-                            <div className="filter-surface rounded-full px-3 py-2 text-[11px] text-slate-500 font-medium">
-                                {t('sel.found', { n: items.length })}
-                            </div>
-                        )}
-                    </div>
+    const currentSortLabel = useMemo(
+        () => sortOptions.find((option) => option.value === sortBy)?.label ?? sortOptions[0].label,
+        [sortBy, sortOptions]
+    );
+
+    const activeFilterCount = useMemo(() => {
+        let count = 0;
+        if (activeGender !== '全部') count += 1;
+        if (searchQuery.trim()) count += 1;
+        if (sortBy !== 'default') count += 1;
+        return count;
+    }, [activeGender, searchQuery, sortBy]);
+
+    const summaryTokens = useMemo(() => {
+        const tokens: string[] = [];
+        if (activeGender !== '全部') tokens.push(activeGender);
+        if (searchQuery.trim()) tokens.push(searchQuery.trim());
+        if (sortBy !== 'default') tokens.push(currentSortLabel);
+
+        if (tokens.length === 0) {
+            return [t('filters.summary_none')];
+        }
+
+        return tokens;
+    }, [activeGender, searchQuery, sortBy, currentSortLabel, t]);
+
+    const resetFilters = useCallback(() => {
+        setActiveGender('全部');
+        setSearchQuery('');
+        setSortBy('default');
+    }, []);
+
+    const handleSheetTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+        sheetTouchStartY.current = e.touches[0]?.clientY ?? null;
+    }, []);
+
+    const handleSheetTouchMove = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+        if (sheetTouchStartY.current === null) return;
+        const delta = e.touches[0].clientY - sheetTouchStartY.current;
+        setSheetOffsetY(Math.max(0, Math.min(delta, 140)));
+    }, []);
+
+    const handleSheetTouchEnd = useCallback(() => {
+        if (sheetOffsetY > 72) {
+            closeFilterPanel();
+        }
+        setSheetOffsetY(0);
+        sheetTouchStartY.current = null;
+    }, [sheetOffsetY, closeFilterPanel]);
+
+    const renderFilterControls = (mode: 'desktop' | 'mobile') => (
+        <div className="space-y-4">
+            <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                    <h3 className="mt-1 text-sm font-semibold text-slate-700">
+                        {mode === 'desktop' ? (language === 'zh' ? '分类与排序' : 'Categories & Sort') : t('filters.sheet_title')}
+                    </h3>
+                </div>
+                <div className="filter-surface rounded-full px-3 py-2 text-[11px] font-medium text-slate-500">
+                    {t('filters.results', { n: sortedProducts.length })}
                 </div>
             </div>
 
+            <div className="space-y-2">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                    {t('filters.category')}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                    {categories.map(cat => (
+                        <button
+                            key={cat}
+                            type="button"
+                            onClick={() => setActiveGender(cat)}
+                            className={`px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all border ${activeGender === cat
+                                ? 'filter-pill-active'
+                                : 'filter-pill hover:bg-white/80 hover:text-slate-700'
+                                }`}
+                        >
+                            {cat === '全部' ? (language === 'zh' ? '全部' : 'All') :
+                                cat === '女装' ? (language === 'zh' ? '女装' : 'Women') :
+                                    cat === '男装' ? (language === 'zh' ? '男装' : 'Men') :
+                                        cat === '童装' ? (language === 'zh' ? '童装' : 'Kids') :
+                                            cat === '婴幼儿装' ? (language === 'zh' ? '婴幼儿装' : 'Baby') : cat}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            <div className="space-y-2">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                    {t('filters.keyword')}
+                </p>
+                <div className="relative">
+                    <input
+                        type="text"
+                        placeholder={t('sel.search_placeholder')}
+                        className="w-full h-11 pl-11 pr-4 bg-white/72 border border-white/70 rounded-full text-sm outline-none appearance-none shadow-none focus:ring-4 focus:ring-teal-500/10 focus:border-teal-600 transition-all"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    <svg className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.3-4.3" />
+                    </svg>
+                </div>
+            </div>
+
+            <div className={`grid gap-3 ${mode === 'desktop' ? 'grid-cols-[minmax(0,11rem)_auto]' : 'grid-cols-1'}`}>
+                <div className="space-y-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                        {t('filters.sort')}
+                    </p>
+                    <div className="filter-control-shell rounded-2xl px-1.5 py-1">
+                        <select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                            className="w-full text-xs px-3 py-2 pr-8 rounded-xl border-0 bg-transparent text-slate-600 outline-none appearance-none shadow-none focus:ring-0 focus:shadow-none cursor-pointer transition-all"
+                        >
+                            {sortOptions.map((option) => (
+                                <option key={option.value} value={option.value}>{option.label}</option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+
+                {mode === 'desktop' && (
+                    <div className="flex items-end justify-end">
+                        <div className="filter-surface rounded-full px-3 py-2 text-[11px] font-medium text-slate-500">
+                            {activeFilterCount > 0 ? t('filters.active_count', { n: activeFilterCount }) : t('filters.summary_none')}
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+
+    return (
+        <div className="h-full flex flex-col bg-transparent overflow-hidden">
             <div
                 ref={scrollContainerRef}
-                onScroll={handleScroll}
-                onTouchMove={handleTouchMove}
-                className={`flex-1 md:overflow-y-auto overflow-visible px-4 pb-20 md:pb-4 scroll-smooth ${isFilterPanelOpen ? 'pt-44' : 'pt-4'}`}
+                className="flex-1 md:overflow-y-auto overflow-visible px-4 pb-20 pt-4 md:pb-4 scroll-smooth"
             >
+                <div className="hidden md:block sticky top-3 z-20 pb-4">
+                    {isFilterPanelOpen ? (
+                        <div className="filter-surface rounded-[30px] px-5 py-4">
+                            {renderFilterControls('desktop')}
+                            <div className="mt-4 flex items-center justify-between gap-3">
+                                <button
+                                    type="button"
+                                    onClick={resetFilters}
+                                    className="filter-pill rounded-full px-4 py-2 text-xs font-semibold text-slate-600 transition-colors hover:text-teal-800"
+                                >
+                                    {t('filters.reset')}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={closeFilterPanel}
+                                    className="filter-pill-active rounded-full px-4 py-2 text-xs font-semibold transition-transform hover:-translate-y-0.5"
+                                >
+                                    {t('filters.done')}
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={onToggleFilterPanel}
+                            className="filter-surface flex w-full items-center gap-4 rounded-[28px] px-4 py-3 text-left transition-all hover:-translate-y-0.5"
+                        >
+                            <div className="min-w-0 flex-1">
+                                <div className="flex flex-wrap gap-2">
+                                    {summaryTokens.map((token) => (
+                                        <span key={token} className="filter-pill rounded-full px-3 py-1 text-[11px] font-medium text-slate-600">
+                                            {token}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="shrink-0 text-right">
+                                <p className="text-sm font-semibold text-slate-700">{sortedProducts.length}</p>
+                                <p className="text-[10px] font-medium text-slate-400">
+                                    {activeFilterCount > 0 ? t('filters.active_count', { n: activeFilterCount }) : t('filters.results', { n: sortedProducts.length })}
+                                </p>
+                            </div>
+                        </button>
+                    )}
+                </div>
+
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-24 text-slate-500">
                         <div className="w-8 h-8 border-2 border-slate-200 border-t-teal-700 rounded-full animate-spin mb-4" />
@@ -614,6 +740,59 @@ export default function SuperSelectionPage({ isFilterPanelOpen = false, onCloseF
                     </div>
                 )}
             </div>
+
+            {isMounted && isFilterPanelOpen && createPortal(
+                <div className="md:hidden fixed inset-0 z-[90] pointer-events-none">
+                    <button
+                        type="button"
+                        aria-label={t('filters.done')}
+                        onClick={closeFilterPanel}
+                        className="pointer-events-auto absolute inset-0 z-0 bg-slate-950/20 backdrop-blur-sm"
+                    />
+                    <div className="pointer-events-auto absolute inset-x-0 bottom-0 z-10 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+                        <div
+                            className="filter-surface touch-pan-y rounded-[30px] px-4 pb-4 pt-3 shadow-[0_-26px_60px_-28px_rgba(31,48,55,0.34)]"
+                            style={{
+                                transform: `translateY(${sheetOffsetY}px)`,
+                                transition: sheetTouchStartY.current === null ? 'transform 240ms cubic-bezier(0.22, 1, 0.36, 1)' : 'none'
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div
+                                className="flex justify-center pb-3"
+                                onTouchStart={handleSheetTouchStart}
+                                onTouchMove={handleSheetTouchMove}
+                                onTouchEnd={handleSheetTouchEnd}
+                            >
+                                <div className="h-1.5 w-12 rounded-full bg-slate-300/80" />
+                            </div>
+                            <div
+                                className="max-h-[65vh] overflow-y-auto overscroll-contain pr-1 touch-pan-y"
+                                style={{ WebkitOverflowScrolling: 'touch' }}
+                            >
+                                {renderFilterControls('mobile')}
+                            </div>
+                            <div className="mt-4 grid grid-cols-2 gap-3">
+                                <button
+                                    type="button"
+                                    onClick={resetFilters}
+                                    className="filter-pill rounded-full px-4 py-3 text-sm font-semibold text-slate-600 transition-colors hover:text-teal-800"
+                                >
+                                    {t('filters.reset')}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={closeFilterPanel}
+                                    className="filter-pill-active rounded-full px-4 py-3 text-sm font-semibold transition-transform active:scale-[0.98]"
+                                >
+                                    {t('filters.done')}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
         </div>
     );
 }

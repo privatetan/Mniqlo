@@ -78,6 +78,8 @@ function HomeContent() {
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
 
   const canToggleFilters = activeTab === 'super-selection' || activeTab === 'limited-time';
+  const isSuperSelectionFilterOpen = activeTab === 'super-selection' && isFilterPanelOpen;
+  const isLimitedTimeFilterOpen = activeTab === 'limited-time' && isFilterPanelOpen;
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -140,7 +142,7 @@ function HomeContent() {
         <Header
           title={getHeaderTitle()}
           showFilterToggle={canToggleFilters}
-          isFilterPanelOpen={isFilterPanelOpen}
+          isFilterPanelOpen={canToggleFilters && isFilterPanelOpen}
           onToggleFilterPanel={() => {
             if (!canToggleFilters) return;
             setIsFilterPanelOpen((open) => !open);
@@ -156,13 +158,15 @@ function HomeContent() {
           </div>
           <div className={activeTab === 'super-selection' ? 'h-full' : 'hidden'}>
             <SuperSelectionPage
-              isFilterPanelOpen={isFilterPanelOpen}
+              isFilterPanelOpen={isSuperSelectionFilterOpen}
+              onToggleFilterPanel={() => setIsFilterPanelOpen((open) => !open)}
               onCloseFilterPanel={() => setIsFilterPanelOpen(false)}
             />
           </div>
           <div className={activeTab === 'limited-time' ? 'h-full' : 'hidden'}>
             <LimitedTimePage
-              isFilterPanelOpen={isFilterPanelOpen}
+              isFilterPanelOpen={isLimitedTimeFilterOpen}
+              onToggleFilterPanel={() => setIsFilterPanelOpen((open) => !open)}
               onCloseFilterPanel={() => setIsFilterPanelOpen(false)}
             />
           </div>
