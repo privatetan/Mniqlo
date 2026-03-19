@@ -82,6 +82,12 @@ export default function LimitedTimePage({ isFilterPanelOpen = false, onToggleFil
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const sheetTouchStartY = useRef<number | null>(null);
     const [sheetOffsetY, setSheetOffsetY] = useState(0);
+    const cardTouchRef = useRef<{ code: string | null; x: number; y: number; moved: boolean }>({
+        code: null,
+        x: 0,
+        y: 0,
+        moved: false
+    });
     const closeFilterPanel = useCallback(() => {
         if (isFilterPanelOpen) {
             onCloseFilterPanel?.();
@@ -381,6 +387,37 @@ export default function LimitedTimePage({ isFilterPanelOpen = false, onToggleFil
         sheetTouchStartY.current = null;
     }, [sheetOffsetY, closeFilterPanel]);
 
+    const handleCardTouchStart = useCallback((code: string, e: React.TouchEvent<HTMLDivElement>) => {
+        const touch = e.touches[0];
+        cardTouchRef.current = {
+            code,
+            x: touch.clientX,
+            y: touch.clientY,
+            moved: false
+        };
+    }, []);
+
+    const handleCardTouchMove = useCallback((code: string, e: React.TouchEvent<HTMLDivElement>) => {
+        if (cardTouchRef.current.code !== code) return;
+        const touch = e.touches[0];
+        const deltaX = Math.abs(touch.clientX - cardTouchRef.current.x);
+        const deltaY = Math.abs(touch.clientY - cardTouchRef.current.y);
+
+        if (deltaX > 8 || deltaY > 8) {
+            cardTouchRef.current.moved = true;
+        }
+    }, []);
+
+    const handleCardToggle = useCallback((code: string) => {
+        if (cardTouchRef.current.code === code && cardTouchRef.current.moved) {
+            cardTouchRef.current = { code: null, x: 0, y: 0, moved: false };
+            return;
+        }
+
+        setExpandedCode((current) => current === code ? null : code);
+        cardTouchRef.current = { code: null, x: 0, y: 0, moved: false };
+    }, []);
+
     const renderFilterControls = (mode: 'desktop' | 'mobile') => (
         <div className="space-y-4">
             <div className="flex items-start justify-between gap-3">
@@ -532,10 +569,18 @@ export default function LimitedTimePage({ isFilterPanelOpen = false, onToggleFil
                 ) : (
                     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
                         {sortedProducts.map(product => (
-                            <div key={product.code} className="card p-0 overflow-hidden border border-white/70 shadow-[0_20px_44px_-34px_rgba(180,83,9,0.36)]">
+                            <div
+                                key={product.code}
+                                className="card rounded-[30px] p-0 overflow-hidden relative border border-white/70 transition-none"
+                            >
                                 <div
-                                    className="p-3 cursor-pointer hover:bg-amber-50/40 transition-colors"
-                                    onClick={() => setExpandedCode(expandedCode === product.code ? null : product.code)}
+                                    className="rounded-[28px] p-3 cursor-pointer transition-none"
+                                    onClick={() => handleCardToggle(product.code)}
+                                    onTouchStart={(e) => handleCardTouchStart(product.code, e)}
+                                    onTouchMove={(e) => handleCardTouchMove(product.code, e)}
+                                    onTouchCancel={() => {
+                                        cardTouchRef.current = { code: null, x: 0, y: 0, moved: false };
+                                    }}
                                 >
                                     <div className="flex gap-3 mb-3">
                                         <div className="w-20 h-20 shrink-0 bg-amber-50/50 rounded-xl overflow-hidden relative border border-amber-100/80">
@@ -543,7 +588,7 @@ export default function LimitedTimePage({ isFilterPanelOpen = false, onToggleFil
                                                 <img
                                                     src={`https://www.uniqlo.cn${product.items[0].main_pic}`}
                                                     alt={product.name}
-                                                    className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+                                                    className="w-full h-full object-cover"
                                                     loading="lazy"
                                                 />
                                             ) : (
@@ -594,23 +639,25 @@ export default function LimitedTimePage({ isFilterPanelOpen = false, onToggleFil
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="flex items-center justify-between text-[10px] font-medium text-amber-700/70 border-t border-amber-100/70 pt-2">
+                                    <div className="flex items-center justify-between text-[10px] font-medium pt-2 border-t border-amber-100/70 text-amber-700/70">
                                         <span>{t('fav.variants', { n: product.items.length })}</span>
-                                        <svg
-                                            className={`transition-transform duration-300 ${expandedCode === product.code ? 'rotate-180' : ''}`}
-                                            width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
-                                        >
-                                            <path d="m6 9 6 6 6-6" />
-                                        </svg>
+                                        <div className="inline-flex items-center justify-center rounded-full px-2.5 py-1 bg-white/70 text-amber-600 border border-white/70">
+                                            <svg
+                                                className={expandedCode === product.code ? 'rotate-180' : ''}
+                                                width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+                                            >
+                                                <path d="m6 9 6 6 6-6" />
+                                            </svg>
+                                        </div>
                                     </div>
                                 </div>
 
                                 {expandedCode === product.code && (
-                                    <div className="px-4 pb-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    <div className="mx-2 mb-2 rounded-[26px] px-4 pb-4 pt-2 bg-white/75">
                                         <div className="h-px bg-amber-100/70 mb-4" />
 
                                         <div
-                                            className="mb-3 flex items-center gap-1 text-xs font-bold border border-white/70 bg-white/80 rounded-full px-3 py-1.5 inline-flex cursor-pointer hover:bg-amber-50/60 transition-colors"
+                                            className="mb-3 flex items-center gap-1 text-xs font-bold border border-white/70 bg-white/80 rounded-full px-3 py-1.5 inline-flex cursor-pointer"
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 setViewMode(viewMode === 'color' ? 'size' : 'color');
@@ -654,7 +701,7 @@ export default function LimitedTimePage({ isFilterPanelOpen = false, onToggleFil
                                         </div>
 
                                         {expandedState?.code === product.code && (
-                                            <div className="bg-amber-50/55 rounded-2xl border border-amber-100/80 p-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                                            <div className="bg-amber-50/55 rounded-2xl border border-amber-100/80 p-3">
                                                 <h4 className="text-xs font-medium text-amber-700 mb-2">
                                                     <span className="text-slate-800">{expandedState?.key}</span> {language === 'zh' ? '库存详情:' : 'Stock Details:'}
                                                 </h4>
