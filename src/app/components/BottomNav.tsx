@@ -1,30 +1,23 @@
 'use client';
 
+import type { ReactNode } from 'react';
+import { useLanguage } from '@/context/LanguageContext';
+
+type ActiveTab = 'search' | 'favorites' | 'super-selection' | 'limited-time' | 'admin';
+
 type BottomNavProps = {
-    activeTab: 'search' | 'favorites' | 'super-selection' | 'limited-time' | 'admin';
-    setActiveTab: (tab: 'search' | 'favorites' | 'super-selection' | 'limited-time' | 'admin') => void;
+    activeTab: ActiveTab;
+    isAdmin: boolean;
+    setActiveTab: (tab: ActiveTab) => void;
 };
 
-import { useState, useEffect } from 'react';
-import { useLanguage } from '@/context/LanguageContext';
-import { getUserString } from '@/lib/session';
-
-export default function BottomNav({ activeTab, setActiveTab }: BottomNavProps) {
+export default function BottomNav({ activeTab, isAdmin, setActiveTab }: BottomNavProps) {
     const { t } = useLanguage();
-    const [isAdmin, setIsAdmin] = useState(false);
-
-    useEffect(() => {
-        const userStr = getUserString();
-        if (userStr) {
-            const user = JSON.parse(userStr);
-            setIsAdmin(user.role === 'ADMIN');
-        }
-    }, []);
 
     const primaryItems: Array<{
-        id: BottomNavProps['activeTab'];
+        id: ActiveTab;
         label: string;
-        icon: React.ReactNode;
+        icon: ReactNode;
         activeClass: string;
         inactiveClass: string;
     }> = [

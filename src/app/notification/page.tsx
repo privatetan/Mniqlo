@@ -28,8 +28,6 @@ function NotificationContent() {
                 const titleParam = searchParams.get('title');
                 const contentParam = searchParams.get('content');
 
-                console.log('Explicit params - title:', titleParam, 'content:', contentParam);
-
                 if (titleParam || contentParam) {
                     // 使用显式参数
                     setNotification({
@@ -47,14 +45,11 @@ function NotificationContent() {
                 let hasData = false;
 
                 searchParams.forEach((value, key) => {
-                    console.log(`URL Param Received - ${key}:`, value);
                     if (key === 'first' || key.startsWith('keyword') || key === 'remark') {
                         dataMap[key] = value;
                         hasData = true;
                     }
                 });
-
-                console.log('Parsed Template Data Map:', dataMap);
 
                 // 使用微信模板数据作为备用方案
                 if (hasData && dataMap['first']) {

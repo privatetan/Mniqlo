@@ -35,6 +35,10 @@ export default function ThemeSwitcher({ align = 'right', compact = false }: Them
     }, []);
 
     useEffect(() => {
+        if (!isOpen) {
+            return;
+        }
+
         const handleClickOutside = (event: MouseEvent) => {
             const target = event.target as Node;
             const clickedInsideTrigger = containerRef.current?.contains(target);
@@ -47,7 +51,7 @@ export default function ThemeSwitcher({ align = 'right', compact = false }: Them
 
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+    }, [isOpen]);
 
     useEffect(() => {
         if (!isOpen || !buttonRef.current) {

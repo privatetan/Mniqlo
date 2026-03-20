@@ -1,3 +1,5 @@
+import 'server-only';
+
 /**
  * Cron Job Manager for Scheduled Crawlers
  * 

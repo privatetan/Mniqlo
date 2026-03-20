@@ -30,6 +30,10 @@ export default function SearchPage({ initialQuery }: SearchPageProps) {
     const [history, setHistory] = useState<string[]>([]);
 
     const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
+    const favoriteKeys = useMemo(
+        () => new Set(favorites.map((favorite) => `${favorite.productId}:${favorite.color}:${favorite.size}`)),
+        [favorites]
+    );
 
     const [showHeader, setShowHeader] = useState(true);
     const lastScrollY = useRef(0);
@@ -274,17 +278,21 @@ export default function SearchPage({ initialQuery }: SearchPageProps) {
         }
     }, [favorites]);
 
-    const updateHistory = (newQuery: string) => {
-        let newHistory = [newQuery, ...history.filter(h => h !== newQuery)].slice(0, 3);
-        setHistory(newHistory);
-        localStorage.setItem('searchHistory', JSON.stringify(newHistory));
-    };
+    const updateHistory = useCallback((newQuery: string) => {
+        setHistory((currentHistory) => {
+            const newHistory = [newQuery, ...currentHistory.filter(item => item !== newQuery)].slice(0, 3);
+            localStorage.setItem('searchHistory', JSON.stringify(newHistory));
+            return newHistory;
+        });
+    }, []);
 
     const removeFromHistory = (e: React.MouseEvent, item: string) => {
         e.stopPropagation();
-        const newHistory = history.filter(h => h !== item);
-        setHistory(newHistory);
-        localStorage.setItem('searchHistory', JSON.stringify(newHistory));
+        setHistory((currentHistory) => {
+            const newHistory = currentHistory.filter(historyItem => historyItem !== item);
+            localStorage.setItem('searchHistory', JSON.stringify(newHistory));
+            return newHistory;
+        });
     };
 
     const handleSearch = useCallback(async (overrideQuery?: string) => {
@@ -322,13 +330,12 @@ export default function SearchPage({ initialQuery }: SearchPageProps) {
                 const list = Array.isArray(data) ? data : [data];
                 setResults(list);
             }
-            console.log('Search Result:', data);
         } catch (error) {
             console.error('Search error:', error);
         } finally {
             setLoading(false);
         }
-    }, [query, history, updateHistory]);
+    }, [query, updateHistory]);
 
     const processedResults = useMemo(() => {
         if (!results) return [];
@@ -561,11 +568,7 @@ export default function SearchPage({ initialQuery }: SearchPageProps) {
                                                             const style = viewMode === 'color' ? expandedState?.key : sub.key;
                                                             const size = viewMode === 'color' ? sub.key : expandedState?.key;
                                                             // Check by attributes, not key
-                                                            const isFav = favorites.some(f =>
-                                                                f.productId === product.productId &&
-                                                                f.color === style &&
-                                                                f.size === size
-                                                            );
+                                                            const isFav = favoriteKeys.has(`${product.productId}:${style}:${size}`);
 
                                                             return (
                                                                 <div key={idx} className="flex justify-between items-center p-3 bg-slate-50/80 rounded-xl border border-white/70">

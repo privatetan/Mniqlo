@@ -1,14 +1,5 @@
 import './globals.css'
-
-// Initialize cron scheduler on server start
-if (typeof window === 'undefined') {
-  // Server-side only
-  import('@/lib/cron').catch(err => {
-    console.error('Failed to initialize cron:', err);
-  });
-}
-
-
+import '@/lib/cron'
 
 export const metadata = {
   title: 'Mniqlo',

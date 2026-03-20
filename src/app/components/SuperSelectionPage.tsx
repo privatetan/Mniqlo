@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback, useDeferredValue, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/context/LanguageContext';
@@ -70,13 +70,18 @@ export default function SuperSelectionPage({ isFilterPanelOpen = false, onToggle
     const [expandedState, setExpandedState] = useState<{ code: string; key: string } | null>(null);
     const [sortBy, setSortBy] = useState<'default' | 'price-asc' | 'price-desc' | 'discount'>('default');
     const { t, language } = useLanguage();
+    const deferredSearchQuery = useDeferredValue(searchQuery);
     const searchKeywords = useMemo(
-        () => searchQuery
+        () => deferredSearchQuery
             .toLowerCase()
             .trim()
             .split(/[\s\u3000]+/)
             .filter(Boolean),
-        [searchQuery]
+        [deferredSearchQuery]
+    );
+    const favoriteKeys = useMemo(
+        () => new Set(favorites.map((favorite) => `${favorite.productId}:${favorite.color}:${favorite.size}`)),
+        [favorites]
     );
 
     const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -715,11 +720,7 @@ export default function SuperSelectionPage({ isFilterPanelOpen = false, onToggle
                                                             const style = viewMode === 'color' ? expandedState?.key : sub.key;
                                                             const size = viewMode === 'color' ? sub.key : expandedState?.key;
                                                             const item = sub.breakdown[0]; // Get first item for product_id
-                                                            const isFav = favorites.some(f =>
-                                                                f.productId === item.product_id &&
-                                                                f.color === style &&
-                                                                f.size === size
-                                                            );
+                                                            const isFav = favoriteKeys.has(`${item.product_id}:${style}:${size}`);
                                                             // Check if this is a new stock item
                                                             const isNewStock = item.stock_status === 'new';
 

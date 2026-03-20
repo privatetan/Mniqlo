@@ -1,28 +1,27 @@
 'use client';
 
+import Image from 'next/image';
+import type { ReactNode } from 'react';
+import { useLanguage } from '@/context/LanguageContext';
+
+type ActiveTab = 'search' | 'favorites' | 'super-selection' | 'limited-time' | 'admin';
+
 type SidebarProps = {
-    activeTab: 'search' | 'favorites' | 'super-selection' | 'limited-time' | 'admin';
-    setActiveTab: (tab: 'search' | 'favorites' | 'super-selection' | 'limited-time' | 'admin') => void;
+    activeTab: ActiveTab;
+    isAdmin: boolean;
+    setActiveTab: (tab: ActiveTab) => void;
 };
 
-import { useState, useEffect } from 'react';
-import { useLanguage } from '@/context/LanguageContext';
-import { getUserString } from '@/lib/session';
-import Image from 'next/image';
+type NavItem = {
+    id: ActiveTab;
+    label: string;
+    icon: ReactNode;
+};
 
-export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
+export default function Sidebar({ activeTab, isAdmin, setActiveTab }: SidebarProps) {
     const { t } = useLanguage();
-    const [isAdmin, setIsAdmin] = useState(false);
 
-    useEffect(() => {
-        const userStr = getUserString();
-        if (userStr) {
-            const user = JSON.parse(userStr);
-            setIsAdmin(user.role === 'ADMIN');
-        }
-    }, []);
-
-    const navItems = [
+    const navItems: NavItem[] = [
         {
             id: 'super-selection',
             label: t('nav.selection'),
@@ -100,7 +99,7 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
                 {navItems.map((item) => (
                     <button
                         key={item.id}
-                        onClick={() => setActiveTab(item.id as any)}
+                        onClick={() => setActiveTab(item.id)}
                         className={`flex items-center gap-3 w-full px-4 py-3.5 rounded-[22px] transition-all duration-300 group border ${activeTab === item.id
                             ? 'frost-panel text-teal-900 border-white/70 shadow-[0_24px_42px_-34px_rgba(47,96,93,0.58)]'
                             : 'bg-transparent text-slate-500 border-transparent hover:bg-white/55 hover:text-slate-700 hover:border-white/60'

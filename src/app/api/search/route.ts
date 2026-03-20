@@ -5,9 +5,6 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const code = searchParams.get('code');
-    if (process.env.NODE_ENV !== 'production') {
-        console.log('[API DEBUG] Search request received for URL:', request.url);
-    }
 
     if (!code) {
         return NextResponse.json({ error: '商品编号不能为空' }, { status: 400 });

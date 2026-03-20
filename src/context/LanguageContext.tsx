@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, ReactNode } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 
 export type LanguageType = 'zh' | 'en';
 
@@ -136,37 +136,32 @@ interface LanguageContextType {
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+const FIXED_LANGUAGE: LanguageType = 'zh';
+
+const setLanguage: LanguageContextType['setLanguage'] = () => {};
+
+const translate: LanguageContextType['t'] = (key, variables) => {
+    const translation = translations[key];
+    if (!translation) return key;
+
+    let text = translation[FIXED_LANGUAGE];
+    if (variables) {
+        Object.entries(variables).forEach(([name, value]) => {
+            text = text.replace(`{${name}}`, String(value));
+        });
+    }
+    return text;
+};
+
+const languageContextValue: LanguageContextType = {
+    language: FIXED_LANGUAGE,
+    setLanguage,
+    t: translate
+};
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-    const language: LanguageType = 'zh';
-
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            localStorage.removeItem('language');
-        }
-    }, []);
-
-    const setLanguage = (_lang: LanguageType) => {
-        if (typeof window !== 'undefined') {
-            localStorage.removeItem('language');
-        }
-    };
-
-    const t = (key: string, variables?: Record<string, string | number>) => {
-        const translation = translations[key];
-        if (!translation) return key;
-
-        let text = translation[language];
-        if (variables) {
-            Object.entries(variables).forEach(([name, value]) => {
-                text = text.replace(`{${name}}`, String(value));
-            });
-        }
-        return text;
-    };
-
     return (
-        <LanguageContext.Provider value={{ language, setLanguage, t }}>
+        <LanguageContext.Provider value={languageContextValue}>
             {children}
         </LanguageContext.Provider>
     );
