@@ -2,17 +2,9 @@ import { supabase } from './supabase';
 import { sendWxNotification } from './wxpush';
 import { getProductIdByCode } from './uniqlo';
 
-const CONFIG_URL = 'https://www.uniqlo.cn/data/config_1/zh_CN/super-u_951462.json';
+const CONFIG_URL = 'https://www.uniqlo.cn/data/pages/super-u.html.json';
 const PRODUCT_DETAIL_URL = 'https://www.uniqlo.cn/data/products/spu/zh_CN';
 const STOCK_URL = 'https://d.uniqlo.cn/p/stock/stock/query/zh_CN';
-
-// Indicators in the JSON configuration that mark the end of a category's product list
-const CATEGORY_INDICATORS: Record<string, string> = {
-    'SALE_W': '女装',
-    'SALE_M': '男装',
-    'SALE_K': '童装',
-    'SALE_B': '婴幼儿装'
-};
 
 // Common headers for all requests
 const COMMON_HEADERS = {
@@ -26,13 +18,16 @@ const COMMON_HEADERS = {
  * Standardize gender values from Uniqlo API to UI display values
  */
 function standardizeGender(rawGender: string): string {
-    const gender = (rawGender || '').toLowerCase();
+    const text = cleanString(rawGender);
+    const gender = text.toLowerCase();
     // Prioritize Baby/Kids because they might contain gender words (e.g. "女童")
     if (gender.includes('baby') || gender.includes('infant') || gender.includes('幼')) return '婴幼儿装';
     if (gender.includes('kids') || gender.includes('child') || gender.includes('kid') || gender.includes('童')) return '童装';
 
-    if (gender.includes('women') || gender.includes('woman') || gender.includes('女')) return '女装';
-    if (gender.includes('men') || gender.includes('man') || gender.includes('男')) return '男装';
+    if (text.startsWith('男装') || text.startsWith('男') || /\bmen'?s?\b/.test(gender) || /\bman\b/.test(gender)) return '男装';
+    if (text.startsWith('女装') || text.startsWith('女') || /\bwom[ae]n\b/.test(gender)) return '女装';
+    if (text.includes('男装')) return '男装';
+    if (text.includes('女装')) return '女装';
 
     return rawGender || '未知';
 }
@@ -44,6 +39,34 @@ function standardizeGender(rawGender: string): string {
 function cleanString(str: any): string {
     if (!str) return '';
     return String(str).trim().replace(/\s+/g, ' ');
+}
+
+function getSectionOrder(sectionKey: string): number {
+    const match = sectionKey.match(/\d+/);
+    return match ? parseInt(match[0], 10) : Number.MAX_SAFE_INTEGER;
+}
+
+function getSortedSectionEntries(payload: Record<string, any>): Array<[string, any]> {
+    return Object.entries(payload).sort((a, b) => getSectionOrder(a[0]) - getSectionOrder(b[0]));
+}
+
+function inferGenderFromProductName(productName: string): string | null {
+    const normalized = cleanString(productName);
+    if (!normalized) return null;
+
+    if (normalized.includes('婴幼儿') || normalized.includes('宝宝')) return '婴幼儿装';
+    if (normalized.includes('童装')) return '童装';
+    if (normalized.startsWith('女装')) return '女装';
+    if (normalized.startsWith('男装')) return '男装';
+
+    return null;
+}
+
+function inferGenderFromSectionHtml(html: string): string | null {
+    if (!html) return null;
+
+    const heading = html.match(/<div[^>]*class=["'][^"']*\bdf\b[^"']*["'][^>]*>\s*([\s\S]*?)\s*<\/div>/i);
+    return inferGenderFromProductName(cleanString(heading?.[1] || ''));
 }
 
 export interface CrawledItem {
@@ -63,8 +86,8 @@ export interface CrawledItem {
 }
 
 /**
- * Get Product Codes from Config
- * 从配置接口获取所有产品代码列表，支持按性别分类过滤
+ * Get Product Codes from Super U page config
+ * 从超值精选页面配置接口获取所有产品代码列表，支持按性别分类过滤
  */
 export async function getProductCodesFromConfig(targetGender?: string): Promise<string[]> {
     try {
@@ -79,69 +102,36 @@ export async function getProductCodesFromConfig(targetGender?: string): Promise<
 
         const configData = await res.json();
         const productCodes: string[] = [];
+        let currentGender: string | null = null;
 
-        // --- Dynamic Category Mapping Logic ---
-        // Group sections into category buckets based on the appearance of 'SALE_W/M/K/B' markers
-        const categoryGroups: Record<string, string[]> = {};
-        let currentGroupSections: string[] = [];
-
-        // Sort keys numerically (section01, section02...) to process in visual order
-        const sortedKeys = Object.keys(configData).sort((a, b) => {
-            const numA = parseInt(a.replace(/\D/g, ''), 10);
-            const numB = parseInt(b.replace(/\D/g, ''), 10);
-            return numA - numB;
-        });
-
-        for (const key of sortedKeys) {
-            currentGroupSections.push(key);
-            const sectionContent = JSON.stringify(configData[key]);
-
-            // Check if this section contains any category marker (e.g., "SALE_W")
-            let foundMarker: string | null = null;
-            for (const marker in CATEGORY_INDICATORS) {
-                if (sectionContent.includes(marker)) {
-                    foundMarker = CATEGORY_INDICATORS[marker];
-                    break;
+        for (const [, section] of getSortedSectionEntries(configData)) {
+            if (section?.component === 'Custom') {
+                const sectionGender = inferGenderFromSectionHtml(section?.props?.html || '');
+                if (sectionGender) {
+                    currentGender = sectionGender;
                 }
+                continue;
             }
 
-            // If a marker is found, it closes the current category group
-            if (foundMarker) {
-                categoryGroups[foundMarker] = [...currentGroupSections];
-                currentGroupSections = []; // Reset for next group
+            if (section?.component !== 'ProductGroup') {
+                continue;
             }
-        }
 
-        // Determine which sections to process based on targetGender
-        let sectionsToProcess: string[] = [];
-        if (targetGender && categoryGroups[targetGender]) {
-            sectionsToProcess = categoryGroups[targetGender];
-            console.log(`[Crawler] Target category "${targetGender}" identified. Processing ${sectionsToProcess.length} dynamically discovered sections.`);
-        } else {
-            // If no target or category not found, process everything
-            sectionsToProcess = sortedKeys;
-        }
-        // --------------------------------------
-
-        // Extract product codes from selected sections
-        sectionsToProcess.forEach(sectionKey => {
-            const section = configData[sectionKey];
-            if (!section) return;
-
-            if (section.componentType === 'productRecommed' || section.componentType === 'productRecommed_v2') {
-                if (Array.isArray(section.props)) {
-                    section.props.forEach((propGroup: any) => {
-                        if (Array.isArray(propGroup.props)) {
-                            propGroup.props.forEach((p: any) => {
-                                if (p.productCode) {
-                                    productCodes.push(p.productCode);
-                                }
-                            });
-                        }
-                    });
+            const items = Array.isArray(section?.props?.items) ? section.props.items : [];
+            items.forEach((item: any) => {
+                const productCode = cleanString(item?.productCode);
+                if (!productCode) {
+                    return;
                 }
-            }
-        });
+
+                const gender = currentGender || inferGenderFromProductName(item?.productName || '');
+                if (targetGender && gender !== targetGender) {
+                    return;
+                }
+
+                productCodes.push(productCode);
+            });
+        }
 
         return Array.from(new Set(productCodes));
     } catch (error) {
