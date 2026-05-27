@@ -22,59 +22,65 @@ function NotificationContent() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        const getNotificationFromUrlParams = (): NotificationDetail | null => {
+            const titleParam = searchParams.get('title');
+            const contentParam = searchParams.get('content');
+
+            if (titleParam || contentParam) {
+                return {
+                    id: 'url-params-explicit',
+                    title: titleParam || '消息通知',
+                    content: contentParam || '',
+                    timestamp: new Date().toLocaleString('zh-CN'),
+                };
+            }
+
+            const dataMap: Record<string, string> = {};
+            let hasData = false;
+
+            searchParams.forEach((value, key) => {
+                if (key === 'first' || key.startsWith('keyword') || key === 'remark') {
+                    dataMap[key] = value;
+                    hasData = true;
+                }
+            });
+
+            if (hasData && dataMap['first']) {
+                return {
+                    id: 'wechat-template',
+                    title: dataMap['first'],
+                    content: dataMap['keyword1'] || '',
+                    timestamp: dataMap['keyword2'] || new Date().toLocaleString('zh-CN'),
+                    templateData: dataMap
+                };
+            }
+
+            return null;
+        };
+
         const fetchNotification = async () => {
             try {
-                // 优先检查显式的 title 和 content 参数
-                const titleParam = searchParams.get('title');
-                const contentParam = searchParams.get('content');
-
-                if (titleParam || contentParam) {
-                    // 使用显式参数
-                    setNotification({
-                        id: 'url-params-explicit',
-                        title: titleParam || '消息通知',
-                        content: contentParam || '',
-                        timestamp: new Date().toLocaleString('zh-CN'),
-                    });
-                    setLoading(false);
-                    return;
-                }
-
-                // 收集所有 URL 参数中可能存在的模板数据(备用方案)
-                const dataMap: Record<string, string> = {};
-                let hasData = false;
-
-                searchParams.forEach((value, key) => {
-                    if (key === 'first' || key.startsWith('keyword') || key === 'remark') {
-                        dataMap[key] = value;
-                        hasData = true;
-                    }
-                });
-
-                // 使用微信模板数据作为备用方案
-                if (hasData && dataMap['first']) {
-                    setNotification({
-                        id: 'wechat-template',
-                        title: dataMap['first'],
-                        content: dataMap['keyword1'] || '',
-                        timestamp: dataMap['keyword2'] || new Date().toLocaleString('zh-CN'),
-                        templateData: dataMap
-                    });
-                    setLoading(false);
-                    return;
-                }
-
-                // 尝试从 API 获取 (如果带有 id 参数)
                 const notificationId = searchParams.get('id');
                 if (notificationId) {
-                    const response = await fetch(`/api/notifications/${notificationId}`);
+                    const response = await fetch(`/api/notifications/${encodeURIComponent(notificationId)}`);
                     if (!response.ok) {
+                        const fallbackNotification = getNotificationFromUrlParams();
+                        if (fallbackNotification) {
+                            setNotification(fallbackNotification);
+                            return;
+                        }
+
                         throw new Error('获取通知详情失败');
                     }
                     const data = await response.json();
                     setNotification(data);
+                    return;
+                }
+
+                const fallbackNotification = getNotificationFromUrlParams();
+                if (fallbackNotification) {
+                    setNotification(fallbackNotification);
                 } else {
-                    // 如果既没有 URL 参数也没有 ID,显示通用消息
                     setNotification({
                         id: 'general',
                         title: '消息通知',

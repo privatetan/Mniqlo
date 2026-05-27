@@ -1,0 +1,13 @@
+.git
+.github
+.idea
+.vscode
+.next
+node_modules
+npm-debug.log*
+.env
+.env.*
+!.env.example
+*.local
+.DS_Store
+tsconfig.tsbuildinfo

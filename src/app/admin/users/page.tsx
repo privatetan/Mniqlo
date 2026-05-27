@@ -11,18 +11,42 @@ export default function AdminUsersPage() {
     const [isAuthorized, setIsAuthorized] = useState(false);
 
     useEffect(() => {
-        const user = getUser();
-        if (!user) {
-            router.push('/login');
-            return;
-        }
+        const verifyAdmin = async () => {
+            const user = getUser();
+            if (!user) {
+                router.push('/login');
+                return;
+            }
 
-        if (user.role !== 'ADMIN') {
-            router.push('/');
-            return;
-        }
+            if (user.id === -1) {
+                router.push('/');
+                return;
+            }
 
-        setIsAuthorized(true);
+            try {
+                const response = await fetch('/api/auth/me');
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    localStorage.removeItem('user');
+                    router.push('/login');
+                    return;
+                }
+
+                if (data.user.role !== 'ADMIN') {
+                    router.push('/');
+                    return;
+                }
+
+                setIsAuthorized(true);
+            } catch (error) {
+                console.error('Admin verification failed:', error);
+                localStorage.removeItem('user');
+                router.push('/login');
+            }
+        };
+
+        verifyAdmin();
     }, [router]);
 
     if (!isAuthorized) {

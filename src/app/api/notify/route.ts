@@ -2,21 +2,24 @@ import { NextResponse } from 'next/server';
 import { sendWxNotification } from '@/lib/wxpush';
 import { supabase } from '@/lib/supabase';
 import { formatToLocalTime } from '@/lib/date-utils';
+import { getCurrentUser, unauthorized } from '@/lib/auth';
+import { createNotificationLogUrl } from '@/lib/notification-log';
 
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { title, content, username, productId, style, size } = body;
+        const { title, content, productId, style, size } = body;
+        const currentUser = getCurrentUser();
 
-        if (!username) {
-            return NextResponse.json({ success: false, message: 'Username is required' }, { status: 400 });
+        if (!currentUser) {
+            return unauthorized();
         }
 
         // Fetch user
         const { data: targetUser, error: userError } = await supabase
             .from('users')
             .select('*')
-            .eq('username', username)
+            .eq('id', currentUser.id)
             .single();
 
         if (userError || !targetUser) {
@@ -71,29 +74,17 @@ export async function POST(req: Request) {
 
         // 先保存通知记录到数据库(用于历史记录)
         const nowStr = formatToLocalTime();
-        const { error: insertError } = await supabase
-            .from('notification_logs')
-            .insert([
-                {
-                    user_id: targetUser.id,
-                    title,
-                    content,
-                    product_id: productId || null,
-                    style: style || null,
-                    size: size || null,
-                    timestamp: nowStr
-                }
-            ]);
+        const notificationUrl = await createNotificationLogUrl({
+            userId: targetUser.id,
+            title,
+            content,
+            productId,
+            style,
+            size,
+            timestamp: nowStr,
+            errorContext: 'Failed to save notification:'
+        });
 
-        if (insertError) {
-            console.error('Failed to save notification:', insertError);
-        }
-
-        // 直接使用 baseUrl,消息内容会自动编码到 URL 参数中
-        const baseUrl = process.env.WECHAT_BASE_URL;
-        const notificationUrl = `${baseUrl}/notification`;
-
-        // 发送微信通知,消息内容会自动编码到 URL 参数
         const result = await sendWxNotification(recipientId, title, content, notificationUrl);
 
         if (result.success) {

@@ -1,16 +1,32 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { formatToLocalTime } from '@/lib/date-utils';
+import { getCurrentUser, unauthorized } from '@/lib/auth';
 
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const taskId = searchParams.get('taskId');
+    const user = getCurrentUser();
+
+    if (!user) {
+        return unauthorized();
+    }
 
     if (!taskId) {
         return NextResponse.json({ success: false, message: 'Task ID required' }, { status: 400 });
     }
 
     try {
+        const { data: task, error: taskError } = await supabase
+            .from('monitor_tasks')
+            .select('id')
+            .eq('id', parseInt(taskId, 10))
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+        if (taskError) throw taskError;
+        if (!task) return unauthorized();
+
         const { data: logs, error } = await supabase
             .from('task_logs')
             .select('*')
@@ -31,10 +47,25 @@ export async function POST(req: Request) {
     try {
         const body = await req.json();
         const { taskId, status, message } = body;
+        const user = getCurrentUser();
+
+        if (!user) {
+            return unauthorized();
+        }
 
         if (!taskId || !status) {
             return NextResponse.json({ success: false, message: 'Missing fields' }, { status: 400 });
         }
+
+        const { data: task, error: taskError } = await supabase
+            .from('monitor_tasks')
+            .select('id')
+            .eq('id', parseInt(taskId, 10))
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+        if (taskError) throw taskError;
+        if (!task) return unauthorized();
 
         const nowStr = formatToLocalTime();
 

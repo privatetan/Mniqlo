@@ -1,23 +1,24 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { formatToLocalTime } from '@/lib/date-utils';
+import { getCurrentUser, unauthorized } from '@/lib/auth';
 
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId');
     const productId = searchParams.get('productId');
     const style = searchParams.get('style');
     const size = searchParams.get('size');
+    const user = getCurrentUser();
 
-    if (!userId) {
-        return NextResponse.json({ success: false, message: 'User ID required' }, { status: 400 });
+    if (!user) {
+        return unauthorized();
     }
 
     try {
         let query = supabase
             .from('monitor_tasks')
             .select('*')
-            .eq('user_id', parseInt(userId, 10));
+            .eq('user_id', user.id);
 
         if (productId) query = query.eq('product_id', productId);
         if (style) query = query.eq('style', style);
@@ -29,11 +30,13 @@ export async function GET(req: Request) {
 
         // Fetch latest log for each task manually (no foreign keys)
         const taskIds = tasks.map(t => t.id);
-        const { data: allLogs } = await supabase
-            .from('task_logs')
-            .select('*')
-            .in('task_id', taskIds)
-            .order('timestamp', { ascending: false });
+        const { data: allLogs } = taskIds.length > 0
+            ? await supabase
+                .from('task_logs')
+                .select('*')
+                .in('task_id', taskIds)
+                .order('timestamp', { ascending: false })
+            : { data: [] };
 
         const tasksWithLogs = tasks.map(task => {
             const latestLog = allLogs?.find(l => l.task_id === task.id);
@@ -62,9 +65,14 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { userId, productId, productName, productCode, style, size, targetPrice, frequency, isActive, startTime, endTime } = body;
+        const { productId, productName, productCode, style, size, targetPrice, frequency, isActive, startTime, endTime } = body;
+        const user = getCurrentUser();
 
-        if (!userId || !productId) {
+        if (!user) {
+            return unauthorized();
+        }
+
+        if (!productId) {
             return NextResponse.json({ success: false, message: 'Missing required fields' }, { status: 400 });
         }
 
@@ -72,7 +80,7 @@ export async function POST(req: Request) {
         const { data: existing } = await supabase
             .from('monitor_tasks')
             .select('*')
-            .eq('user_id', parseInt(userId, 10))
+            .eq('user_id', user.id)
             .eq('product_id', productId)
             .eq('style', style || null)
             .eq('size', size || null)
@@ -105,7 +113,7 @@ export async function POST(req: Request) {
                 .from('monitor_tasks')
                 .insert([
                     {
-                        user_id: parseInt(userId, 10),
+                        user_id: user.id,
                         product_id: productId,
                         product_name: productName,
                         product_code: productCode,

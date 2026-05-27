@@ -1,23 +1,15 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { forbidden } from '@/lib/auth';
+import { getAdminUser } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
     try {
-        const username = req.headers.get('X-Admin-User');
-        if (!username) {
-            return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
-        }
-
-        const { data: admin, error: adminError } = await supabase
-            .from('users')
-            .select('role')
-            .eq('username', username)
-            .single();
-
-        if (adminError || !admin || admin.role !== 'ADMIN') {
-            return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
+        const admin = await getAdminUser();
+        if (!admin) {
+            return forbidden();
         }
 
         const { data: users, error: usersError } = await supabase

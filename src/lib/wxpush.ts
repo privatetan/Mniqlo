@@ -32,6 +32,55 @@ export interface WeChatSendResponse {
     msgid?: number;
 }
 
+const MAX_WECHAT_TEMPLATE_URL_LENGTH = 1024;
+
+function getFallbackNotificationUrl(baseUrl: string): string | undefined {
+    const normalizedBaseUrl = baseUrl.replace(/\/$/, '');
+    if (!normalizedBaseUrl) return undefined;
+
+    return `${normalizedBaseUrl}/notification`;
+}
+
+function shortenNotificationUrl(rawUrl: string): string | undefined {
+    try {
+        const parsedUrl = new URL(rawUrl);
+        const notificationId = parsedUrl.searchParams.get('id');
+        const isNotificationUrl = parsedUrl.pathname.endsWith('/notification');
+
+        if (isNotificationUrl && notificationId) {
+            const shortenedUrl = new URL(`${parsedUrl.origin}${parsedUrl.pathname}`);
+            shortenedUrl.searchParams.set('id', notificationId);
+            return shortenedUrl.toString();
+        }
+
+        if (!isNotificationUrl) return undefined;
+
+        return `${parsedUrl.origin}${parsedUrl.pathname}`;
+    } catch {
+        return undefined;
+    }
+}
+
+function getSafeWeChatUrl(rawUrl: string | undefined, baseUrl: string): string | undefined {
+    if (!rawUrl) return baseUrl || undefined;
+
+    const shortenedUrl = shortenNotificationUrl(rawUrl);
+    if (shortenedUrl) return shortenedUrl;
+    if (rawUrl.length <= MAX_WECHAT_TEMPLATE_URL_LENGTH) return rawUrl;
+
+    const fallbackUrl = getFallbackNotificationUrl(baseUrl) || baseUrl || undefined;
+
+    console.warn(
+        `[WeChat] Notification URL length (${rawUrl.length}) exceeds ${MAX_WECHAT_TEMPLATE_URL_LENGTH}; using shortened fallback.`
+    );
+
+    if (fallbackUrl && fallbackUrl.length <= MAX_WECHAT_TEMPLATE_URL_LENGTH) {
+        return fallbackUrl;
+    }
+
+    return undefined;
+}
+
 /**
  * WeChat Notification Service
  * Handles token management and template message sending
@@ -122,24 +171,14 @@ class WeChatPushService {
             // Force refresh if this is a retry
             const token = await this.getAccessToken(retryCount > 0);
 
-            // Encode template data into URL for the notification detail page if applicable
-            let notificationUrl = options?.url || this.baseUrl;
-            if (notificationUrl && !options?.miniprogram) {
-                const urlObj = new URL(notificationUrl);
-                Object.keys(data).forEach(key => {
-                    if (data[key]?.value) {
-                        urlObj.searchParams.set(key, data[key].value);
-                    }
-                });
-                notificationUrl = urlObj.toString();
-            }
+            const notificationUrl = getSafeWeChatUrl(options?.url || this.baseUrl, this.baseUrl);
 
             const sendData: WeChatTemplateSendData = {
                 touser,
                 template_id: templateId || this.templateId,
                 data,
-                url: notificationUrl,
                 ...options,
+                url: notificationUrl,
             };
 
             const url = new URL('https://api.weixin.qq.com/cgi-bin/message/template/send');
@@ -200,16 +239,7 @@ export async function sendWxNotification(
             remark: { value: '点击查看详情', color: '#FF0000' },
         };
 
-        // Add explicit title and content parameters to the URL for reliable access
-        let notificationUrl = url;
-        if (notificationUrl) {
-            const urlObj = new URL(notificationUrl);
-            urlObj.searchParams.set('title', title);
-            urlObj.searchParams.set('content', content);
-            notificationUrl = urlObj.toString();
-        }
-
-        const result = await wxPushService.sendTemplateMessage(openId, templateData, templateId, { url: notificationUrl });
+        const result = await wxPushService.sendTemplateMessage(openId, templateData, templateId, { url });
 
         return {
             success: true,

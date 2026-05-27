@@ -8,20 +8,17 @@ export async function GET(
     try {
         const { id } = params;
 
-        // 从 notification_logs 表获取通知详情
         const { data: notification, error } = await supabase
             .from('notification_logs')
             .select(`
         id,
+        user_id,
         title,
         content,
         timestamp,
         product_id,
         style,
-        size,
-        users (
-          username
-        )
+        size
       `)
             .eq('id', id)
             .single();
@@ -33,7 +30,12 @@ export async function GET(
             );
         }
 
-        // 格式化返回数据
+        const { data: user } = await supabase
+            .from('users')
+            .select('username')
+            .eq('id', notification.user_id)
+            .maybeSingle();
+
         const response = {
             id: notification.id,
             title: notification.title || '消息通知',
@@ -42,7 +44,7 @@ export async function GET(
             productId: notification.product_id,
             style: notification.style,
             size: notification.size,
-            username: (notification.users as any)?.username,
+            username: user?.username,
         };
 
         return NextResponse.json(response);

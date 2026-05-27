@@ -124,7 +124,7 @@ export default function SearchPage({ initialQuery }: SearchPageProps) {
                 }
 
                 try {
-                    const res = await fetch(`/api/favorites?userId=${user.id}`);
+                    const res = await fetch('/api/favorites');
                     const data = await res.json();
                     if (data.success) {
                         const mapped = data.favorites.map((f: any) => ({
@@ -164,7 +164,7 @@ export default function SearchPage({ initialQuery }: SearchPageProps) {
         if (user) {
             try {
                 if (user.id !== -1) {
-                    const res = await fetch(`/api/search/history?userId=${user.id}`);
+                    const res = await fetch('/api/search/history');
                     const data = await res.json();
                     if (data.success) {
                         const serverKeywords = data.history.map((h: any) => h.keyword);
@@ -233,7 +233,7 @@ export default function SearchPage({ initialQuery }: SearchPageProps) {
                 if (itemToRemove) {
                     const query = itemToRemove.id
                         ? `/api/favorites?id=${itemToRemove.id}`
-                        : `/api/favorites?userId=${user.id}&productId=${itemToRemove.productId}&style=${style}&size=${size}`;
+                        : `/api/favorites?productId=${itemToRemove.productId}&style=${style}&size=${size}`;
                     await fetch(query, {
                         method: 'DELETE'
                     });
@@ -241,7 +241,6 @@ export default function SearchPage({ initialQuery }: SearchPageProps) {
                 setFavorites(favorites.filter(f => !(f.productId === product.productId && f.color === style && f.size === size)));
             } else {
                 const newItem = {
-                    userId: user.id,
                     productId: product.productId,
                     code: product.code,
                     name: product.productName,
@@ -309,7 +308,7 @@ export default function SearchPage({ initialQuery }: SearchPageProps) {
                     fetch('/api/search/history', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ userId: user.id, keyword: searchText })
+                        body: JSON.stringify({ keyword: searchText })
                     });
                 }
             } catch (e) {

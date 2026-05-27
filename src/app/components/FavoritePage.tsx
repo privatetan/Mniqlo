@@ -33,7 +33,7 @@ export default function FavoritePage() {
         }
 
         try {
-            const res = await fetch(`/api/favorites?userId=${user.id}`);
+            const res = await fetch('/api/favorites');
             const data = await res.json();
             if (data.success) {
                 const mapped = data.favorites.map((f: any) => ({
@@ -153,7 +153,7 @@ export default function FavoritePage() {
 
                 const query = itemToRemove.id
                     ? `/api/favorites?id=${itemToRemove.id}`
-                    : `/api/favorites?userId=${user.id}&productId=${itemToRemove.productId}&style=${itemToRemove.color}&size=${itemToRemove.size}`;
+                    : `/api/favorites?productId=${itemToRemove.productId}&style=${itemToRemove.color}&size=${itemToRemove.size}`;
 
                 await fetch(query, {
                     method: 'DELETE'

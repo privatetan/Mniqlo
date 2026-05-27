@@ -14,8 +14,13 @@ export default function Header({ title, showFilterToggle = false, isFilterPanelO
     const router = useRouter();
     const { t } = useLanguage();
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
         if (confirm(t('header.logout_confirm'))) {
+            try {
+                await fetch('/api/auth/logout', { method: 'POST' });
+            } catch (error) {
+                console.error('Logout failed:', error);
+            }
             localStorage.removeItem('user');
             router.push('/login');
         }

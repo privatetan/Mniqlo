@@ -8,21 +8,15 @@ export default function WxPushTest() {
     const [loading, setLoading] = useState(false);
 
     const [wxUserId, setWxUserId] = useState('');
-    const [username, setUsername] = useState('');
     const [notifyFrequency, setNotifyFrequency] = useState('60');
 
     const handleSaveWxUserId = async () => {
-        if (!username) {
-            alert('Username is required');
-            return;
-        }
         setLoading(true);
         try {
             const res = await fetch('/api/user/update', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    username,
                     wxUserId,
                     notifyFrequency: notifyFrequency ? parseInt(notifyFrequency, 10) : 60
                 })
@@ -47,7 +41,7 @@ export default function WxPushTest() {
             const res = await fetch('/api/notify', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, content, username: username || undefined })
+                body: JSON.stringify({ title, content })
             });
             const data = await res.json();
             if (data.success) {
@@ -66,16 +60,6 @@ export default function WxPushTest() {
         <div className="p-4 border rounded max-w-md mx-auto mt-10 bg-white shadow flex flex-col gap-6">
             <section>
                 <h2 className="text-xl font-bold mb-4">Set User Wx Notification Config</h2>
-                <div className="mb-4">
-                    <label className="block text-sm font-medium mb-1">Username</label>
-                    <input
-                        type="text"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        placeholder="e.g. admin"
-                        className="w-full border p-2 rounded"
-                    />
-                </div>
                 <div className="mb-4">
                     <label className="block text-sm font-medium mb-1">WxUserID (Puid)</label>
                     <input

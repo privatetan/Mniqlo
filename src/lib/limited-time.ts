@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import { sendWxNotification } from './wxpush';
 import { getProductIdByCode } from './uniqlo';
+import { createNotificationLogUrl } from './notification-log';
 
 const TIMELIMIT_PAGE_URL = 'https://www.uniqlo.cn/data/pages/timelimit.html.json';
 const PRODUCT_DETAIL_URL = 'https://www.uniqlo.cn/data/products/spu/zh_CN';
@@ -593,13 +594,18 @@ async function sendLimitedTimeNotifications(newItems: LimitedTimeItem[], targetC
             index += 1;
         }
 
-        const baseUrl = process.env.WECHAT_BASE_URL;
-        const notificationUrl = `${baseUrl}/notification`;
+        const contentText = content.trim();
+        const notificationUrl = await createNotificationLogUrl({
+            userId: user.id,
+            title,
+            content: contentText,
+            errorContext: `[LimitedTime] Failed to save notification log for ${user.username}:`
+        });
 
         const result = await sendWxNotification(
             user.wx_user_id,
             title,
-            content.trim(),
+            contentText,
             notificationUrl,
             process.env.WECHAT_TEMPLATE_ID_SUPER || process.env.WECHAT_TEMPLATE_ID
         );

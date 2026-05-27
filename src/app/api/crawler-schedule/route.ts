@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { toLocalISOString } from '@/lib/date-utils';
 import { intervalToCron } from '@/lib/cron-utils';
-import { addOrUpdateJob, removeJob } from '@/lib/cron';
+import { removeCatalogCrawlSchedule, syncCatalogCrawlSchedule } from '@/lib/jobs/catalog-crawl-jobs';
 import * as logger from '@/lib/logger';
 
 /**
@@ -65,10 +65,11 @@ export async function POST(request: Request) {
                 error: error.message || 'Invalid interval'
             }, { status: 400 });
         }
+        const enabled = is_enabled ?? true;
 
         const updatePayload = {
             gender,
-            is_enabled: is_enabled ?? true,
+            is_enabled: enabled,
             cron_expression,
             updated_at: toLocalISOString(new Date())
         };
@@ -86,21 +87,12 @@ export async function POST(request: Request) {
 
         if (error) throw error;
 
-        // Dynamically update the cron job
-        if (is_enabled) {
-            const success = addOrUpdateJob(gender, cron_expression);
-            if (!success) {
-                logger.error(`[CrawlerSchedule] Failed to add/update cron job for ${gender}`);
-            }
-        } else {
-            // Remove the job if disabled
-            removeJob(gender);
-        }
+        await syncCatalogCrawlSchedule('super', gender, cron_expression, enabled);
 
         return NextResponse.json({
             success: true,
             schedule: data,
-            message: `Schedule for ${gender} has been ${is_enabled ? 'enabled' : 'disabled'}`,
+            message: `Schedule for ${gender} has been ${enabled ? 'enabled' : 'disabled'}`,
             cron_expression
         });
     } catch (error: any) {
@@ -134,6 +126,8 @@ export async function DELETE(request: Request) {
             .eq('gender', gender);
 
         if (error) throw error;
+
+        await removeCatalogCrawlSchedule('super', gender);
 
         return NextResponse.json({
             success: true,

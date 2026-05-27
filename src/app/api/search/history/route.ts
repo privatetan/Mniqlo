@@ -1,13 +1,19 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { formatToLocalTime } from '@/lib/date-utils';
+import { getCurrentUser, unauthorized } from '@/lib/auth';
 
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { userId, keyword } = body;
+        const { keyword } = body;
+        const user = getCurrentUser();
 
-        if (!userId || !keyword) {
+        if (!user) {
+            return unauthorized();
+        }
+
+        if (!keyword) {
             return NextResponse.json({ success: false, message: 'Missing required fields' }, { status: 400 });
         }
 
@@ -15,7 +21,7 @@ export async function POST(req: Request) {
             .from('search_histories')
             .insert([
                 {
-                    user_id: parseInt(userId, 10),
+                    user_id: user.id,
                     query: keyword,
                     timestamp: formatToLocalTime()
                 }
@@ -33,18 +39,17 @@ export async function POST(req: Request) {
 }
 
 export async function GET(req: Request) {
-    const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId');
+    const user = getCurrentUser();
 
-    if (!userId) {
-        return NextResponse.json({ success: false, message: 'User ID required' }, { status: 400 });
+    if (!user) {
+        return unauthorized();
     }
 
     try {
         const { data: history, error } = await supabase
             .from('search_histories')
             .select('*')
-            .eq('user_id', parseInt(userId, 10))
+            .eq('user_id', user.id)
             .order('id', { ascending: false })
             .limit(100);
 

@@ -1,71 +1,26 @@
-# Deployment Guide
+# Deployment
 
-This guide covers deploying the Mniqlo application using Supabase for persistent storage.
+Mniqlo runs as a standalone Next.js container and uses Supabase/PostgreSQL for storage and `pg-boss` jobs.
 
-## Prerequisites
+## Prepare
 
-1.  **Supabase Project**: Create a new project at [supabase.com](https://supabase.com).
-2.  **Environment Variables**: You will need your Supabase URL and Anon Key.
-3.  **Docker**: Required for containerized deployment.
+1. Run the SQL files in `database/` from the Supabase SQL Editor.
+2. Copy `.env.example` to `.env` on the server.
+3. Fill Supabase, pg-boss, session, and WeChat values.
 
-## Database Initialization
+`PG_BOSS_DATABASE_URL` must be a PostgreSQL connection string, not the Supabase anon key.
 
-Before deploying the app, you must initialize the database structure in Supabase:
-
-1.  Open your project on the Supabase Dashboard.
-2.  Go to the **SQL Editor**.
-3.  Create a "New Query".
-4.  Copy the contents of `supabase_init.sql` from this repository and run it.
-
-## Deployment Options
-
-### Option 1: Docker Compose (Recommended)
-
-1.  **Configure Environment**:
-    Create a `.env` file on your server:
-    ```bash
-    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-    WECHAT_APPID=your_wechat_appid
-    WECHAT_APPSECRET=your_wechat_appsecret
-    WECHAT_TEMPLATE_ID=your_template_id
-    WECHAT_BASE_URL=http://your-server-ip:3000
-    # ... other variables from .env.example
-    ```
-
-2.  **Start Services**:
-    ```bash
-    docker-compose up -d
-    ```
-
-3.  **Check Status**:
-    ```bash
-    docker-compose logs -f
-    ```
-
-### Option 2: Manual Docker Run
+## Docker Compose
 
 ```bash
-docker run -d \
-  -p 3000:3000 \
-  -e NEXT_PUBLIC_SUPABASE_URL="yours" \
-  -e NEXT_PUBLIC_SUPABASE_ANON_KEY="yours" \
-  -e WECHAT_APPID="yours" \
-  -e WECHAT_APPSECRET="yours" \
-  -e WECHAT_TEMPLATE_ID="yours" \
-  -e WECHAT_BASE_URL="http://your-server-ip:3000" \
-  mniqlo-app
+docker compose up -d --build
+docker compose logs -f app
 ```
 
-## Maintenance
+The app listens on container port `3000`. Set `APP_PORT` in `.env` to change the host port; the default is `13300`.
 
-### Updating the Database
-Since we do not use foreign keys or database-level migrations (like Prisma), any schema updates should be applied manually via the Supabase SQL Editor. We recommend keep track of changes in version-controlled SQL scripts.
+## Runtime Notes
 
-### Data Backups
-Supabase automatically handles daily backups for Pro tier projects. For free tier, you can manually export data as SQL or CSV from the Supabase Table Editor.
-
-## Security
-- Always use **Environment Variables** for sensitive keys.
-- Ensure `NEXT_PUBLIC_SUPABASE_ANON_KEY` is the key used for client-side/public API access.
-- For backend administrative tasks, the `X-Admin-User` header logic in our APIs provides an additional layer of security on top of the database role checks.
+- `JOB_WORKER_ENABLED=true` lets this container process pg-boss jobs.
+- Use `JOB_WORKER_ENABLED=false` for HTTP-only replicas.
+- Keep `.env` out of git; it contains database and WeChat secrets.

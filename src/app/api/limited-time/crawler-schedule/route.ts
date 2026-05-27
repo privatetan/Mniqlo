@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { toLocalISOString } from '@/lib/date-utils';
 import { intervalToCron } from '@/lib/cron-utils';
-import { addOrUpdateLimitedTimeJob, removeLimitedTimeJob } from '@/lib/limited-time-cron';
+import { removeCatalogCrawlSchedule, syncCatalogCrawlSchedule } from '@/lib/jobs/catalog-crawl-jobs';
 import * as logger from '@/lib/logger';
 
 export async function GET() {
@@ -78,9 +78,9 @@ export async function POST(request: Request) {
         }
 
         if (updatePayload.is_enabled) {
-            addOrUpdateLimitedTimeJob(gender, cron_expression);
+            await syncCatalogCrawlSchedule('limited-time', gender, cron_expression, true);
         } else {
-            removeLimitedTimeJob(gender);
+            await syncCatalogCrawlSchedule('limited-time', gender, cron_expression, false);
         }
 
         return NextResponse.json({
@@ -119,7 +119,7 @@ export async function DELETE(request: Request) {
             throw error;
         }
 
-        removeLimitedTimeJob(gender);
+        await removeCatalogCrawlSchedule('limited-time', gender);
 
         return NextResponse.json({
             success: true,

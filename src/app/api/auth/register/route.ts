@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { setSessionCookie } from '@/lib/auth';
 import { formatToLocalTime } from '@/lib/date-utils';
 import crypto from 'crypto';
 
@@ -42,8 +43,14 @@ export async function POST(req: Request) {
         if (createError) throw createError;
 
         const { password: _, ...userWithoutPassword } = newUser;
+        const response = NextResponse.json({ success: true, user: userWithoutPassword });
+        setSessionCookie(response, {
+            id: Number(newUser.id),
+            username: newUser.username,
+            role: newUser.role,
+        });
 
-        return NextResponse.json({ success: true, user: userWithoutPassword });
+        return response;
     } catch (error) {
         console.error('Registration error:', error);
         return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });

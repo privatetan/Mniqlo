@@ -1,18 +1,12 @@
-/**
- * Cron Initialization Route
- * This route is called automatically when the server starts
- * to initialize the cron job manager
- */
-
 import { NextResponse } from 'next/server';
-
-// Import cron module to trigger auto-start
-import '@/lib/cron';
+import { startJobs } from '@/lib/jobs';
 
 export async function GET() {
+    await startJobs();
+
     return NextResponse.json({
         success: true,
-        message: 'Cron initialization endpoint'
+        message: 'Job runtime initialization endpoint'
     });
 }
 

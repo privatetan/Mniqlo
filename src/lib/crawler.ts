@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import { sendWxNotification } from './wxpush';
 import { getProductIdByCode } from './uniqlo';
+import { createNotificationLogUrl } from './notification-log';
 
 const CONFIG_URL = 'https://www.uniqlo.cn/data/pages/super-u.html.json';
 const OFFICIAL_PRODUCT_DETAIL_URL = 'https://d.uniqlo.cn/p/product/i/product/spu/pc/query';
@@ -100,6 +101,12 @@ export interface CrawledItem {
 type ProcessProductResult = {
     items: CrawledItem[];
     checked: boolean;
+};
+
+type NotificationUser = {
+    id: number;
+    username: string;
+    wx_user_id: string | null;
 };
 
 /**
@@ -715,7 +722,7 @@ export async function crawlUniqloProducts(targetGender?: string): Promise<{ tota
                     console.log(`[Notification] Found ${subscriptions.length} eligible subscribers for category "${targetGender}".`);
 
                     for (const sub of subscriptions) {
-                        const user = sub.users as any;
+                        const user = sub.users as NotificationUser | undefined;
                         if (!user?.wx_user_id) {
                             console.log(`[Notification] User ${user?.username || sub.user_id} has no wx_user_id, skipping.`);
                             continue;
@@ -741,14 +748,18 @@ export async function crawlUniqloProducts(targetGender?: string): Promise<{ tota
                             index++;
                         }
 
-                        // Send single summary notification
-                        const baseUrl = process.env.WECHAT_BASE_URL;
-                        const notificationUrl = `${baseUrl}/notification`;
+                        const contentText = content.trim();
+                        const notificationUrl = await createNotificationLogUrl({
+                            userId: user.id,
+                            title,
+                            content: contentText,
+                            errorContext: `[Notification] Failed to save summary log for ${user.username}:`
+                        });
 
                         const notificationResult = await sendWxNotification(
                             user.wx_user_id,
                             title,
-                            content.trim(),
+                            contentText,
                             notificationUrl,
                             process.env.WECHAT_TEMPLATE_ID_SUPER
                         );

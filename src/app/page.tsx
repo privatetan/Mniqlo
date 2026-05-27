@@ -70,15 +70,40 @@ function HomeContent() {
   const isLimitedTimeFilterOpen = activeTab === 'limited-time' && isFilterPanelOpen;
 
   useEffect(() => {
-    const user = getUser();
+    const verifySession = async () => {
+      const user = getUser();
 
-    if (!user) {
-      router.push('/login');
-      return;
-    }
+      if (!user) {
+        router.push('/login');
+        return;
+      }
 
-    setIsAdmin(user.role === 'ADMIN');
-    setIsAuthorized(true);
+      if (user.id === -1) {
+        setIsAdmin(false);
+        setIsAuthorized(true);
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/auth/me');
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          localStorage.removeItem('user');
+          router.push('/login');
+          return;
+        }
+
+        setIsAdmin(data.user.role === 'ADMIN');
+        setIsAuthorized(true);
+      } catch (error) {
+        console.error('Session verification failed:', error);
+        localStorage.removeItem('user');
+        router.push('/login');
+      }
+    };
+
+    verifySession();
   }, [router]);
 
   useEffect(() => {

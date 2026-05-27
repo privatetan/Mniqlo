@@ -147,29 +147,19 @@ export default function AdminUsers() {
             return;
         }
 
-        if (user.role !== 'ADMIN') {
+        if (user.id === -1) {
             return;
         }
 
-        fetchUsers(user.username);
+        fetchUsers();
         fetchCrawlerSchedules();
         fetchLimitedTimeCrawlerSchedules();
     }, []);
 
-    const fetchUsers = async (username?: string) => {
+    const fetchUsers = async () => {
         try {
             setLoading(true);
-            const currentUser = username || getUser()?.username;
-            if (!currentUser) {
-                setError('Unauthorized');
-                setUsers([]);
-                return;
-            }
-            const response = await fetch('/api/admin/users', {
-                headers: {
-                    'X-Admin-User': currentUser
-                }
-            });
+            const response = await fetch('/api/admin/users');
             const data = await response.json();
             if (data.success) {
                 setUsers(data.users);
@@ -192,14 +182,14 @@ export default function AdminUsers() {
         });
     };
 
-    const handleSave = async (username: string) => {
+    const handleSave = async (userId: number) => {
         try {
             setSavingUserId(editingUserId);
             const response = await fetch('/api/user/update', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    username,
+                    userId,
                     wxUserId: editForm.wxUserId,
                     notifyFrequency: editForm.notifyFrequency
                 }),
@@ -226,16 +216,7 @@ export default function AdminUsers() {
             setIsTaskModalOpen(true);
             setExpandedTaskProductId(null);
 
-            const currentUser = getUser()?.username;
-            if (!currentUser) {
-                alert('未授权');
-                return;
-            }
-            const response = await fetch(`/api/admin/users/${user.id}/tasks`, {
-                headers: {
-                    'X-Admin-User': currentUser
-                }
-            });
+            const response = await fetch(`/api/admin/users/${user.id}/tasks`);
             const data = await response.json();
             if (data.success) {
                 setSelectedTasks(data.tasks);
@@ -257,16 +238,7 @@ export default function AdminUsers() {
             setIsPushSettingsModalOpen(true);
             setPushSettingsFeature(feature);
 
-            const currentUser = getUser()?.username;
-            if (!currentUser) {
-                alert('未授权');
-                return;
-            }
-            const response = await fetch(getFeaturePushSettingsEndpoint(feature, user.id), {
-                headers: {
-                    'X-Admin-User': currentUser
-                }
-            });
+            const response = await fetch(getFeaturePushSettingsEndpoint(feature, user.id));
             const data = await response.json();
             if (data.success) {
                 setSelectedPushSettings(data.settings);
@@ -286,16 +258,10 @@ export default function AdminUsers() {
 
         try {
             setSavingPushSettings(true);
-            const currentUser = getUser()?.username;
-            if (!currentUser) {
-                alert('未授权');
-                return;
-            }
             const response = await fetch(getFeaturePushSettingsEndpoint(pushSettingsFeature, selectedUser.id), {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-Admin-User': currentUser
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(selectedPushSettings)
             });
@@ -684,7 +650,7 @@ export default function AdminUsers() {
                                                     {editingUserId === user.id ? (
                                                         <div className="flex gap-1.5">
                                                             <button
-                                                                onClick={() => handleSave(user.username)}
+                                                                onClick={() => handleSave(user.id)}
                                                                 disabled={savingUserId === user.id}
                                                                 className="bg-[#0b5fff] text-white text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider hover:bg-blue-700 disabled:opacity-50"
                                                             >
@@ -1190,7 +1156,7 @@ export default function AdminUsers() {
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="sm:w-4 sm:h-4"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>
                                                 </div>
                                                 <p className="text-[9px] sm:text-[10px] text-orange-700 font-bold leading-relaxed flex-1">
-                                                    该用户尚未绑定微信 (X-Admin-User ID)，即使开启通知也无法成功接收微信消息。
+                                                    该用户尚未绑定微信 ID，即使开启通知也无法成功接收微信消息。
                                                 </p>
                                             </div>
                                         )}

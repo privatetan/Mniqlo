@@ -133,7 +133,7 @@ export default function SuperSelectionPage({ isFilterPanelOpen = false, onToggle
         if (user) {
             if (user.id === -1) return;
             try {
-                const res = await fetch(`/api/favorites?userId=${user.id}`);
+                const res = await fetch('/api/favorites');
                 const data = await res.json();
                 if (data.success) {
                     const mapped = data.favorites.map((f: any) => ({
@@ -193,7 +193,6 @@ export default function SuperSelectionPage({ isFilterPanelOpen = false, onToggle
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        userId: user.id,
                         productId: item.product_id,
                         code: item.code,
                         name: item.name,

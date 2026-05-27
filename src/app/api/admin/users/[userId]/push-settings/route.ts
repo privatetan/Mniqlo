@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { forbidden, getAdminUser } from '@/lib/auth';
 
 /**
  * GET: Fetch super selection push settings for a user
@@ -9,20 +10,9 @@ export async function GET(
     { params }: { params: { userId: string } }
 ) {
     try {
-        const username = req.headers.get('X-Admin-User');
-        if (!username) {
-            return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
-        }
-
-        // Verify admin permissions
-        const { data: admin, error: adminError } = await supabase
-            .from('users')
-            .select('role')
-            .eq('username', username)
-            .single();
-
-        if (adminError || !admin || admin.role !== 'ADMIN') {
-            return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
+        const admin = await getAdminUser();
+        if (!admin) {
+            return forbidden();
         }
 
         const userId = parseInt(params.userId, 10);
@@ -62,19 +52,9 @@ export async function POST(
     { params }: { params: { userId: string } }
 ) {
     try {
-        const username = req.headers.get('X-Admin-User');
-        if (!username) {
-            return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
-        }
-
-        const { data: admin, error: adminError } = await supabase
-            .from('users')
-            .select('role')
-            .eq('username', username)
-            .single();
-
-        if (adminError || !admin || admin.role !== 'ADMIN') {
-            return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
+        const admin = await getAdminUser();
+        if (!admin) {
+            return forbidden();
         }
 
         const userId = parseInt(params.userId, 10);

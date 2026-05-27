@@ -1,12 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { formatToLocalTime } from '@/lib/date-utils';
-
-function parseUserId(value: string | null) {
-    if (!value) return null;
-    const parsed = Number.parseInt(value, 10);
-    return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
-}
+import { getCurrentUser, unauthorized } from '@/lib/auth';
 
 function parseRecordId(value: string | null) {
     if (!value) return null;
@@ -20,18 +15,17 @@ function parsePrice(value: unknown) {
 }
 
 export async function GET(req: Request) {
-    const { searchParams } = new URL(req.url);
-    const userId = parseUserId(searchParams.get('userId'));
+    const user = getCurrentUser();
 
-    if (!userId) {
-        return NextResponse.json({ success: false, message: 'Valid user ID required' }, { status: 400 });
+    if (!user) {
+        return unauthorized();
     }
 
     try {
         const { data: favorites, error } = await supabase
             .from('favorites')
             .select('*')
-            .eq('user_id', userId)
+            .eq('user_id', user.id)
             .order('id', { ascending: false });
 
         if (error) throw error;
@@ -50,10 +44,14 @@ export async function POST(req: Request) {
     try {
         const body = await req.json();
         const { productId, code, name, price, style, size } = body;
-        const userId = parseUserId(String(body.userId ?? ''));
+        const user = getCurrentUser();
         const parsedPrice = parsePrice(price);
 
-        if (!userId || !productId) {
+        if (!user) {
+            return unauthorized();
+        }
+
+        if (!productId) {
             return NextResponse.json({ success: false, message: 'Missing required fields' }, { status: 400 });
         }
 
@@ -61,7 +59,7 @@ export async function POST(req: Request) {
             .from('favorites')
             .insert([
                 {
-                    user_id: userId,
+                    user_id: user.id,
                     product_id: productId,
                     code: code || productId,
                     name,
@@ -87,17 +85,22 @@ export async function POST(req: Request) {
 export async function DELETE(req: Request) {
     const { searchParams } = new URL(req.url);
     const id = parseRecordId(searchParams.get('id'));
-    const userId = parseUserId(searchParams.get('userId'));
     const productId = searchParams.get('productId');
     const style = searchParams.get('style');
     const size = searchParams.get('size');
+    const user = getCurrentUser();
+
+    if (!user) {
+        return unauthorized();
+    }
 
     if (id) {
         try {
             const { error, count } = await supabase
                 .from('favorites')
                 .delete({ count: 'exact' })
-                .eq('id', id);
+                .eq('id', id)
+                .eq('user_id', user.id);
 
             if (error) throw error;
             return NextResponse.json({ success: true, count });
@@ -107,7 +110,7 @@ export async function DELETE(req: Request) {
         }
     }
 
-    if (!userId || !productId) {
+    if (!productId) {
         return NextResponse.json({ success: false, message: 'Missing fields' }, { status: 400 });
     }
 
@@ -115,7 +118,7 @@ export async function DELETE(req: Request) {
         const { error, count } = await supabase
             .from('favorites')
             .delete({ count: 'exact' })
-            .eq('user_id', userId)
+            .eq('user_id', user.id)
             .eq('product_id', productId)
             .eq('color', style ?? '')
             .eq('size', size ?? '');

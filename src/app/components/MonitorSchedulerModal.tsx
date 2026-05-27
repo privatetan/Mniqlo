@@ -120,7 +120,6 @@ export function MonitorSchedulerModal({
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
-                                    username: user.username,
                                     productId: item.productId,
                                     style: item.color,
                                     size: item.size,
@@ -200,7 +199,6 @@ export function MonitorSchedulerModal({
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    userId: user.id,
                     productId: item.productId,
                     productName: item.name,
                     productCode: item.code,
@@ -301,7 +299,7 @@ export function MonitorSchedulerModal({
                     return;
                 }
 
-                const res = await fetch(`/api/tasks?userId=${user.id}&productId=${item.productId}&style=${item.color}&size=${item.size}`);
+                const res = await fetch(`/api/tasks?productId=${item.productId}&style=${item.color}&size=${item.size}`);
                 const data = await res.json();
                 if (!data.success || data.tasks.length === 0 || cancelled) {
                     stop();
