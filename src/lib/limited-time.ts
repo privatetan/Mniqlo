@@ -16,6 +16,44 @@ const COMMON_HEADERS = {
     'Referer': 'https://www.uniqlo.cn/'
 };
 
+type LimitedTimeUpstreamErrorCode =
+    | 'LIMITED_TIME_UPSTREAM_ACCESS_RESTRICTED'
+    | 'LIMITED_TIME_UPSTREAM_FETCH_FAILED';
+
+type LimitedTimeUpstreamErrorDetails = {
+    code: LimitedTimeUpstreamErrorCode;
+    url: string;
+    upstreamStatus: number;
+    upstreamStatusText: string;
+    upstreamServer: string;
+    requestId: string;
+};
+
+export class LimitedTimeUpstreamError extends Error {
+    code: LimitedTimeUpstreamErrorCode;
+    url: string;
+    upstreamStatus: number;
+    upstreamStatusText: string;
+    upstreamServer: string;
+    requestId: string;
+    httpStatus = 502;
+
+    constructor(details: LimitedTimeUpstreamErrorDetails) {
+        super(formatLimitedTimeUpstreamError(details));
+        this.name = 'LimitedTimeUpstreamError';
+        this.code = details.code;
+        this.url = details.url;
+        this.upstreamStatus = details.upstreamStatus;
+        this.upstreamStatusText = details.upstreamStatusText;
+        this.upstreamServer = details.upstreamServer;
+        this.requestId = details.requestId;
+    }
+}
+
+export function isLimitedTimeUpstreamError(error: unknown): error is LimitedTimeUpstreamError {
+    return error instanceof LimitedTimeUpstreamError;
+}
+
 type LimitedTimeSeed = {
     productCode: string;
     category: LimitedTimeCategory;
@@ -51,6 +89,29 @@ export interface LimitedTimeItem {
 function cleanString(value: unknown): string {
     if (value == null) return '';
     return String(value).trim().replace(/\s+/g, ' ');
+}
+
+function formatLimitedTimeUpstreamError(details: LimitedTimeUpstreamErrorDetails): string {
+    const statusInfo = `HTTP ${details.upstreamStatus}${details.upstreamStatusText ? ` ${details.upstreamStatusText}` : ''}`;
+    const serverInfo = details.upstreamServer ? `，服务端：${details.upstreamServer}` : '';
+    const requestInfo = details.requestId ? `，Request ID：${details.requestId}` : '';
+
+    if (details.code === 'LIMITED_TIME_UPSTREAM_ACCESS_RESTRICTED') {
+        return `优衣库限时特优配置接口访问受限（${statusInfo}${serverInfo}${requestInfo}）。本次同步已中止，未更新数据库。`;
+    }
+
+    return `优衣库限时特优配置接口请求失败（${statusInfo}${serverInfo}${requestInfo}）。本次同步已中止，未更新数据库。`;
+}
+
+function extractTencentRequestId(body: string): string {
+    const match = body.match(/(?:Request ID:|请求 ID：)<\/span>\s*<span>([^<]+)<\/span>/i);
+    return cleanString(match?.[1]);
+}
+
+function isRestrictedAccessResponse(status: number, body: string): boolean {
+    return status === 567 ||
+        body.includes('Restricted Access') ||
+        body.includes('访问受限');
 }
 
 function isLimitedTimeCategory(value?: string | null): value is LimitedTimeCategory {
@@ -159,7 +220,21 @@ async function fetchLimitedTimeSeedGroups(): Promise<LimitedTimeSeedGroups> {
     });
 
     if (!res.ok) {
-        throw new Error(`Failed to fetch timelimit page config: ${res.status}`);
+        const responseBody = await res.text();
+        const upstreamServer = cleanString(res.headers.get('server'));
+        const requestId = cleanString(res.headers.get('eo-log-uuid')) || extractTencentRequestId(responseBody);
+        const isAccessRestricted = isRestrictedAccessResponse(res.status, responseBody);
+
+        throw new LimitedTimeUpstreamError({
+            code: isAccessRestricted
+                ? 'LIMITED_TIME_UPSTREAM_ACCESS_RESTRICTED'
+                : 'LIMITED_TIME_UPSTREAM_FETCH_FAILED',
+            url: TIMELIMIT_PAGE_URL,
+            upstreamStatus: res.status,
+            upstreamStatusText: cleanString(res.statusText) || 'Unknown Status',
+            upstreamServer,
+            requestId
+        });
     }
 
     const pageData = await res.json();

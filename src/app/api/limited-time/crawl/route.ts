@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
-import { crawlLimitedTimeProducts } from '@/lib/limited-time';
+import {
+    crawlLimitedTimeProducts,
+    isLimitedTimeUpstreamError
+} from '@/lib/limited-time';
 
 export async function POST(request: Request) {
     try {
@@ -16,11 +19,23 @@ export async function POST(request: Request) {
             soldOutItems,
             message: `Successfully crawled ${totalFound} limited-time items${gender ? ` for category: ${gender}` : ''}. Found ${newItems.length} new records and ${soldOutItems.length} sold out records.`
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Limited time crawl API error:', error);
+
+        if (isLimitedTimeUpstreamError(error)) {
+            return NextResponse.json({
+                success: false,
+                code: error.code,
+                error: error.message,
+                upstreamStatus: error.upstreamStatus,
+                upstreamServer: error.upstreamServer,
+                requestId: error.requestId
+            }, { status: error.httpStatus });
+        }
+
         return NextResponse.json({
             success: false,
-            error: error.message || 'Internal Server Error'
+            error: error instanceof Error ? error.message : 'Internal Server Error'
         }, { status: 500 });
     }
 }
