@@ -3,6 +3,7 @@ import { sendWxNotification } from './wxpush';
 import { getProductIdByCode } from './uniqlo';
 
 const CONFIG_URL = 'https://www.uniqlo.cn/data/pages/super-u.html.json';
+const OFFICIAL_PRODUCT_DETAIL_URL = 'https://d.uniqlo.cn/p/product/i/product/spu/pc/query';
 const PRODUCT_DETAIL_URL = 'https://www.uniqlo.cn/data/products/spu/zh_CN';
 const STOCK_URL = 'https://d.uniqlo.cn/p/stock/stock/query/zh_CN';
 
@@ -69,6 +70,17 @@ function inferGenderFromSectionHtml(html: string): string | null {
     return inferGenderFromProductName(cleanString(heading?.[1] || ''));
 }
 
+function extractItemCode(summary: any, rows: any[]): string {
+    const summaryCode = cleanString(summary?.code);
+    if (summaryCode) return summaryCode;
+
+    const omsProductCode = cleanString(summary?.oms_productCode);
+    if (omsProductCode) return omsProductCode.slice(0, 6);
+
+    const omsSkuCode = cleanString(rows.find(row => row?.omsSkuCode)?.omsSkuCode);
+    return omsSkuCode.match(/^\d{6}/)?.[0] || '';
+}
+
 export interface CrawledItem {
     product_id: string;      // 商品ID (产品代码, 例如 u0000000066997)
     code: string;            // 货号 (6位数字代码)
@@ -84,6 +96,11 @@ export interface CrawledItem {
     sku_id: string;          // SKU ID (唯一SKU标识，例如 u0000000066997001)
     main_pic?: string;       // 商品主图URL后缀
 }
+
+type ProcessProductResult = {
+    items: CrawledItem[];
+    checked: boolean;
+};
 
 /**
  * Get Product Codes from Super U page config
@@ -140,11 +157,7 @@ export async function getProductCodesFromConfig(targetGender?: string): Promise<
     }
 }
 
-/**
- * Get Product Detail by Product Code
- * 通过产品代码获取商品详情
- */
-export async function getProductDetailByCode(productCode: string) {
+async function getStaticProductDetailByCode(productCode: string) {
     const url = `${PRODUCT_DETAIL_URL}/${productCode}.json`;
 
     try {
@@ -166,6 +179,79 @@ export async function getProductDetailByCode(productCode: string) {
         console.error(`getProductDetailByCode error for ${productCode}:`, error);
         return null;
     }
+}
+
+async function getOfficialProductDetailByCode(productCode: string) {
+    const url = `${OFFICIAL_PRODUCT_DETAIL_URL}/${productCode}/zh_CN`;
+
+    try {
+        const res = await fetch(url, {
+            headers: {
+                ...COMMON_HEADERS,
+                'Referer': `https://www.uniqlo.cn/product-detail.html?productCode=${productCode}`
+            }
+        });
+
+        if (!res.ok) {
+            console.log(`[${productCode}] Official detail fetch failed: ${res.status}`);
+            return null;
+        }
+
+        const data = await res.json();
+        const detail = Array.isArray(data?.resp) ? data.resp[0] : null;
+        if (!data?.success || !detail) {
+            return null;
+        }
+
+        return {
+            summary: detail.summary || {},
+            rows: Array.isArray(detail.rows) ? detail.rows : []
+        };
+    } catch (error) {
+        console.error(`getOfficialProductDetailByCode error for ${productCode}:`, error);
+        return null;
+    }
+}
+
+/**
+ * Get Product Detail by Product Code
+ * 通过官方详情链路获取商品详情，并用静态详情补充颜色和尺码文案
+ */
+export async function getProductDetailByCode(productCode: string) {
+    const [officialDetail, staticDetail] = await Promise.all([
+        getOfficialProductDetailByCode(productCode),
+        getStaticProductDetailByCode(productCode)
+    ]);
+
+    if (!officialDetail && !staticDetail) {
+        return null;
+    }
+
+    if (!officialDetail) {
+        return staticDetail;
+    }
+
+    const staticRowsByProductId = new Map(
+        (staticDetail?.rows || [])
+            .filter((row: any) => cleanString(row?.productId))
+            .map((row: any) => [cleanString(row.productId), row])
+    );
+
+    const officialRows = officialDetail.rows || [];
+    const rows = officialRows.length > 0
+        ? officialRows.map((row: any) => ({
+            ...(staticRowsByProductId.get(cleanString(row?.productId)) || {}),
+            ...row
+        }))
+        : (staticDetail?.rows || []);
+
+    return {
+        summary: {
+            ...(staticDetail?.summary || {}),
+            ...(officialDetail.summary || {})
+        },
+        rows
+    };
 }
 
 /**
@@ -201,14 +287,14 @@ export async function getStockByProductId(productId: string) {
  * Process single product and extract in-stock items
  * 处理单个产品并提取有库存的商品
  */
-async function processProduct(productCode: string, targetGender?: string): Promise<CrawledItem[]> {
+async function processProduct(productCode: string, targetGender?: string): Promise<ProcessProductResult> {
     const results: CrawledItem[] = [];
 
     try {
         // 1. Get product detail
         const detailData = await getProductDetailByCode(productCode);
         if (!detailData || detailData.rows.length === 0) {
-            return results;
+            return { items: results, checked: false };
         }
 
         const { summary, rows } = detailData;
@@ -216,8 +302,8 @@ async function processProduct(productCode: string, targetGender?: string): Promi
         // Extract product information from summary
         const productName = summary.name || rows[0].name || '';
         const rawGender = summary.sex || summary.gDeptValue || '未知';
-        const gender = standardizeGender(rawGender);
-        const itemCode = summary.code || summary.oms_productCode || '';
+        const gender = targetGender || standardizeGender(rawGender);
+        const itemCode = extractItemCode(summary, rows);
         let mainPic = summary.mainPic || '';
 
         // If mainPic is missing, try to get it from Search API (as per user request)
@@ -242,7 +328,7 @@ async function processProduct(productCode: string, targetGender?: string): Promi
         // targetGender is already standardized (e.g., '女装')
         if (targetGender && gender !== targetGender && !gender.includes(targetGender)) {
             // console.log(`[${productCode}] Skipping: Gender "${gender}" does not match target "${targetGender}"`);
-            return results;
+            return { items: results, checked: true };
         }
 
         // 2. Get stock information
@@ -250,7 +336,7 @@ async function processProduct(productCode: string, targetGender?: string): Promi
         const stockData = await getStockByProductId(productCode);
 
         if (!stockData || !stockData.resp || !stockData.resp[0]) {
-            return results;
+            return { items: results, checked: false };
         }
 
         const stockMap = stockData.resp[0].skuStocks || {};
@@ -263,7 +349,7 @@ async function processProduct(productCode: string, targetGender?: string): Promi
 
             if (stockCount > 0) {
                 const originPrice = parseFloat(row.originPrice || summary.originPrice || 0);
-                const varyPrice = parseFloat(row.varyPrice || row.minPrice || summary.minVaryPrice || 0);
+                const varyPrice = parseFloat(row.price || row.varyPrice || row.minPrice || summary.minPrice || summary.minVaryPrice || 0);
                 const minPrice = parseFloat(row.minPrice || summary.minPrice || varyPrice);
 
                 results.push({
@@ -284,10 +370,10 @@ async function processProduct(productCode: string, targetGender?: string): Promi
             }
         }
 
-        return results;
+        return { items: results, checked: true };
     } catch (error) {
         console.error(`Error processing product ${productCode}:`, error);
-        return results;
+        return { items: results, checked: false };
     }
 }
 
@@ -508,6 +594,7 @@ export async function crawlUniqloProducts(targetGender?: string): Promise<{ tota
         const allResults: CrawledItem[] = [];
         let processedCount = 0;
         let successCount = 0;
+        let checkedCount = 0;
 
         // 2. Process each product with concurrency limit
         const CONCURRENCY_LIMIT = 20;
@@ -536,7 +623,12 @@ export async function crawlUniqloProducts(targetGender?: string): Promise<{ tota
             const randomDelay = Math.floor(Math.random() * 50);
             await new Promise(resolve => setTimeout(resolve, randomDelay));
 
-            const items = await processProduct(code, targetGender);
+            const result = await processProduct(code, targetGender);
+            const items = result.items;
+
+            if (result.checked) {
+                checkedCount++;
+            }
 
             if (items.length > 0) {
                 allResults.push(...items);
@@ -552,8 +644,13 @@ export async function crawlUniqloProducts(targetGender?: string): Promise<{ tota
         }, CONCURRENCY_LIMIT);
 
         console.log(`Processed ${processedCount}/${productCodes.length} products.`);
+        console.log(`Successfully checked ${checkedCount}/${productCodes.length} products.`);
         console.log(`Successfully fetched ${successCount} products with details.`);
         console.log(`Found ${allResults.length} in-stock items.`);
+
+        if (targetGender && checkedCount === 0) {
+            throw new Error(`No ${targetGender} products were successfully checked. Aborting database sync to avoid deleting existing records.`);
+        }
 
         // 3. Save to database results (New items vs Sold out)
         let newItems: CrawledItem[] = [];

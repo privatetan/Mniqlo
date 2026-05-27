@@ -1,4 +1,3 @@
-import 'server-only';
 
 /**
  * Cron Job Manager for Scheduled Crawlers
@@ -12,6 +11,7 @@ import 'server-only';
 import cron from 'node-cron';
 import { supabase } from './supabase';
 import { validateCronExpression } from './cron-utils';
+import { crawlUniqloProducts } from './crawler';
 import * as logger from './logger';
 
 // Store active cron jobs by gender
@@ -49,27 +49,15 @@ async function loadSchedulesFromDB() {
  */
 async function executeCrawl(gender: string) {
     try {
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-        const response = await fetch(`${baseUrl}/api/crawl?gender=${encodeURIComponent(gender)}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
+        const result = await crawlUniqloProducts(gender);
 
-        const data = await response.json();
+        logger.log(`[Cron] ✓ ${gender}: ${result.totalFound} total, ${result.newItems.length} new, ${result.soldOutItems.length} sold out`);
 
-        if (data.success) {
-            logger.log(`[Cron] ✓ ${gender}: ${data.newCount} new, ${data.soldOutCount} sold out`);
-
-            // Update last_run_time
-            await supabase
-                .from('crawler_schedules')
-                .update({ last_run_time: new Date().toISOString() })
-                .eq('gender', gender);
-        } else {
-            logger.error(`[Cron] ✗ ${gender}: ${data.error || 'Unknown error'}`);
-        }
+        // Update last_run_time only after the crawler completes successfully.
+        await supabase
+            .from('crawler_schedules')
+            .update({ last_run_time: new Date().toISOString() })
+            .eq('gender', gender);
     } catch (error) {
         logger.error(`[Cron] Failed to execute crawl for ${gender}:`, error);
     }

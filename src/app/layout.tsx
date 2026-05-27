@@ -1,5 +1,4 @@
 import './globals.css'
-import '@/lib/cron'
 
 export const metadata = {
   title: 'Mniqlo',

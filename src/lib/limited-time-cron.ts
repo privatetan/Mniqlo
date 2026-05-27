@@ -1,6 +1,7 @@
 import cron from 'node-cron';
 import { supabase } from './supabase';
 import { validateCronExpression } from './cron-utils';
+import { crawlLimitedTimeProducts } from './limited-time';
 import * as logger from './logger';
 
 const globalForLimitedTimeCron = global as unknown as {
@@ -34,24 +35,14 @@ async function loadSchedulesFromDB() {
 
 async function executeCrawl(gender: string) {
     try {
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-        const response = await fetch(`${baseUrl}/api/limited-time/crawl?gender=${encodeURIComponent(gender)}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
+        const result = await crawlLimitedTimeProducts(gender);
 
-        const data = await response.json();
-        if (data.success) {
-            logger.log(`[LimitedTimeCron] ✓ ${gender}: ${data.newCount} new, ${data.soldOutCount} sold out`);
-            await supabase
-                .from('limited_time_crawler_schedules')
-                .update({ last_run_time: new Date().toISOString() })
-                .eq('gender', gender);
-        } else {
-            logger.error(`[LimitedTimeCron] ✗ ${gender}: ${data.error || 'Unknown error'}`);
-        }
+        logger.log(`[LimitedTimeCron] ✓ ${gender}: ${result.totalFound} total, ${result.newItems.length} new, ${result.soldOutItems.length} sold out`);
+
+        await supabase
+            .from('limited_time_crawler_schedules')
+            .update({ last_run_time: new Date().toISOString() })
+            .eq('gender', gender);
     } catch (error) {
         logger.error(`[LimitedTimeCron] Failed to execute crawl for ${gender}:`, error);
     }
